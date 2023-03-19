@@ -1,0 +1,33 @@
+{
+  "name": "@hyurl/type-guard",
+  "version": "1.0.0",
+  "description": "Runtime type checking for JavaScript variables and function parameters.",
+  "main": "dist/index.js",
+  "types": "src/index.ts",
+  "scripts": {
+    "test": "npx mocha -r ts-node/register test/*.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hyurl/type-guard.git"
+  },
+  "keywords": [
+    "\"type",
+    "checking\""
+  ],
+  "author": "A-yon Lee <i@hyurl.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/hyurl/type-guard/issues"
+  },
+  "homepage": "https://github.com/hyurl/type-guard#readme",
+  "devDependencies": {
+    "@types/mocha": "^10.0.1",
+    "@types/node": "^18.15.3",
+    "mocha": "^10.2.0",
+    "ts-node": "^10.9.1"
+  },
+  "dependencies": {
+    "@hyurl/utils": "^0.2.26"
+  }
+}
