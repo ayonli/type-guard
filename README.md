@@ -31,7 +31,9 @@ Runtime type checking for JavaScript variables and function parameters.
     - [Generic Type](#generic-types)
 - [Utility Functions](#utility-functions)
     - [Utility Types](#utility-types)
-- [Work for Common Functions](#work-for-common-functions)
+- [Work with Common Functions](#work-with-common-functions)
+- [Work with JSON Schema](#work-with-json-schema)
+    - [JSON Schema for Functions](#json-schema-for-functions)
 
 ## Install
 
@@ -624,7 +626,7 @@ type Struct = ExtractInstanceType<typeof Struct>;
 // will resolve in: { foo: string; bar?: number; deep: { foo1: Date; bar2?: object; } }
 ```
 
-## Work for Common Functions
+## Work with Common Functions
 
 Well, generators only works on class methods, so if we want to use type
 validation in a common function, there are two ways (with limited support) to do
@@ -736,7 +738,7 @@ const ArticleSchema = createJSONSchema(Article, { // and JSON schema
 // }
 ```
 
-### JSON Schema for Function
+### JSON Schema for Functions
 
 As we've used decorators to add constrain features to class methods, it would be
 much better if we can annotate the method via plain JSON Schema as an API.
