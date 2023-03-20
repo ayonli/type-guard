@@ -142,8 +142,8 @@ And these abstract types can be created via the wrapper function `as()`:
 - `default(value)` Sets the default value for the current
     variable/property/parameter when it is omitted. NOTE: this function will
     implicitly force `optional`.
-- `deprecated(message: string)` Marks the current variable/property/parameter as
-    deprecated and provide a message.
+- `deprecated(message?: string)` Marks the current variable/property/parameter
+    as deprecated and provide a message.
 - `alternatives(...props: string[])` Sets the current property and the other
     properties to be alternatives, and only one of them are required. This
     function must be used along with `optional` directive and only have to be
@@ -365,8 +365,8 @@ There are also other non-frequently used decorators:
 - `@throws(...types: any[])` A decorator that restrains the thrown error of the 
     method. 
     - `types` The types of the thrown error, usually a class or a string.
-- `@deprecated(message: string)` A decorator that deprecates the method and emit
-    warning message when the method is called.
+- `@deprecated(message?: string)` A decorator that deprecates the method and
+    emit warning message when the method is called.
     - `message` The warning message, can be used to provide suggestions.
 
 ```ts

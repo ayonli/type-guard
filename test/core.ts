@@ -166,10 +166,10 @@ describe("Core Features", () => {
 
     it("should add features to the Array prototype", () => {
         assert.strictEqual(typeof Array.prototype.optional, "object");
-        assert.strictEqual(String(Array.prototype.optional), "[object OptionalCustomType]");
+        assert.strictEqual(String(Array.prototype.optional), "[object OptionalArrayType]");
 
         assert.strictEqual(typeof Array.prototype.required, "object");
-        assert.strictEqual(String(Array.prototype.required), "[object CustomType]");
+        assert.strictEqual(String(Array.prototype.required), "[object ArrayType]");
         assert.strictEqual(typeof Array.prototype.deprecated, "function");
         assert.strictEqual(typeof Array.prototype.alternatives, "function");
         assert.strictEqual(typeof Array.prototype.associates, "function");
