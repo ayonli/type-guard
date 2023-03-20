@@ -142,6 +142,7 @@ And these abstract types can be created via the wrapper function `as()`:
 - `default(value)` Sets the default value for the current
     variable/property/parameter when it is omitted. NOTE: this function will
     implicitly force `optional`.
+- `remarks(note: string)` Adds a remark message to the variable/property/parameter.
 - `deprecated(message?: string)` Marks the current variable/property/parameter
     as deprecated and provide a message.
 - `alternatives(...props: string[])` Sets the current property and the other
@@ -337,23 +338,24 @@ const Type = {
 There are two decorators for most use cases, as long as you're coding in
 TypeScript or with Babel.
 
-- `@param(type: any, name?: string)` A decorator that restrains the input
-    arguments of the method.
+- `@param(type: any, name?: string, remarks?: string)` A decorator that
+    restrains the input arguments of the method.
     - `type` The type of the argument, can be a class, a type constructor
         (including `as()`), an object or array literal that specifies deep
         structure.
     - `name` The argument name, used to address where the error is reported.
+    - `remarks` The remark message of the parameter.
 
     NOTE: the order of using `@param()` must consist with order of which the
     parameter is present.
 
     Specifically, `@param(Void)` will restrain the method to take no argument.
-- `@returns(...types: any[])` A decorator that restrains the return value of the
-    method.
-    - `types` The type of the return value, can be a class, a type constructor
+- `@returns(type: any, remarks?: string)` A decorator that restrains the
+    return value of the method.
+    - `type` The type of the return value, can be a class, a type constructor
         (including `as()`), an object or array literal that specifies deep
-        structure. If multiple types are provided, it means that the function
-        returns multiple type of values (a union type).
+        structure.
+    - `remark` the remark message of the return value.
 
     NOTE: if the method returns a Promise, this function restrains the resolved
     value instead.
@@ -362,9 +364,10 @@ TypeScript or with Babel.
 
 There are also other non-frequently used decorators:
 
-- `@throws(...types: any[])` A decorator that restrains the thrown error of the 
+- `@throws(type: any)` A decorator that restrains the thrown error of the 
     method. 
-    - `types` The types of the thrown error, usually a class or a string.
+    - `type` The type of the thrown error, usually a class or a string.
+- `@remarks(note: string)` A decorator that adds remark message to the method.
 - `@deprecated(message?: string)` A decorator that deprecates the method and
     emit warning message when the method is called.
     - `message` The warning message, can be used to provide suggestions.
@@ -404,15 +407,14 @@ check the value we want.
     - `options`
         - `strict?: boolean` Use strict mode, will disable any implicit type
             conversion.
+        - `suppress?: boolean` Suppress non-critical errors to warnings.
         - `warnings?: ValidationWarning[]` A list used to
             store all the warnings occurred during the validation process.
         - `removeUnknownProps?: boolean` Remove all properties in the value
             (if it's an object or tuple) that are not defined if the type.
-        - `silenceRemoving?: boolean` Do not emit warnings when removing unknown
-            properties.
 
 NOTE: Both `@param()` and `@returns()` will set `removeUnknownProps` to `true`,
-`@returns()` sets `silenceRemoving` as well.
+`@returns()` sets `suppress` as well.
 
 ```ts 
 import { validate, as } from "@hyurl/type-guard";
@@ -655,4 +657,154 @@ const wrappedSum = wrap(
 )(({ num1, num2, num3 }) => {
     return num1 + num2 + (num3 || 0);
 });
+```
+
+## Work with JSON Schema
+
+The type definition can be easily converted to JSON Schema, and exported to
+other clients or languages for wider adoption.
+
+```ts
+import { ExtractInstanceType, createJSONSchema } from "@hyurl/type-guard";
+
+const Article = {
+    id: Number.remarks("The ID of article"),
+    title: String.remarks("The title of the article"),
+    content: String.remarks("The content of the article"),
+    status: String.enum(["created", "published", "archived"] as const).remarks("The status of the article"),
+    tags: [String].optional.remarks("The tags of the article"),
+};
+
+type Article = ExtractInstanceType<typeof Article>; // type declaration
+
+const ArticleSchema = createJSONSchema(Article, { // and JSON schema
+    $id: "https://myapi.com/article.schema.json",
+    title: "Article",
+    description: "",
+});
+// will generate something like this:
+// {
+//     "$schema": "https://json-schema.org/draft/2020-12/schema",
+//     "$id": "https://myapi.com/article.schema.json",
+//     "title": "Article",
+//     "type": "object",
+//     "description": "",
+//     "properties": {
+//         "id": {
+//             "type": "number",
+//             "description": "The ID of article",
+//             "enum": null
+//         },
+//         "title": {
+//             "type": "string",
+//             "description": "The title of the article",
+//             "enum": null,
+//             "minLength": 0
+//         },
+//         "content": {
+//             "type": "string",
+//             "description": "The content of the article",
+//             "enum": null,
+//             "minLength": 0
+//         },
+//         "status": {
+//             "type": "string",
+//             "description": "The status of the article",
+//             "enum": [
+//                 "created",
+//                 "published",
+//                 "archived"
+//             ],
+//             "minLength": 0
+//         },
+//         "tags": {
+//             "type": "array",
+//             "description": "The tags of the article",
+//             "items": {
+//                 "type": "string"
+//             },
+//             "minItems": 0,
+//             "uniqueItems": false
+//         }
+//     },
+//     "required": [
+//         "id",
+//         "title",
+//         "content",
+//         "status"
+//     ]
+// }
+```
+
+### JSON Schema for Function
+
+As we've used decorators to add constrain features to class methods, it would be
+much better if we can annotate the method via plain JSON Schema as an API.
+This's why this package also add a `getJSONSchema()` function to the
+`Function.prototype`, which creates a super schema of the function design.
+
+```ts
+import { ExtractInstanceType, remarks, param, returns } from "@hyurl/type-guard";
+
+const Article = {
+    id: Number.remarks("The ID of article"),
+    title: String.remarks("The title of the article"),
+    content: String.remarks("The content of the article"),
+    status: String.enum(["created", "published", "archived"] as const).remarks("The status of the article"),
+    tags: [String].optional.remarks("The tags of the article"),
+};
+type Article = ExtractInstanceType<typeof Article>;
+
+class ArticleController {
+    @remarks("Create a new article")
+    @param(Article, "article")
+    @returns(Article)
+    async create(article: Article) {
+        return article;
+    }
+}
+
+console.log(JSON.stringify(new ArticleController().create.getJSONSchema(), null, "    "));
+// will output something like this:
+// {
+//     "$schema": "https://json-schema.org/draft/2020-12/schema",
+//     "$id": "ArticleController.create",
+//     "title": "ArticleController.create",
+//     "type": "function",
+//     "description": "Create a new article",
+//     "parameters": {
+//         "article": {
+//             "$schema": "https://json-schema.org/draft/2020-12/schema",
+//             "$id": "ArticleController.create.parameters.article",
+//             "title": "ArticleController.create.parameters.article",
+//             "type": "object",
+//             "description": "",
+//             "properties": {
+//                 // refer to the previous example
+//             },
+//             "required": [
+//                 "id",
+//                 "title",
+//                 "content",
+//                 "status"
+//             ]
+//         }
+//     },
+//     "returns": {
+//         "$schema": "https://json-schema.org/draft/2020-12/schema",
+//         "$id": "ArticleController.create.returns",
+//         "title": "ArticleController.create.returns",
+//         "type": "object",
+//         "description": "",
+//         "properties": {
+//             // refer to the previous example
+//         },
+//         "required": [
+//             "id",
+//             "title",
+//             "content",
+//             "status"
+//         ]
+//     }
+// }
 ```

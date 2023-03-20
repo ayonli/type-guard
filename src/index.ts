@@ -3,10 +3,16 @@ import omit from "@hyurl/utils/omit";
 import pick from "@hyurl/utils/pick";
 import isVoid from "@hyurl/utils/isVoid";
 
+export type JSONSchema = {
+    type: "string" | "number" | "integer" | "boolean" | "array" | "object" | "null" | string[];
+    description: string;
+    [x: string]: any;
+};
+
 export abstract class ValidateableType<T> {
     protected _optional = false;
     protected _default: T = void 0;
-    protected _description: string = void 0;
+    protected _remarks: string = void 0;
     private _deprecated: string = void 0;
     private _alternatives: string[] = null;
     private _associates: string[] = null;
@@ -32,8 +38,9 @@ export abstract class ValidateableType<T> {
      */
     abstract default(value: ExtractInstanceType<T>): ThisType<this>;
 
-    description(note: string) {
-        return this.deriveWith({ _description: note });
+    /** Adds a remark message to the variable/property/parameter. */
+    remarks(note: string) {
+        return this.deriveWith({ _remarks: note });
     }
 
     /**
@@ -108,11 +115,7 @@ export abstract class ValidateableType<T> {
     }
 
 
-    abstract toJSONSchema(): {
-        type: "string" | "number" | "integer" | "boolean" | "array" | "object" | "null" | string[];
-        description: string;
-        [x: string]: any;
-    };
+    abstract toJSONSchema(): JSONSchema;
 
     /** @internal */
     protected deriveWith(props: object): this;
@@ -332,14 +335,36 @@ export class StringType extends ValidateableType<string> {
         return _value;
     }
 
-    toJSONSchema() {
+    toJSONSchema(): JSONSchema {
+        let pattern: RegExp;
+
+        if (this._match === "email") {
+            pattern = StringType.EmailRegex;
+        } else if (this._match === "phone") {
+            pattern = StringType.PhoneRegex;
+        } else if (this._match === "ip") {
+            pattern = StringType.IpRegex;
+        } else if (this._match === "hostname") {
+            pattern = StringType.HostnameRegex;
+        } else if (this._match === "url") {
+            pattern = StringType.UrlRegex;
+        } else if (this._match === "date") {
+            pattern = StringType.DateRegex;
+        } else if (this._match === "time") {
+            pattern = StringType.TimeRegex;
+        } else if (this._match === "datetime") {
+            pattern = StringType.DatetimeRegex;
+        } else if (this._match instanceof RegExp) {
+            pattern = this._match;
+        }
+
         return {
-            type: "string" as const,
-            description: this._description || "",
+            type: "string",
+            description: this._remarks || "",
             enum: this._enum,
             minLength: this._minLength,
             maxLength: this._maxLength,
-            pattern: this._match instanceof RegExp ? this._match : void 0,
+            pattern: pattern?.source,
         };
     }
 }
@@ -531,10 +556,10 @@ export class NumberType extends ValidateableType<number> {
         return _value;
     }
 
-    toJSONSchema() {
+    toJSONSchema(): JSONSchema {
         return {
-            type: "number" as const,
-            description: this._description || "",
+            type: this._integer ? "integer" : "number",
+            description: this._remarks || "",
             enum: this._enum,
             minimum: this._min,
             maximum: this._max,
@@ -702,10 +727,10 @@ export class BigIntType extends ValidateableType<bigint> {
         return _value;
     }
 
-    toJSONSchema() {
+    toJSONSchema(): JSONSchema {
         return {
-            type: "integer" as const,
-            description: this._description || "",
+            type: "integer",
+            description: this._remarks || "",
             enum: this._enum,
             minimum: this._min,
             maximum: this._max,
@@ -852,10 +877,10 @@ export class BooleanType extends ValidateableType<boolean> {
         return _value;
     }
 
-    toJSONSchema() {
+    toJSONSchema(): JSONSchema {
         return {
-            type: "boolean" as const,
-            description: this._description || "",
+            type: "boolean",
+            description: this._remarks || "",
         };
     }
 }
@@ -922,10 +947,10 @@ export class DateType extends ValidateableType<Date> {
         return _value;
     }
 
-    toJSONSchema() {
+    toJSONSchema(): JSONSchema {
         return {
-            type: "string" as const,
-            description: this._description || "",
+            type: "string",
+            description: this._remarks || "",
             format: "date-time",
         };
     }
@@ -975,10 +1000,10 @@ export class MixedType extends ValidateableType<object> {
         }
     }
 
-    toJSONSchema() {
+    toJSONSchema(): JSONSchema {
         return {
-            type: "object" as const,
-            description: this._description || "",
+            type: "object",
+            description: this._remarks || "",
         };
     }
 }
@@ -1013,6 +1038,13 @@ export class AnyType extends ValidateableType<any> {
     default(value: any) {
         return this.deriveWith({ _optional: true, _default: value }, new OptionalAnyType());
     }
+
+    toJSONSchema(): JSONSchema {
+        return {
+            type: ["string", "number", "integer", "boolean", "object", "array", "null"],
+            description: this._remarks || "",
+        };
+    }
 }
 
 export class OptionalAnyType extends AnyType {
@@ -1025,13 +1057,6 @@ export class OptionalAnyType extends AnyType {
     // @ts-ignore
     get required() {
         return this.deriveWith({ _optional: false }, new AnyType());
-    }
-
-    toJSONSchema() {
-        return {
-            type: ["string", "number", "integer", "boolean", "object", "array", "null"],
-            description: this._description || "",
-        };
     }
 }
 
@@ -1065,10 +1090,10 @@ export class VoidType extends ValidateableType<void> {
         }
     }
 
-    toJSONSchema() {
+    toJSONSchema(): JSONSchema {
         return {
-            type: "null" as const,
-            description: this._description || "",
+            type: "null",
+            description: this._remarks || "",
         };
     }
 }
@@ -1139,7 +1164,6 @@ export class CustomType<T> extends ValidateableType<T> {
         removeUnknownProps?: boolean;
     } = null): T | never {
         value = super.validate(path, value, { ...options, suppress: 2 });
-        let _value: T;
 
         if (value === null || value === void 0) {
             return value;
@@ -1156,33 +1180,32 @@ export class CustomType<T> extends ValidateableType<T> {
             } else {
                 this.throwTypeError(path, value, "type of " + this.type.name);
             }
-        } else if (isObject(this.type) && !isObject(value)) {
-            this.throwTypeError(path, value, "object");
-        } else if (Array.isArray(this.type) && !Array.isArray(value)) {
-            this.throwTypeError(path, value, "array");
+        } else if (isObject(this.type)) {
+            if (isObject(value)) {
+                return validate(value, this.type as any, path, options) as any;
+            } else {
+                this.throwTypeError(path, value, "object");
+            }
+        } else if (Array.isArray(this.type)) {
+            if (Array.isArray(value)) {
+                return validate(value as any, this.type, path, options) as any;
+            } else {
+                this.throwTypeError(path, value, "array");
+            }
         } else {
-            _value = value;
-        }
-
-        if (Array.isArray(_value) && Array.isArray(this.type)) {
-            // @ts-ignores
-            return validate(_value as any, this.type, path, options) as any;
-        } else if (isObject(_value) && isObject(this.type)) {
-            // @ts-ignores
-            return validate(_value, this.type as any, path, options) as any;
-        } else if ((this.type instanceof Function) && !(_value instanceof this.type)) {
-            this.throwTypeError(path, value, "type of " + this.type.name);
-        } else {
-            // @ts-ignores
-            return validate(_value, this.type, path, options) as any;
+            return validate(value, this.type, path, options) as any;
         }
     }
 
-    toJSONSchema() {
-        return {
-            type: "object" as const,
-            description: this._description || "",
-        };
+    toJSONSchema(): JSONSchema {
+        if (this.type instanceof Function) {
+            return {
+                type: "object",
+                description: this._remarks || "",
+            };
+        } else {
+            return getJSONSchema(this.type);
+        }
     }
 }
 
@@ -1324,10 +1347,17 @@ export class UnionType<T> extends ValidateableType<T> {
         }));
     }
 
-    toJSONSchema() {
+    toJSONSchema(): JSONSchema {
+        const types: string[] = [];
+
+        for (const type of this.types) {
+            const _schema = getJSONSchema(type);
+            types.push(_schema.type as string);
+        }
+
         return {
-            type: ["string", "number", "integer", "boolean", "object", "array", "null"],
-            description: this._description || "",
+            type: types,
+            description: this._remarks || "",
         };
     }
 }
@@ -1419,11 +1449,31 @@ export class DictType<K extends IndexableType, V> extends ValidateableType<Recor
         }
     }
 
-    toJSONSchema() {
-        return {
-            type: "object" as const,
-            description: this._description || "",
-        };
+    toJSONSchema(): JSONSchema {
+        if (this.key instanceof StringEnum) {
+            const valueSchema = getJSONSchema(this.value);
+            const schema: JSONSchema = {
+                type: "object",
+                description: this._remarks || "",
+                properties: (this.key.enum() as string[]).reduce((properties, prop) => {
+                    properties[prop] = {
+                        type: valueSchema.type,
+                    };
+                    return properties;
+                }, {}),
+            };
+
+            if (!(this.key instanceof OptionalStringEnum)) {
+                schema["required"] = this.key.enum() as string[];
+            }
+
+            return schema;
+        } else {
+            return {
+                type: "object",
+                description: this._remarks || "",
+            };
+        }
     }
 }
 
@@ -1535,15 +1585,27 @@ export class ArrayType<T extends any[]> extends CustomType<T> {
         return validate(_value as any, this.type, path, options) as T;
     }
 
-    // @ts-ignore
-    toJSONSchema() {
-        return {
-            type: "array" as const,
-            description: this._description || "",
+    toJSONSchema(): JSONSchema {
+        const type = this.type[0];
+        const valueSchema = getJSONSchema(type);
+        const schema: JSONSchema = {
+            type: "array",
+            description: this._remarks || "",
+            items: { type: valueSchema.type },
             minItems: this._minItems,
             maxItems: this._maxItems,
             uniqueItems: this._uniqueItems,
         };
+
+        if (type instanceof StringEnum) {
+            schema["enum"] = type.enum() as string[];
+        } else if (type instanceof NumberEnum) {
+            schema["enum"] = type.enum() as number[];
+        } else if (type instanceof BigIntEnum) {
+            schema["enum"] = type.enum() as bigint[];
+        }
+
+        return schema;
     }
 }
 
@@ -1635,11 +1697,14 @@ export class TupleType<T extends readonly any[]> extends CustomType<T> {
         return result as any as T;
     }
 
-    // @ts-ignore
-    toJSONSchema() {
+    toJSONSchema(): JSONSchema {
+        const valueSchema = getJSONSchema(this.type);
         return {
-            type: "array" as const,
-            description: this._description || "",
+            type: "array",
+            description: this._remarks || "",
+            items: { type: valueSchema.type },
+            minItems: this.type.length,
+            maxItems: this.type.length,
         };
     }
 }
@@ -1772,6 +1837,7 @@ function augmentStaticMethods(ctor: new (...args: any[]) => any, type: new () =>
     ctor["deprecated"] = (message: string) => ins.deprecated(message);
     ctor["alternatives"] = (...props: string[]) => ins.alternatives(...props);
     ctor["associates"] = (...props: string[]) => ins.associates(...props);
+    ctor["remarks"] = (note: string) => ins.remarks(note);
 
     Object.getOwnPropertyNames(type.prototype).forEach(prop => {
         if (prop !== "constructor" && !ctor[prop]) {
@@ -1876,6 +1942,22 @@ declare global {
         associates: (...props: string[]) => ArrayType<T[]>;
         minItems: (count: number) => ArrayType<T[]>;
         maxItems: (count: number) => ArrayType<T[]>;
+    }
+
+    interface Function {
+        /**
+         * Returns the JSON schema representation of the function. If available,
+         * returns a schema with `type: 'function'` and with `parameters` and
+         * `returns` keywords. Otherwise, `null` is returned.
+         */
+        getJSONSchema: (options?: {
+            $id: string;
+        }) => Omit<JSONSchema, "type"> & {
+            $schema: string;
+            $id: string;
+            title: string;
+            type: "function";
+        };
     }
 }
 
@@ -2071,7 +2153,7 @@ export function validate<T>(value: ExtractInstanceType<T>, type: T, variable = "
      */
     removeUnknownProps?: boolean;
 } = null): ExtractInstanceType<T> | never {
-    const reduce = (type: ValidateableType<any> | ValidateableType<any>[], value: any, path: string) => {
+    const reduce = (type: any, value: any, path: string) => {
         if (Array.isArray(type)) {
             if (Array.isArray(value)) {
                 if (!type.length) {
@@ -2185,7 +2267,7 @@ export function validate<T>(value: ExtractInstanceType<T>, type: T, variable = "
         }
     };
 
-    return reduce(type as any, value, variable);
+    return reduce(type, value, variable);
 }
 
 export type ValidationWarning = { path: string; message: string; };
@@ -2220,6 +2302,8 @@ const _methods = Symbol.for("methods");
 const _params = Symbol.for("params");
 const _returns = Symbol.for("returns");
 const _throws = Symbol.for("throws");
+const _title = Symbol.for("title");
+const _remarks = Symbol.for("remarks");
 const _deprecated = Symbol.for("deprecated");
 
 class ValidationError extends Error {
@@ -2236,17 +2320,17 @@ const wrapMethod = (target: any, prop: string | symbol, desc: TypedPropertyDescr
     if (!target[_methods]?.[prop]) {
         (target[_methods] ??= {})[prop] = desc.value;
 
-        desc.value = (function (this: any, ...args: any[]) {
+        const fn = desc.value = (function (this: any, ...args: any[]) {
             const method = target[_methods][prop] as (...arg: any[]) => any;
-            const paramsDef = method[_params] as { type: any; name?: string; }[];
-            const returnDef = method[_returns] as { types: any[]; name: string; };
-            const throwDef = method[_throws] as { types: any[]; name: string; };
+            const paramsDef = fn[_params] as { type: any; name?: string; }[];
+            const returnDef = fn[_returns] as { type: any; name: string; };
+            const throwDef = fn[_throws] as { type: any; name: string; };
             const warnings: ValidationWarning[] = [];
             const options = { warnings, removeUnknownProps: true };
 
-            if (!isVoid(method[_deprecated])) {
-                const message = method[_deprecated]
-                    ? `${String(prop)}() is deprecated: ${method[_deprecated]}`
+            if (!isVoid(fn[_deprecated])) {
+                const message = fn[_deprecated]
+                    ? `${String(prop)}() is deprecated: ${fn[_deprecated]}`
                     : `${String(prop)}() is deprecated`;
                 warnings.push({ path: `${String(prop)}()`, message });
             }
@@ -2263,8 +2347,7 @@ const wrapMethod = (target: any, prop: string | symbol, desc: TypedPropertyDescr
                 let _args = {};
                 const paramList = [];
                 const params = paramsDef.map((item, index) => {
-                    item.name ||= "param" + index;
-                    return item;
+                    return { ...item, name: item.name || "param" + index };
                 }).reduce((record, item, index) => {
                     record[item.name] = item.type;
                     _args[item.name] = args[index];
@@ -2276,11 +2359,11 @@ const wrapMethod = (target: any, prop: string | symbol, desc: TypedPropertyDescr
                 args = paramList.map(name => _args[name]);
             }
 
-            const handleReturns = (returns: any, returnDef: { types: any[], name: string; }) => {
+            const handleReturns = (returns: any, returnDef: { type: any, name: string; }) => {
                 try {
                     return validate(
                         returns,
-                        as(...returnDef.types),
+                        as(returnDef.type),
                         returnDef.name,
                         { ...options, suppress: true }
                     );
@@ -2297,7 +2380,7 @@ const wrapMethod = (target: any, prop: string | symbol, desc: TypedPropertyDescr
                 if (err instanceof ValidationError) {
                     throw err.cause;
                 } else if (throwDef) {
-                    const _err = validate(err, as(...throwDef.types), throwDef.name, {
+                    const _err = validate(err, as(throwDef.type), throwDef.name, {
                         ...options,
                         suppress: true,
                     });
@@ -2342,6 +2425,8 @@ const wrapMethod = (target: any, prop: string | symbol, desc: TypedPropertyDescr
                 handleError(err);
             }
         }) as any;
+
+        fn[_title] = (target.constructor as Function).name + "." + String(prop);
     }
 };
 
@@ -2350,6 +2435,7 @@ const wrapMethod = (target: any, prop: string | symbol, desc: TypedPropertyDescr
  * @param type The type of the argument, can be a class, a type constructor
  *  (including `as()`), an object or array literal that specifies deep structure.
  * @param name The argument name, used to address where the error is reported.
+ * @param remarks The remark message of the parameter.
  * @example
  * ```ts
  * class Example {
@@ -2366,18 +2452,19 @@ const wrapMethod = (target: any, prop: string | symbol, desc: TypedPropertyDescr
  * }
  * ```
  */
-export function param<T>(type: T, name?: string): MethodDecorator;
-export function param<T>(name: string, type: T): MethodDecorator;
-export function param<T>(arg0: T | string, arg1?: string | T): MethodDecorator {
+export function param<T>(type: T, name?: string, remarks?: string): MethodDecorator;
+export function param<T>(name: string, type: T, remarks?: string): MethodDecorator;
+export function param<T>(arg0: T | string, arg1?: string | T, remarks = ""): MethodDecorator {
     const type = typeof arg0 === "string" ? arg1 as T : arg0 as T;
     const name = typeof arg0 === "string" ? arg0 as string : arg1 as string;
 
     return (target, prop, desc) => {
-        const fn = (target[_methods]?.[prop] || desc.value) as (...args: any[]) => any;
-        const params = (fn[_params] ??= []) as { type: any; name?: string; }[];
-
-        params.unshift({ type, name });
         wrapMethod(target, prop, desc);
+
+        // @ts-ignore
+        const fn = desc.value as (...args: any[]) => any;
+        const params = (fn[_params] ??= []) as { type: any; name?: string; remarks?: string; }[];
+        params.unshift({ type, name, remarks });
     };
 }
 
@@ -2386,8 +2473,9 @@ export function param<T>(arg0: T | string, arg1?: string | T): MethodDecorator {
  * 
  * NOTE: if the method returns a Promise, this function restrains the resolved
  * value instead.
- * @param types The type of the return value, can be a class, a type constructor
+ * @param type The type of the return value, can be a class, a type constructor
  *  (including `as()`), an object or array literal that specifies deep structure.
+ * @param remarks The remark message remark of the return value.
  * @example
  * ```ts
  * class Example {
@@ -2404,12 +2492,13 @@ export function param<T>(arg0: T | string, arg1?: string | T): MethodDecorator {
  * }
  * ```
  */
-export function returns<T extends any[]>(...types: T): MethodDecorator {
+export function returns<T>(type: T, remarks = ""): MethodDecorator {
     return (target, prop, desc) => {
-        const fn = (target[_methods]?.[prop] || desc.value) as (...args: any[]) => any;
-
-        fn[_returns] = { types, name: "returns" };
         wrapMethod(target, prop, desc);
+
+        // @ts-ignore
+        const fn = desc.value as (...args: any[]) => any;
+        fn[_returns] = { type, name: "returns", remarks };
     };
 }
 
@@ -2418,7 +2507,7 @@ export function returns<T extends any[]>(...types: T): MethodDecorator {
  * 
  * NOTE: if the method returns a Promise, this function restrains the rejected
  * reason instead.
- * @param types The types of the thrown error, usually a class or a string.
+ * @param type The type of the thrown error, usually a class or a string.
  * @example
  * ```ts
  * class Example {
@@ -2431,12 +2520,37 @@ export function returns<T extends any[]>(...types: T): MethodDecorator {
  * }
  * ```
  */
-export function throws<T extends any[]>(...types: T): MethodDecorator {
+export function throws<T>(type: T): MethodDecorator {
     return (target, prop, desc) => {
-        const fn = (target[_methods]?.[prop] || desc.value) as (...args: any[]) => any;
-
-        fn[_throws] = { types, name: "throws" };
         wrapMethod(target, prop, desc);
+
+        // @ts-ignore
+        const fn = desc.value as (...args: any[]) => any;
+        fn[_throws] = { type, name: "throws" };
+    };
+}
+
+/**
+ * A decorator that adds remark message to the method.
+ * @param note The remark message.
+ * @example
+ * ```ts
+ * class Example {
+ *     \@remarks("Retrieves id and name")
+ *     \@param(String, "id")
+ *     async get(id: String): Promise<{ id: string; name: string; }> {
+ *         // ...
+ *     }
+ * }
+ * ```
+ */
+export function remarks(note: string): MethodDecorator {
+    return (target, prop, desc) => {
+        wrapMethod(target, prop, desc);
+
+        // @ts-ignore
+        const fn = desc.value as (...args: any[]) => any;
+        fn[_remarks] = note;
     };
 }
 
@@ -2457,10 +2571,11 @@ export function throws<T extends any[]>(...types: T): MethodDecorator {
  */
 export function deprecated(message = ""): MethodDecorator {
     return (target, prop, desc) => {
-        const fn = (target[_methods]?.[prop] || desc.value) as (...args: any[]) => any;
-
-        fn[_deprecated] = message;
         wrapMethod(target, prop, desc);
+
+        // @ts-ignore
+        const fn = desc.value as (...args: any[]) => any;
+        fn[_deprecated] = message;
     };
 }
 
@@ -2578,10 +2693,109 @@ export function ensured<T extends Record<string, unknown>, K extends keyof T>(ty
     };
 }
 
-// @ts-ignore
-export function getJSONSchema(type: any) {
-    // TODO
+function getJSONSchema(type: any) {
+    if (Array.isArray(type)) {
+        if (!type.length) {
+            return new ArrayType([Any]).toJSONSchema();
+        } else if (type.length === 1) {
+            return new ArrayType(type).toJSONSchema();
+        } else {
+            return as(...type).toJSONSchema(); // as union type
+        }
+    } else if (isObject(type)) {
+        const required: string[] = [];
+        const schema: JSONSchema = {
+            type: "object",
+            description: "",
+            properties: Object.keys(type).reduce((properties, prop) => {
+                const subSchema = getJSONSchema(type[prop]);
+
+                if (subSchema) {
+                    properties[prop] = subSchema;
+
+                    const subType = ensureType(type[prop]);
+                    let isRequired: boolean;
+
+                    if (subType instanceof ValidateableType) {
+                        isRequired = !type[prop]["_optional"];
+                    } else {
+                        isRequired = false;
+                    }
+
+                    if (isRequired) {
+                        required.push(prop);
+                    }
+                }
+
+                return properties;
+            }, {}),
+        };
+
+        schema["required"] = required;
+        return schema;
+    } else {
+        try {
+            return ensureType(type, "", true).toJSONSchema();
+        } catch {
+            return null;
+        }
+    }
 }
+
+/**
+ * Creates JSON schema base on the type definition.
+ */
+export function createJSONSchema(type: any, options: {
+    $id: string;
+    title: string;
+    description?: string;
+}) {
+    const schema = getJSONSchema(type);
+    return {
+        $schema: "https://json-schema.org/draft/2020-12/schema",
+        $id: options.$id,
+        title: options.title,
+        ...schema,
+        description: schema.description || options.description || "",
+    } as {
+        $schema: string;
+        $id: string;
+        title: string;
+    } & JSONSchema;
+}
+
+Function.prototype.getJSONSchema = function (options) {
+    const title = this[_title] as string;
+    const $id = options?.$id || title;
+    const paramsDef = this[_params] as { type: any; name?: string; remarks?: string; }[];
+    const returnDef = this[_returns] as { type: any; name: string; remarks?: string; };
+
+    console.log(returnDef);
+
+    return title ? {
+        $schema: "https://json-schema.org/draft/2020-12/schema",
+        $id: options?.$id || title,
+        title,
+        type: "function",
+        description: this[_remarks] || "",
+        parameters: paramsDef ? paramsDef.reduce((records, item, index) => {
+            const name = item.name || "param" + index;
+
+            records[name] = createJSONSchema(item.type, {
+                $id: `${$id}.parameters.${name}`,
+                title: `${title}.parameters.${name}`,
+                description: item.remarks || "",
+            });
+
+            return records;
+        }, {}) : null,
+        returns: returnDef ? createJSONSchema(returnDef.type, {
+            $id: `${$id}.${returnDef.name}`,
+            title: `${title}.${returnDef.name}`,
+            description: returnDef.remarks || "",
+        }) : null,
+    } : null;
+};
 
 // const test = wrap({ foo: String, bar: Number.optional }, Number)(({ foo, bar }) => {
 //     if (bar) {
@@ -2596,7 +2810,7 @@ export function getJSONSchema(type: any) {
 // console.log(validate({ foo: "hello, world", bar: 123 }, { foo: String }, "$", { removeUnknownProps: true }));
 
 // const type = {
-//     str: new StringType(),
+//     str: String.remarks("This is a string"),
 //     str1: String.enum(["a", "b", "c"] as const),
 //     str2: String.default(""),
 //     str3: String.optional.enum(["a", "b", "c"] as const),
@@ -2621,12 +2835,12 @@ export function getJSONSchema(type: any) {
 //     union: as(Number, String).optional,
 //     obj: Object,
 //     any: Any,
-//     arr: [],
-//     arr1: [String],
+//     arr: [as(String, Number)],
+//     arr1: [String.enum(["foo", "bar"] as const)],
 //     arr2: [String, Number],
-//     arr3: asConst([String, Number, String] as const),
-//     arr4: ([String, Number, Boolean] as const),
-//     arr5: ([String, Number, Boolean, String] as const),
+//     arr3: as([String, Number, String] as const),
+//     // arr4: ([String, Number, Boolean] as const),
+//     // arr5: ([String, Number, Boolean, String] as const),
 //     deep: as({
 //         str: String,
 //         str1: String.enum(["a", "b", "c"] as const),
@@ -2639,14 +2853,33 @@ export function getJSONSchema(type: any) {
 //         union: as(Number, Boolean).optional,
 //     }).optional,
 //     dict: Dict(String, Number).optional,
+//     dict1: Dict(String.enum(["foo", "bar"] as const), Number).optional,
+//     dict2: Dict(String.optional.enum(["foo", "bar"] as const), String).optional,
 //     nil: Void,
 // };
+
+// console.log(JSON.stringify(createJSONSchema(type, {
+//     $id: "https://example.com/ExampleType.schema.json",
+//     title: "ExampleType",
+//     description: "This is just an example",
+// }), null, "    "));
+
+// class Example {
+//     @remarks("Echo what you input")
+//     @param("text", String, "the text you want to echo")
+//     @returns(String, "returns what you input")
+//     echo(text: string) {
+//         return text;
+//     }
+// }
+
+// console.log(new Example().echo.getJSONSchema());
 
 // const myType = ensured(type, ["union", "custom"]);
 
 // const value: ExtractInstanceType<typeof type> = null;
 
-// value.arr3;
+// value.arr1;
 
 // type Arr = readonly [number, string];
 
@@ -2771,3 +3004,30 @@ export function getJSONSchema(type: any) {
 // }, "$", { removeUnknownProps: true }));
 
 // console.log(validate("1,2,3", [String, Number], "$", { removeUnknownProps: true }));
+
+// const Article = {
+//     id: Number.remarks("The ID of article"),
+//     title: String.remarks("The title of the article"),
+//     content: String.remarks("The content of the article"),
+//     status: String.enum(["created", "published", "archived"] as const).remarks("The status of the article"),
+//     tags: [String].optional.remarks("The tags of the article"),
+// };
+
+// type Article = ExtractInstanceType<typeof Article>; // type declaration
+
+// const ArticleSchema = createJSONSchema(Article, { // and JSON schema
+//     $id: "https://myapi.com/article.schema.json",
+//     title: "Article",
+//     description: "",
+// });
+
+// class ArticleController {
+//     @remarks("Create a new article")
+//     @param(Article, "article")
+//     @returns(Article)
+//     async create(article: Article) {
+//         return article;
+//     }
+// }
+
+// console.log(JSON.stringify(new ArticleController().create.getJSONSchema(), null, "    "));
