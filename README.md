@@ -742,8 +742,8 @@ const ArticleSchema = createJSONSchema(Article, { // and JSON schema
 
 As we've used decorators to add constrain features to class methods, it would be
 much better if we can annotate the method via plain JSON Schema as an API.
-This's why this package also add a `getJSONSchema()` function to the
-`Function.prototype`, which creates a super schema of the function design.
+This's why this package also added a `getJSONSchema()` function to the
+`Function.prototype`, which retrieves a super schema of the function design.
 
 ```ts
 import { ExtractInstanceType, remarks, param, returns } from "@hyurl/type-guard";
