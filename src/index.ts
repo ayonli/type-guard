@@ -1946,7 +1946,7 @@ declare global {
 
     interface Function {
         /**
-         * Returns the JSON schema representation of the function. If available,
+         * Returns the JSON Schema representation of the function. If available,
          * returns a schema with `type: 'function'` and with `parameters` and
          * `returns` keywords. Otherwise, `null` is returned.
          */
@@ -2743,7 +2743,7 @@ function getJSONSchema(type: any) {
 }
 
 /**
- * Creates JSON schema base on the type definition.
+ * Creates JSON Schema base on the type definition.
  */
 export function createJSONSchema(type: any, options: {
     $id: string;
@@ -3015,7 +3015,7 @@ Function.prototype.getJSONSchema = function (options) {
 
 // type Article = ExtractInstanceType<typeof Article>; // type declaration
 
-// const ArticleSchema = createJSONSchema(Article, { // and JSON schema
+// const ArticleSchema = createJSONSchema(Article, { // and JSON Schema
 //     $id: "https://myapi.com/article.schema.json",
 //     title: "Article",
 //     description: "",
@@ -3030,4 +3030,4 @@ Function.prototype.getJSONSchema = function (options) {
 //     }
 // }
 
-// console.log(JSON.stringify(new ArticleController().create.getJSONSchema(), null, "    "));
+// console.log(JSON.stringify(ArticleController.prototype.create.getJSONSchema(), null, "    "));

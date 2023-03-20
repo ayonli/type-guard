@@ -766,7 +766,7 @@ class ArticleController {
     }
 }
 
-console.log(JSON.stringify(new ArticleController().create.getJSONSchema(), null, "    "));
+console.log(JSON.stringify(ArticleController.prototype.create.getJSONSchema(), null, "    "));
 // will output something like this:
 // {
 //     "$schema": "https://json-schema.org/draft/2020-12/schema",
