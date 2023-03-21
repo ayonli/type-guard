@@ -278,8 +278,22 @@ describe("Number", () => {
         } catch (err) {
             assert.strictEqual(
                 String(err),
-                "RangeError: num must be one of these values: -1, 0, 1"
+                "Error: num must be one of these values: -1, 0, 1"
             );
+        }
+    });
+
+    it("should restrain by a constant number", () => {
+        const num1 = validate(1, 1 as const, "num1");
+        assert.strictEqual(num1, 1);
+
+        try {
+            // @ts-ignore
+            validate(0, 1 as const, "num");
+        } catch (err) {
+            assert.strictEqual(
+                String(err),
+                "Error: num must be 1");
         }
     });
 

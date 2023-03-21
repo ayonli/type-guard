@@ -192,6 +192,8 @@ const Structure = {
     dict1: Dict(String, Number), // equivalent to Record<string, number> in TypeScript
     dict2: Dict(String.enum(["foo", "bar"] as const), String), // Record<"foo" | "bar", number>
     nil: Void, // void type: null or undefined
+    const1: "hello" as const, // string constant
+    const2: 100 as const, // number constant
 };
 ```
 

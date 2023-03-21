@@ -1947,6 +1947,12 @@ Object.defineProperties(Array.prototype, {
             return new OptionalArrayType(this).default(value);
         },
     },
+    remarks: {
+        configurable: true,
+        value: function (this: any[], note: string) { // eslint-disable-line
+            return new ArrayType(this).remarks(note);
+        },
+    },
     deprecated: {
         configurable: true,
         value: function (this: any[], message: string = "") { // eslint-disable-line
@@ -1997,6 +2003,7 @@ declare global {
         optional: OptionalArrayType<T[]>;
         required: ArrayType<T[]>;
         default: (value: T[]) => OptionalArrayType<T[]>;
+        remarks: (note: string) => ArrayType<T[]>;
         deprecated: (message?: string) => ArrayType<T[]>;
         alternatives: (...props: string[]) => ArrayType<T[]>;
         associates: (...props: string[]) => ArrayType<T[]>;

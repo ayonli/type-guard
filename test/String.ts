@@ -261,7 +261,21 @@ describe("String", () => {
         } catch (err) {
             assert.strictEqual(
                 String(err),
-                "RangeError: str must be one of these values: 'hello', 'world'");
+                "Error: str must be one of these values: 'hello', 'world'");
+        }
+    });
+
+    it("should restrain by a constant string", () => {
+        const str1 = validate("hello", "hello" as const, "str1");
+        assert.strictEqual(str1, "hello");
+
+        try {
+            // @ts-ignore
+            validate("hi", "hello" as const, "str");
+        } catch (err) {
+            assert.strictEqual(
+                String(err),
+                "Error: str must be 'hello'");
         }
     });
 

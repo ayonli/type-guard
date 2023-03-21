@@ -219,7 +219,7 @@ describe("BigInt", () => {
         } catch (err) {
             assert.strictEqual(
                 String(err),
-                "RangeError: num must be one of these values: -1, 0, 1"
+                "Error: num must be one of these values: -1, 0, 1"
             );
         }
     });
