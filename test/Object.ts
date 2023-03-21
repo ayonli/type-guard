@@ -120,6 +120,19 @@ describe("Object", () => {
             );
         }
         assert(err3 instanceof Error);
+
+        let err4: any;
+        try {
+            // @ts-ignore
+            validate("hello, world!", { foo: String, bar: Number }, "obj");
+        } catch (err) {
+            err4 = err;
+            assert.strictEqual(
+                String(err),
+                "TypeError: obj is expected to be an object, but a string is given"
+            );
+        }
+        assert(err4 instanceof TypeError);
     });
 
     it("should emit deprecation warnings", () => {
