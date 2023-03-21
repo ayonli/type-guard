@@ -1038,7 +1038,7 @@ export class MixedType extends ValidateableType<object> {
         if (value === null || value === void 0) {
             return value;
         } else if (!(value instanceof Object)) {
-            this.throwTypeError(path, value, "Date");
+            this.throwTypeError(path, value, "object");
         } else {
             return value;
         }
@@ -1155,7 +1155,7 @@ export class CustomType<T> extends ValidateableType<T> {
         : T extends readonly ValidateableType<infer U>[] ? readonly ExtractInstanceType<U>[]
         : T);
 
-    constructor(readonly type: T | (new (...args: any[]) => T)) {
+    constructor(readonly type: T | Constructor<T>) {
         super();
     }
 
@@ -1213,7 +1213,7 @@ export class CustomType<T> extends ValidateableType<T> {
         warnings?: ValidationWarning[];
         removeUnknownProps?: boolean;
     } = null): T | never {
-        value = super.validate(path, value, { ...options, suppress: 2 });
+        value = super.validate(path, value, options);
 
         if (value === null || value === void 0) {
             return value;
@@ -1221,10 +1221,7 @@ export class CustomType<T> extends ValidateableType<T> {
             value = this._guard(value);
         }
 
-        if ([String, Number, BigInt, Boolean, Date, Object, Any, Void].includes(this.type as any)) {
-            // @ts-ignores
-            return validate(value, this.type, path, options) as any;
-        } else if (this.type instanceof Function) {
+        if (this.type instanceof Function) {
             if (value instanceof this.type) {
                 return value;
             } else {
@@ -2156,14 +2153,26 @@ function ensureType(type: any, path = "$", deep = false) {
  * }
  * ```
  */
-// @ts-ignore
+export function as(type: StringConstructor): StringConstructor;
+export function as(type: NumberConstructor): NumberConstructor;
+export function as(type: BigIntConstructor): BigIntConstructor;
+export function as(type: BooleanConstructor): BooleanConstructor;
+export function as(type: DateConstructor): DateConstructor;
+export function as(type: ObjectConstructor): ObjectConstructor;
+export function as<T extends ValidateableType<any>>(type: T): T;
 export function as<T extends readonly any[]>(type: T): TupleType<ExtractInstanceType<T>>;
 export function as<T>(type: T): CustomType<ExtractInstanceType<T>>;
 export function as<T extends any[]>(...types: T): UnionType<ExtractInstanceType<T>[0]>;
-export function as<T>(...types: (T | (new (...args: any[]) => T))[]) {
+export function as<T>(...types: (T | Constructor<T>)[]) {
     if (types.length === 1) {
-        if (Array.isArray(types[0])) {
-            return new TupleType(types[0]);
+        const [type] = types;
+
+        if (Array.isArray(type)) {
+            return new TupleType(type);
+        } else if ([String, Number, BigInt, Boolean, Date, Object].includes(type as any)
+            || (type instanceof ValidateableType)
+        ) {
+            return type;
         } else {
             return new CustomType(types[0]);
         }
@@ -2288,7 +2297,7 @@ export function validate<T>(value: ExtractInstanceType<T>, type: T, variable = "
                         otherProps.every(_prop => isEmptyValue(records[_prop]))
                     ) {
                         const props = [prop, ...otherProps].map(p => `'${p}'`).join(", ");
-                        throw new TypeError(`${path} must contain one of these properties: ${props}`);
+                        throw new Error(`${path} must contain one of these properties: ${props}`);
                     }
                 }
 
@@ -2303,7 +2312,7 @@ export function validate<T>(value: ExtractInstanceType<T>, type: T, variable = "
                                 ? `property '${missing[0]}'`
                                 : `properties ${join(missing.map(p => `'${p}'`))}`;
 
-                            throw new TypeError(
+                            throw new Error(
                                 `${path} must contain ${others} when property '${prop}' is provided`);
                         }
                     }
