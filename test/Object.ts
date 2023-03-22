@@ -19,6 +19,10 @@ describe("Object", () => {
         const obj4 = validate(buf, Object, "obj4");
         assert.strictEqual(obj4, buf);
 
+        const obj = { foo: "hello", bar: "world" };
+        const obj5 = validate(obj, Object, "obj4");
+        assert.strictEqual(obj5, obj);
+
         let err1: any;
         try {
             // @ts-ignore
@@ -52,7 +56,7 @@ describe("Object", () => {
         }, {
             str: String,
             str1: String.optional,
-        }, "obj1");
+        }, "obj");
         assert.deepStrictEqual(obj, { str: "hello, world!" });
 
         // @ts-ignore
@@ -133,35 +137,51 @@ describe("Object", () => {
             );
         }
         assert(err4 instanceof TypeError);
+
+        let err5: any;
+        try {
+            // @ts-ignore
+            validate({ foo: {} }, { foo: String }, "obj");
+        } catch (err) {
+            err5 = err;
+            assert.strictEqual(
+                String(err),
+                "TypeError: obj.foo is expected to be a string, but an object is given"
+            );
+        }
+        assert(err5 instanceof TypeError);
     });
 
-    it("should emit deprecation warnings", () => {
+    it("should emit warnings", () => {
         const warnings: ValidationWarning[] = [];
 
-        // @ts-ignore
         const obj1 = validate({}, Object.deprecated("no longer effect"), "obj1", { warnings });
         assert.deepStrictEqual(obj1, {});
 
-        // @ts-ignore
         const obj2 = validate({ foo: "hello, world!" }, {
             foo: String.optional.deprecated("use 'bar' instead"),
             bar: String.optional,
         }, "obj2", { warnings });
         assert.deepStrictEqual(obj2, { foo: "hello, world!" });
 
-        // @ts-ignore
         const obj3 = validate({ foo: "hello, world!" }, {
             foo: String.optional.deprecated(),
             bar: String.optional,
         }, "obj3", { warnings });
         assert.deepStrictEqual(obj3, { foo: "hello, world!" });
 
-        // @ts-ignore
         const obj4 = validate({ foo: "hello, world!", bar: "hi, world!" }, {
             foo: String.optional.deprecated("use 'bar' instead"),
             bar: String.optional.deprecated(),
         }, "obj4", { warnings });
         assert.deepStrictEqual(obj4, { foo: "hello, world!", bar: "hi, world!" });
+
+        // @ts-ignore
+        const obj5 = validate({ foo: 123, bar: "123" }, {
+            foo: String,
+            bar: Number,
+        }, "obj5", { warnings });
+        assert.deepStrictEqual(obj5, { foo: "123", bar: 123 });
 
         assert.deepStrictEqual(warnings, [
             {
@@ -184,6 +204,14 @@ describe("Object", () => {
                 path: "obj4.bar",
                 message: "obj4.bar is deprecated",
             },
+            {
+                path: "obj5.foo",
+                message: "a number at obj5.foo has been converted to string",
+            },
+            {
+                path: "obj5.bar",
+                message: "a string at obj5.bar has been converted to number",
+            }
         ] as ValidationWarning[]);
     });
 

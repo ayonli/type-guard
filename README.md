@@ -116,7 +116,10 @@ various properties and methods for type constrains.
 - `Boolean`
 - `Date`
 - `Object` for mixed value
+- `Array` for an array of any type of elements
 - `{}` and `[]` literals are used to define deep structures
+  - Specifically, `[]` with no elements serves as the same as `Array`
+
 
 ### Additional Types
 

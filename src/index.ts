@@ -86,22 +86,15 @@ export abstract class ValidateableType<T> {
     /** @internal */
     validate(path: string, value: any, options: {
         warnings?: ValidationWarning[];
-        suppress?: boolean | 0 | 1 | 2;
+        suppress?: boolean;
     } = null): T | never {
         if (value === null || value === void 0 || Object.is(value, NaN)) {
-            const message = `${path} is required, but no value is provided`;
-
             if (this._default !== void 0) {
                 return this._default;
             } else if (this._optional) {
                 return Object.is(value, NaN) ? null : value;
             } else if (!options?.suppress) {
-                throw new Error(message);
-            } else if (options?.suppress !== 2 &&
-                !options.warnings.some(item => item.path === path && item.message === message)
-            ) {
-                options.warnings.push({ path, message });
-                return Object.is(value, NaN) ? null : value;
+                throw new Error(`${path} is required, but no value is provided`);
             }
         } else if (!isVoid(this._deprecated) && options?.warnings) {
             const message = this._deprecated
@@ -1326,7 +1319,7 @@ export class UnionType<T> extends ValidateableType<T> {
         warnings?: ValidationWarning[];
         removeUnknownProps?: boolean;
     } = null): T | never {
-        value = super.validate(path, value, { ...options, suppress: 2 });
+        value = super.validate(path, value, options);
         let _value: T;
 
         if (value === null || value === void 0) {
@@ -1598,10 +1591,7 @@ export class ArrayType<T extends any[]> extends CustomType<T> {
         warnings?: ValidationWarning[];
         removeUnknownProps?: boolean;
     } = null): T | never {
-        value = ValidateableType.prototype.validate.call(this, path, value, {
-            ...options,
-            suppress: 2
-        });
+        value = ValidateableType.prototype.validate.call(this, path, value, options);
         let _value: T;
         let err: Error;
 
@@ -1635,11 +1625,11 @@ export class ArrayType<T extends any[]> extends CustomType<T> {
             }
         }
 
-        return validate(_value as any, this.type, path, options) as T;
+        return validate(_value as any, this.type ?? [], path, options) as T;
     }
 
     toJSONSchema(): JSONSchema {
-        const type = this.type[0];
+        const type = this.type ? (this.type[0] ?? Any) : Any;
         const valueSchema = getJSONSchema(type);
         const schema: JSONSchema = {
             type: "array",
@@ -1705,10 +1695,7 @@ export class TupleType<T extends readonly any[]> extends CustomType<T> {
         warnings?: ValidationWarning[];
         removeUnknownProps?: boolean;
     } = null): T | never {
-        value = ValidateableType.prototype.validate.call(this, path, value, {
-            ...options,
-            suppress: 2
-        });
+        value = ValidateableType.prototype.validate.call(this, path, value, options);
         let _value: T;
 
         if (value === null || value === void 0) {
@@ -1823,6 +1810,7 @@ export type ExtractInstanceType<T> = T extends OptionalStringEnum<infer U> ? (U 
     : T extends (BooleanConstructor | typeof BooleanType | BooleanType | OptionalBooleanType) ? boolean
     : T extends (DateConstructor | typeof DateType | DateType | OptionalDateType) ? Date
     : T extends (ObjectConstructor | typeof MixedType | MixedType | OptionalMixedType) ? object
+    : T extends (ArrayConstructor | typeof ArrayType) ? any[]
     : T extends (typeof AnyType | AnyType | OptionalAnyType) ? any
     : T extends (typeof VoidType | VoidType) ? void
     : T extends (infer U)[] ? ExtractInstanceType<U>[]
@@ -1886,7 +1874,7 @@ export type EnsureRequiredProperties<T extends Record<string, unknown>> = {
     : T[K]
 };
 
-function augmentStaticMethods(ctor: new (...args: any[]) => any, type: new () => any) {
+function augmentStaticMethods(ctor: Constructor<any>, type: Constructor<any>) {
     const ins = new type() as ValidateableType<any>;
     ctor["optional"] = ins.optional;
     ctor["required"] = ins.required;
@@ -1915,6 +1903,7 @@ augmentStaticMethods(BigInt as any, BigIntType);
 augmentStaticMethods(Boolean, BooleanType);
 augmentStaticMethods(Date, DateType);
 augmentStaticMethods(Object, MixedType);
+augmentStaticMethods(Array, ArrayType);
 
 export const Any = new AnyType();
 export const Void = new VoidType();
@@ -1995,6 +1984,7 @@ declare global {
     interface BooleanConstructor extends BooleanType { } // eslint-disable-line
     interface DateConstructor extends DateType { } // eslint-disable-line
     interface ObjectConstructor extends MixedType { } // eslint-disable-line
+    interface ArrayConstructor extends ArrayType<any[]> { } // eslint-disable-line
 
     interface Array<T> {
         optional: OptionalArrayType<T[]>;
@@ -2097,6 +2087,8 @@ function ensureType(type: any, path = "$", deep = false) {
             return new DateType();
         } else if (Object.is(type, Object) || Object.is(type, MixedType)) {
             return new MixedType();
+        } else if (Object.is(type, Array) || Object.is(type, ArrayType)) {
+            return new ArrayType([]);
         } else if (Object.is(type, AnyType)) {
             return new AnyType();
         } else if (Object.is(type, VoidType)) {
@@ -2159,6 +2151,7 @@ export function as(type: BigIntConstructor): BigIntConstructor;
 export function as(type: BooleanConstructor): BooleanConstructor;
 export function as(type: DateConstructor): DateConstructor;
 export function as(type: ObjectConstructor): ObjectConstructor;
+export function as(type: ArrayConstructor): ArrayConstructor;
 export function as<T extends ValidateableType<any>>(type: T): T;
 export function as<T extends readonly any[]>(type: T): TupleType<ExtractInstanceType<T>>;
 export function as<T>(type: T): CustomType<ExtractInstanceType<T>>;
@@ -2169,7 +2162,7 @@ export function as<T>(...types: (T | Constructor<T>)[]) {
 
         if (Array.isArray(type)) {
             return new TupleType(type);
-        } else if ([String, Number, BigInt, Boolean, Date, Object].includes(type as any)
+        } else if ([String, Number, BigInt, Boolean, Date, Object, Array].includes(type as any)
             || (type instanceof ValidateableType)
         ) {
             return type;

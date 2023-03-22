@@ -1,47 +1,7 @@
 import "@hyurl/utils/types";
 import * as assert from "node:assert";
 import { describe, it } from "mocha";
-import { Any, Dict, ExtractInstanceType, validate, Void, wrap } from "..";
-
-const Type = {
-    str: String.optional.enum(["A", "B", "C"] as const),
-};
-// @ts-ignore
-type Type = ExtractInstanceType<typeof Type>;
-
-const value: Type = {
-    str: "A",
-};
-
-console.log(validate(value, Type));
-
-
-// const _StringEnum = String.enum(["A", "B", "C"] as const);
-// type _StringEnum = ExtractInstanceType<typeof _StringEnum>;
-
-// function sum(num1: number, num2: number, num3?: number) {
-//     const warnings: ValidationWarning[] = [];
-//     num1 = validate(num1, Number, "num1", { warnings });
-//     num2 = validate(num2, Number, "num2", { warnings });
-//     num3 = validate(num3, Number.optional, "num3", { warnings });
-// }
-
-const wrappedSum = wrap(
-    { num1: Number, num2: Number, num3: Number.optional },
-    Number
-)(({ num1, num2, num3 }) => {
-    return num1 + num2 + (num3 || 0);
-});
-
-console.log(wrappedSum({ num1: 100, num2: 200, num3: 0 }));
-
-// function getDefinedValue(target: any, prop: string) {
-//     const desc = Object.getOwnPropertyDescriptor(target, prop);
-
-//     console.log(desc);
-
-//     return desc?.value || desc?.get || null;
-// }
+import { Any, Dict, Void } from "..";
 
 describe("Core Features", () => {
     it("should add features to the String constructor", () => {
@@ -57,6 +17,7 @@ describe("Core Features", () => {
         assert.strictEqual(typeof String.default, "function");
         assert.strictEqual(String(String.default("")), "[object OptionalStringType]");
 
+        assert.strictEqual(typeof String.remarks, "function");
         assert.strictEqual(typeof String.deprecated, "function");
         assert.strictEqual(typeof String.alternatives, "function");
         assert.strictEqual(typeof String.associates, "function");
@@ -85,6 +46,7 @@ describe("Core Features", () => {
         assert.strictEqual(Number.required, Number.required);
         assert(Number.optional.required !== Number.required);
 
+        assert.strictEqual(typeof Number.remarks, "function");
         assert.strictEqual(typeof Number.deprecated, "function");
         assert.strictEqual(typeof Number.alternatives, "function");
         assert.strictEqual(typeof Number.associates, "function");
@@ -107,6 +69,7 @@ describe("Core Features", () => {
         assert.strictEqual(BigInt.required, BigInt.required);
         assert(BigInt.optional.required !== BigInt.required);
 
+        assert.strictEqual(typeof BigInt.remarks, "function");
         assert.strictEqual(typeof BigInt.deprecated, "function");
         assert.strictEqual(typeof BigInt.alternatives, "function");
         assert.strictEqual(typeof BigInt.associates, "function");
@@ -129,6 +92,7 @@ describe("Core Features", () => {
         assert.strictEqual(Boolean.required, Boolean.required);
         assert(Boolean.optional.required !== Boolean.required);
 
+        assert.strictEqual(typeof Boolean.remarks, "function");
         assert.strictEqual(typeof Boolean.deprecated, "function");
         assert.strictEqual(typeof Boolean.alternatives, "function");
         assert.strictEqual(typeof Boolean.associates, "function");
@@ -144,6 +108,7 @@ describe("Core Features", () => {
         assert.strictEqual(Date.required, Date.required);
         assert(Date.optional.required !== Date.required);
 
+        assert.strictEqual(typeof Date.remarks, "function");
         assert.strictEqual(typeof Date.deprecated, "function");
         assert.strictEqual(typeof Date.alternatives, "function");
         assert.strictEqual(typeof Date.associates, "function");
@@ -159,17 +124,34 @@ describe("Core Features", () => {
         assert.strictEqual(Object.required, Object.required);
         assert(Object.optional.required !== Object.required);
 
+        assert.strictEqual(typeof Object.remarks, "function");
         assert.strictEqual(typeof Object.deprecated, "function");
         assert.strictEqual(typeof Object.alternatives, "function");
         assert.strictEqual(typeof Object.associates, "function");
     });
 
-    it("should add features to the Array prototype", () => {
+    it("should add features to the Array constructor and Array prototype", () => {
+        assert.strictEqual(typeof Array.optional, "object");
+        assert.strictEqual(String(Array.optional), "[object OptionalArrayType]");
+        assert.strictEqual(Array.optional, Array.optional);
+
+        assert.strictEqual(typeof Array.optional, "object");
+        assert.strictEqual(String(Array.required), "[object ArrayType]");
+        assert.strictEqual(Array.required, Array.required);
+        assert(Array.optional.required !== Array.required);
+
+        assert.strictEqual(typeof Array.remarks, "function");
+        assert.strictEqual(typeof Array.deprecated, "function");
+        assert.strictEqual(typeof Array.alternatives, "function");
+        assert.strictEqual(typeof Array.associates, "function");
+
         assert.strictEqual(typeof Array.prototype.optional, "object");
         assert.strictEqual(String(Array.prototype.optional), "[object OptionalArrayType]");
 
         assert.strictEqual(typeof Array.prototype.required, "object");
         assert.strictEqual(String(Array.prototype.required), "[object ArrayType]");
+
+        assert.strictEqual(typeof Array.prototype.remarks, "function");
         assert.strictEqual(typeof Array.prototype.deprecated, "function");
         assert.strictEqual(typeof Array.prototype.alternatives, "function");
         assert.strictEqual(typeof Array.prototype.associates, "function");
