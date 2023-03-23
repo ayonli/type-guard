@@ -39,7 +39,7 @@ describe("String", () => {
         } catch (err) {
             assert.strictEqual(
                 String(err),
-                "Error: str is required, but no value is provided"
+                "Error: str is required, but no value is given"
             );
         }
 
@@ -49,7 +49,7 @@ describe("String", () => {
         } catch (err) {
             assert.strictEqual(
                 String(err),
-                "Error: str is required, but no value is provided"
+                "Error: str is required, but no value is given"
             );
         }
 

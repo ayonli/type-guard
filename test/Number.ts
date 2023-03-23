@@ -39,7 +39,7 @@ describe("Number", () => {
         } catch (err) {
             assert.strictEqual(
                 String(err),
-                "Error: num is required, but no value is provided"
+                "Error: num is required, but no value is given"
             );
         }
 
@@ -49,7 +49,7 @@ describe("Number", () => {
         } catch (err) {
             assert.strictEqual(
                 String(err),
-                "Error: num is required, but no value is provided"
+                "Error: num is required, but no value is given"
             );
         }
 
@@ -58,7 +58,7 @@ describe("Number", () => {
         } catch (err) {
             assert.strictEqual(
                 String(err),
-                "Error: num is required, but no value is provided"
+                "Error: num is required, but no value is given"
             );
         }
 
@@ -67,7 +67,7 @@ describe("Number", () => {
         } catch (err) {
             assert.strictEqual(
                 String(err),
-                "Error: num is required, but no value is provided"
+                "Error: num is required, but no value is given"
             );
         }
     });

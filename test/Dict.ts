@@ -33,7 +33,7 @@ describe("Dict", () => {
             err1 = err;
             assert.strictEqual(
                 String(err),
-                "Error: dict1 is required, but no value is provided"
+                "Error: dict1 is required, but no value is given"
             );
         }
         assert(err1 instanceof Error);

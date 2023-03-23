@@ -25,7 +25,7 @@ describe("as()", () => {
                 err1 = err;
                 assert.strictEqual(
                     String(err),
-                    "Error: buf4 is required, but no value is provided"
+                    "Error: buf4 is required, but no value is given"
                 );
             }
             assert(err1 instanceof Error);
@@ -57,7 +57,7 @@ describe("as()", () => {
                 err1 = err;
                 assert.strictEqual(
                     String(err),
-                    "Error: buf2 is required, but no value is provided"
+                    "Error: buf2 is required, but no value is given"
                 );
             }
             assert(err1 instanceof Error);
@@ -135,7 +135,7 @@ describe("as()", () => {
                 err1 = err;
                 assert.strictEqual(
                     String(err),
-                    "Error: value is required, but no value is provided"
+                    "Error: value is required, but no value is given"
                 );
             }
             assert(err1 instanceof Error);
@@ -175,7 +175,7 @@ describe("as()", () => {
                 err1 = err;
                 assert.strictEqual(
                     String(err),
-                    "Error: value is required, but no value is provided"
+                    "Error: value is required, but no value is given"
                 );
             }
             assert(err1 instanceof Error);

@@ -94,7 +94,7 @@ export abstract class ValidateableType<T> {
             } else if (this._optional) {
                 return Object.is(value, NaN) ? null : value;
             } else if (!options?.suppress) {
-                throw new Error(`${path} is required, but no value is provided`);
+                throw new Error(`${path} is required, but no value is given`);
             }
         } else if (!isVoid(this._deprecated) && options?.warnings) {
             const message = this._deprecated

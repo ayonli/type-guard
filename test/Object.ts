@@ -31,7 +31,7 @@ describe("Object", () => {
             err1 = err;
             assert.strictEqual(
                 String(err),
-                "Error: obj is required, but no value is provided"
+                "Error: obj is required, but no value is given"
             );
         }
         assert(err1 instanceof Error);
@@ -87,7 +87,7 @@ describe("Object", () => {
             err1 = err;
             assert.strictEqual(
                 String(err),
-                "Error: obj.str is required, but no value is provided"
+                "Error: obj.str is required, but no value is given"
             );
         }
         assert(err1 instanceof Error);
@@ -100,7 +100,7 @@ describe("Object", () => {
             err2 = err;
             assert.strictEqual(
                 String(err),
-                "Error: obj is required, but no value is provided"
+                "Error: obj is required, but no value is given"
             );
         }
         assert(err2 instanceof Error);
@@ -120,7 +120,7 @@ describe("Object", () => {
             err3 = err;
             assert.strictEqual(
                 String(err),
-                "Error: obj.foo.foo1 is required, but no value is provided"
+                "Error: obj.foo.foo1 is required, but no value is given"
             );
         }
         assert(err3 instanceof Error);

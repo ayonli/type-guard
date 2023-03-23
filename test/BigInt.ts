@@ -39,7 +39,7 @@ describe("BigInt", () => {
         } catch (err) {
             assert.strictEqual(
                 String(err),
-                "Error: num is required, but no value is provided"
+                "Error: num is required, but no value is given"
             );
         }
 
@@ -49,7 +49,7 @@ describe("BigInt", () => {
         } catch (err) {
             assert.strictEqual(
                 String(err),
-                "Error: num is required, but no value is provided"
+                "Error: num is required, but no value is given"
             );
         }
     });

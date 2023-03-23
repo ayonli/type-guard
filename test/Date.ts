@@ -38,7 +38,7 @@ describe("Date", () => {
         } catch (err) {
             assert.strictEqual(
                 String(err),
-                "Error: date is required, but no value is provided"
+                "Error: date is required, but no value is given"
             );
         }
 
@@ -48,7 +48,7 @@ describe("Date", () => {
         } catch (err) {
             assert.strictEqual(
                 String(err),
-                "Error: date is required, but no value is provided"
+                "Error: date is required, but no value is given"
             );
         }
     });

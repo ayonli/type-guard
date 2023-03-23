@@ -38,7 +38,7 @@ describe("Boolean", () => {
         } catch (err) {
             assert.strictEqual(
                 String(err),
-                "Error: bool is required, but no value is provided"
+                "Error: bool is required, but no value is given"
             );
         }
 
@@ -48,7 +48,7 @@ describe("Boolean", () => {
         } catch (err) {
             assert.strictEqual(
                 String(err),
-                "Error: bool is required, but no value is provided"
+                "Error: bool is required, but no value is given"
             );
         }
     });

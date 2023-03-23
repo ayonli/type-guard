@@ -27,7 +27,7 @@ describe("Object", () => {
             err1 = err;
             assert.strictEqual(
                 String(err),
-                "Error: arr is required, but no value is provided"
+                "Error: arr is required, but no value is given"
             );
         }
         assert(err1 instanceof Error);
