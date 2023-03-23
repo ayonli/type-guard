@@ -57,7 +57,7 @@ export abstract class ValidateableType<T> {
     /**
      * Sets the current property and the other properties to be alternatives,
      * and only one of them are required. This function must be used along with
-     * `optional` directive and only have to be set on one of the alternative
+     * `optional` keyword and only have to be set on one of the alternative
      * properties.
      */
     alternatives(...props: string[]): this;
@@ -1996,6 +1996,7 @@ declare global {
         associates: (...props: string[]) => ArrayType<T[]>;
         minItems: (count: number) => ArrayType<T[]>;
         maxItems: (count: number) => ArrayType<T[]>;
+        uniqueItems: ArrayType<T[]>;
     }
 
     interface Function {
@@ -2520,7 +2521,7 @@ const wrapMethod = (target: any, prop: string | symbol, desc: TypedPropertyDescr
  *         // ...
  *     }
  * 
- *     \@param(Void) // specifically, \@param(Void) will restrain the method to take no argument.
+ *     \@param(Void) // specifically, \@param(Void) will constrain the method to take no argument.
  *     zeroArgFn() {
  *         // ...
  *     }
@@ -2560,7 +2561,7 @@ export function param<T>(arg0: T | string, arg1?: string | T, remarks: string = 
  *         // ...
  *     }
  * 
- *     \@returns(Void) // specifically, \@returns(Void) will restrain the method to return nothing.
+ *     \@returns(Void) // specifically, \@returns(Void) will constrain the method to return nothing.
  *     noReturnFn() {
  *         // ...
  *     }

@@ -144,6 +144,9 @@ describe("Core Features", () => {
         assert.strictEqual(typeof Array.deprecated, "function");
         assert.strictEqual(typeof Array.alternatives, "function");
         assert.strictEqual(typeof Array.associates, "function");
+        assert.strictEqual(typeof Array.minItems, "function");
+        assert.strictEqual(typeof Array.maxItems, "function");
+        assert.strictEqual(String(Array.uniqueItems), "[object ArrayType]");
 
         assert.strictEqual(typeof Array.prototype.optional, "object");
         assert.strictEqual(String(Array.prototype.optional), "[object OptionalArrayType]");
@@ -155,6 +158,10 @@ describe("Core Features", () => {
         assert.strictEqual(typeof Array.prototype.deprecated, "function");
         assert.strictEqual(typeof Array.prototype.alternatives, "function");
         assert.strictEqual(typeof Array.prototype.associates, "function");
+        assert.strictEqual(typeof Array.prototype.minItems, "function");
+        assert.strictEqual(typeof Array.prototype.maxItems, "function");
+        assert.strictEqual(String(Array.prototype.uniqueItems), "[object ArrayType]");
+
     });
 
     it("should import Dict type", () => {

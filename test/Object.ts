@@ -215,7 +215,7 @@ describe("Object", () => {
         ] as ValidationWarning[]);
     });
 
-    it("should validate against the alternative directive", () => {
+    it("should validate object literals against the alternative keyword", () => {
         const obj1 = validate({ foo: "hello, world!" }, {
             foo: String.optional.alternatives("bar"),
             bar: String.optional,
@@ -245,7 +245,7 @@ describe("Object", () => {
         assert(err1 instanceof Error);
     });
 
-    it("should validate against the associative directive", () => {
+    it("should validate object literals against the associative keyword", () => {
         const obj1 = validate({}, {
             foo: String.optional.associates("foo1"),
             bar: String.optional,

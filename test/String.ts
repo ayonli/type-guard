@@ -224,7 +224,7 @@ describe("String", () => {
         assert.strictEqual(str1, "hello, world!");
     });
 
-    it("should restrain the length of the string", () => {
+    it("should constrain the length of the string", () => {
         const str1 = validate("hello, world!", String.minLength(10), "str1");
         assert.strictEqual(str1, "hello, world!");
 
@@ -251,7 +251,7 @@ describe("String", () => {
         assert.strictEqual(str3, "hello, world!");
     });
 
-    it("should restrain the options of the text value", () => {
+    it("should constrain the options of the text value", () => {
         const str1 = validate("hello", String.enum(["hello", "world"] as const), "str1");
         assert.strictEqual(str1, "hello");
 
@@ -265,7 +265,7 @@ describe("String", () => {
         }
     });
 
-    it("should restrain by a constant string", () => {
+    it("should constrain by a constant string", () => {
         const str1 = validate("hello", "hello" as const, "str1");
         assert.strictEqual(str1, "hello");
 

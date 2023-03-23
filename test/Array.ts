@@ -70,6 +70,10 @@ describe("Object", () => {
         const arr6 = validate([], [String], "arr6");
         assert.deepStrictEqual(arr6, []);
 
+        const _arr7 = ["hello", "world", 1, 2, true];
+        const arr7 = validate(_arr7, [] as any[], "arr4");
+        assert.deepStrictEqual(arr7, _arr7);
+
         let err1: any;
         try {
             // @ts-ignore
@@ -137,5 +141,75 @@ describe("Object", () => {
                 message: "a string at arr3[0] has been converted to number",
             }
         ] as ValidationWarning[]);
+    });
+
+    it("should validate arrays with length limits", () => {
+        const arr0 = validate(["hello", "world"], [String].minItems(1).maxItems(2), "arr0");
+        assert.deepStrictEqual(arr0, ["hello", "world"]);
+
+        let err1: any;
+        try {
+            validate([], Array.minItems(1), "arr1");
+        } catch (err) {
+            err1 = err;
+            assert.strictEqual(
+                String(err),
+                "Error: arr1 must contain at least 1 item"
+            );
+        }
+        assert(err1 instanceof Error);
+
+        let err2: any;
+        try {
+            validate([], [].minItems(2), "arr2");
+        } catch (err) {
+            err2 = err;
+            assert.strictEqual(
+                String(err),
+                "Error: arr2 must contain at least 2 items"
+            );
+        }
+        assert(err2 instanceof Error);
+
+        let err3: any;
+        try {
+            validate(["hello", "world", 1, 2], Array.maxItems(1), "arr3");
+        } catch (err) {
+            err3 = err;
+            assert.strictEqual(
+                String(err),
+                "Error: arr3 must contain no more than 1 item"
+            );
+        }
+        assert(err3 instanceof Error);
+
+        let err4: any;
+        try {
+            validate(["hello", "world", 1, 2], [String, Number].maxItems(2), "arr3");
+        } catch (err) {
+            err4 = err;
+            assert.strictEqual(
+                String(err),
+                "Error: arr3 must contain no more than 2 items"
+            );
+        }
+        assert(err4 instanceof Error);
+    });
+
+    it("should validate the arrays with unique constraint", () => {
+        const arr = validate(["hello", "world"], [String].uniqueItems, "arr");
+        assert.deepStrictEqual(arr, ["hello", "world"]);
+
+        let err1: any;
+        try {
+            validate(["hello", "hello"], [String].uniqueItems, "arr1");
+        } catch (err) {
+            err1 = err;
+            assert.strictEqual(
+                String(err),
+                "Error: arr1 must contain unique items"
+            );
+        }
+        assert(err1 instanceof Error);
     });
 });

@@ -225,7 +225,7 @@ describe("Number", () => {
         }
     });
 
-    it("should restrain the value to be integer", () => {
+    it("should constrain the value to be integer", () => {
         const num1 = validate(123, Number.integer, "num1");
         assert.strictEqual(num1, 123);
 
@@ -239,7 +239,7 @@ describe("Number", () => {
         }
     });
 
-    it("should restrain the range of the number", () => {
+    it("should constrain the range of the number", () => {
         const num1 = validate(10, Number.min(1), "num1");
         assert.strictEqual(num1, 10);
 
@@ -268,7 +268,7 @@ describe("Number", () => {
         assert.strictEqual(num3, 10);
     });
 
-    it("should restrain the options of the number", () => {
+    it("should constrain the options of the number", () => {
         const num1 = validate(1, Number.enum([-1, 0, 1] as const), "num1");
         assert.strictEqual(num1, 1);
 
@@ -283,7 +283,7 @@ describe("Number", () => {
         }
     });
 
-    it("should restrain by a constant number", () => {
+    it("should constrain by a constant number", () => {
         const num1 = validate(1, 1 as const, "num1");
         assert.strictEqual(num1, 1);
 

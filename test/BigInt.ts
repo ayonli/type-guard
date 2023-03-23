@@ -179,7 +179,7 @@ describe("BigInt", () => {
         }
     });
 
-    it("should restrain the range of the bigint", () => {
+    it("should constrain the range of the bigint", () => {
         const num1 = validate(BigInt(10), BigInt.min(BigInt(1)), "num1");
         assert.strictEqual(num1, BigInt(10));
 
@@ -208,7 +208,7 @@ describe("BigInt", () => {
         assert.strictEqual(num3, BigInt(10));
     });
 
-    it("should restrain the options of the bigint", () => {
+    it("should constrain the options of the bigint", () => {
         const enums = BigInt.enum([BigInt(-1), BigInt(0), BigInt(1)] as const);
         const num1 = validate(BigInt(1), enums, "num1");
         assert.strictEqual(num1, BigInt(1));

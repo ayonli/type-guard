@@ -101,13 +101,10 @@ compatible.
 
 ## Extends JavaScript Basic Type Constructors
 
-Type-Guard does not introduce new keywords or schema for type checking, instead,
-it extends the ability of general type constructors like `String`, `Number`,
-`Boolean`, etc. for type constrains. All schema-like definitions are just plain
-objects, which can be reused any where, and even *inherited* (with spread syntax).
-
-By importing Type-Guard, the program will extends these type constructors with
-various properties and methods for type constrains.
+Type-Guard adds a set of keywords to the general type constructors like
+`String`, `Number`, `Boolean`, etc. for type constraints, and all schema-like
+definitions are plain objects, which can be reused any where, and even
+*inherited* (with spread syntax).
 
 ### Core Types
 
@@ -127,10 +124,10 @@ These types can be imported from this package:
 
 - `Dict(Key, Value)` the value is of `Record<K, V>`
 - `Any` the value can be anything
-- `Void` void constrains are mainly for functions that takes no argument or
+- `Void` void constraints are mainly for functions that takes no argument or
     returns nothing. For example:
-    - `@param(Void)` will restrain the method to take no argument.
-    - `@returns(Void)` will restrain the method to return nothing.
+    - `@param(Void)` will constrain the method to take no argument.
+    - `@returns(Void)` will constrain the method to return nothing.
 
 And these abstract types can be created via the wrapper function `as()`:
 
@@ -152,13 +149,13 @@ And these abstract types can be created via the wrapper function `as()`:
     as deprecated and provide a message.
 - `alternatives(...props: string[])` Sets the current property and the other
     properties to be alternatives, and only one of them are required. This
-    function must be used along with `optional` directive and only have to be
+    function must be used along with `optional` keyword and only have to be
     set on one of the alternative properties.
 - `associates(...props: string[])` Sets the current property to be associated
     with other properties, if this property is set, all others must be provided
     as well.
 
-*All this directives are chainable, we can use several of them to form a*
+*All these keywords are chainable, we can use several of them to form a*
 *specific constrains.*
 
 ```ts
@@ -200,10 +197,10 @@ const Structure = {
 };
 ```
 
-*Each referencing of the directives will create a new constrain, so they can*
+*Each referencing of the keywords will create a new constraint, so they can*
 *reused without worrying about context pollution.*
 
-In the above example, `Str2.required` will create a new string constrain and
+In the above example, `Str2.required` will create a new string constraint and
 leave the `Str2` untouched.
 
 ## String Specials
@@ -356,7 +353,7 @@ TypeScript or with Babel.
     NOTE: the order of using `@param()` must consist with order of which the
     parameter is present.
 
-    Specifically, `@param(Void)` will restrain the method to take no argument.
+    Specifically, `@param(Void)` will constrain the method to take no argument.
 - `@returns(type: any, remarks?: string)` A decorator that restrains the
     return value of the method.
     - `type` The type of the return value, can be a class, a type constructor
@@ -367,7 +364,7 @@ TypeScript or with Babel.
     NOTE: if the method returns a Promise, this function restrains the resolved
     value instead.
 
-    Specifically, `@returns(Void)` will restrain the method to return nothing.
+    Specifically, `@returns(Void)` will constrain the method to return nothing.
 
 There are also other non-frequently used decorators:
 
@@ -745,7 +742,7 @@ const ArticleSchema = createJSONSchema(Article, { // and JSON schema
 
 ### JSON Schema for Functions
 
-As we've used decorators to add constrain features to class methods, it would be
+As we've used decorators to add constraint features to class methods, it would be
 much better if we can annotate the method via plain JSON Schema as an API.
 This's why this package also added a `getJSONSchema()` function to the
 `Function.prototype`, which retrieves a super schema of the function design.
