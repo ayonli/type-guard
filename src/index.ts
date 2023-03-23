@@ -1322,8 +1322,14 @@ export class UnionType<T> extends ValidateableType<T> {
         warnings?: ValidationWarning[];
         removeUnknownProps?: boolean;
     } = null): T | never {
-        if (!this.types.some(type => type instanceof VoidType)) {
+        try {
             value = super.validate(path, value, options);
+        } catch (err) {
+            if (!String(err).includes("required") ||
+                !this.types.some(type => type instanceof VoidType)
+            ) {
+                throw err;
+            }
         }
 
         let _value: T;

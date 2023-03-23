@@ -1,6 +1,6 @@
 import * as assert from "node:assert";
 import { describe, it } from "mocha";
-import { as, validate, ValidationWarning } from "..";
+import { as, validate, ValidationWarning, Void } from "..";
 
 describe("as()", () => {
     describe("CustomType", () => {
@@ -103,6 +103,86 @@ describe("as()", () => {
                 {
                     path: "buf1",
                     message: `a string has been converted to Buffer at buf1`,
+                }
+            ] as ValidationWarning[]);
+        });
+    });
+
+    describe("UnionType", () => {
+        it("should validate union types with as() function", () => {
+            const value1 = validate("hello, world!", as(String, Number, Boolean), "str");
+            assert.strictEqual(value1, "hello, world!");
+
+            const value2 = validate(123, as(String, Number, Boolean), "value2");
+            assert.strictEqual(value2, 123);
+
+            const value3 = validate(true, as(String, Number, Boolean), "value3");
+            assert.strictEqual(value3, true);
+
+            const date = new Date();
+            const value4 = validate(date, as(String, Number, Boolean, Date), "value3");
+            assert.strictEqual(value4, date);
+
+            // @ts-ignore
+            const value5 = validate(null, as(String, Number).optional, "value5");
+            assert.strictEqual(value5, null);
+
+            // @ts-ignore
+            const value6 = validate(null, as(String, Number).default("hello, world!"), "value6");
+            assert.strictEqual(value6, "hello, world!");
+
+            let err1: any;
+            try {
+                // @ts-ignore
+                validate(null, as(String, Number), "value");
+            } catch (err) {
+                err1 = err;
+                assert.strictEqual(
+                    String(err),
+                    "Error: value is required, but no value is provided"
+                );
+            }
+            assert(err1 instanceof Error);
+        });
+
+        it("should validate null against union types with Void", () => {
+            const nil1 = validate(void 0, as(String, Number, Void), "nill");
+            assert.strictEqual(nil1, void 0);
+
+            // @ts-ignore
+            const nil2 = validate(null, as(String, Number, Void), "nill");
+            assert.strictEqual(nil2, null);
+        });
+
+        it("should validate union types with a custom guard function", () => {
+            const warnings: ValidationWarning[] = [];
+
+            // @ts-ignore
+            const value1 = validate(Date.now(), as(String, Date).guard((data, path, warnings) => {
+                if (data instanceof Date || typeof data === "string") {
+                    return data;
+                } else if (typeof data === "number") {
+                    warnings.push({
+                        path,
+                        message: `a number has been converted to Date at ${path}`,
+                    });
+
+                    return new Date(data);
+                } else {
+                    warnings.push({
+                        path,
+                        message: `a ${typeof data} has been converted to string at ${path}`,
+                    });
+
+                    return String(data);
+                }
+            }), "value1", { warnings });
+            assert(value1 instanceof Date);
+
+            assert.deepStrictEqual(warnings, [
+                {
+                    path: "value1",
+                    message: `a number has been converted to Date at value1`,
                 }
             ] as ValidationWarning[]);
         });
