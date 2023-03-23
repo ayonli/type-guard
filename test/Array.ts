@@ -216,4 +216,30 @@ describe("Object", () => {
         }
         assert(err1 instanceof Error);
     });
+
+    it("should validate arrays with a custom guard function", () => {
+        const warnings: ValidationWarning[] = [];
+
+        // @ts-ignore
+        const arr1 = validate("hello,world", [String].guard((data, path, warnings) => {
+            const arr = Array.isArray(data) ? data : String(data).split(",");
+
+            if (arr !== data) {
+                warnings.push({
+                    path,
+                    message: `a ${typeof data} has been converted to Array at ${path}`,
+                });
+            }
+
+            return arr;
+        }), "arr1", { warnings });
+        assert.deepStrictEqual(arr1, ["hello", "world"]);
+
+        assert.deepStrictEqual(warnings, [
+            {
+                path: "arr1",
+                message: `a string has been converted to Array at arr1`,
+            }
+        ] as ValidationWarning[]);
+    });
 });

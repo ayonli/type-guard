@@ -144,6 +144,7 @@ describe("Core Features", () => {
         assert.strictEqual(typeof Array.deprecated, "function");
         assert.strictEqual(typeof Array.alternatives, "function");
         assert.strictEqual(typeof Array.associates, "function");
+        assert.strictEqual(typeof Array.guard, "function");
         assert.strictEqual(typeof Array.minItems, "function");
         assert.strictEqual(typeof Array.maxItems, "function");
         assert.strictEqual(String(Array.uniqueItems), "[object ArrayType]");
@@ -158,6 +159,7 @@ describe("Core Features", () => {
         assert.strictEqual(typeof Array.prototype.deprecated, "function");
         assert.strictEqual(typeof Array.prototype.alternatives, "function");
         assert.strictEqual(typeof Array.prototype.associates, "function");
+        assert.strictEqual(typeof Array.prototype.guard, "function");
         assert.strictEqual(typeof Array.prototype.minItems, "function");
         assert.strictEqual(typeof Array.prototype.maxItems, "function");
         assert.strictEqual(String(Array.prototype.uniqueItems), "[object ArrayType]");

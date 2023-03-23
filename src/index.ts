@@ -1143,7 +1143,8 @@ export class VoidType extends ValidateableType<void> {
 }
 
 export class CustomType<T> extends ValidateableType<T> {
-    protected _guard: (data: any) => (T extends ValidateableType<infer U>
+    protected _guard: (data: any, path: string, warnings: ValidationWarning[]) => (
+        T extends ValidateableType<infer U>
         ? ExtractInstanceType<U>
         : T extends ValidateableType<infer U>[] ? ExtractInstanceType<U>[]
         : T extends readonly ValidateableType<infer U>[] ? readonly ExtractInstanceType<U>[]
@@ -1190,7 +1191,8 @@ export class CustomType<T> extends ValidateableType<T> {
      * }
      * ```
      */
-    guard(transform: (data: any) => (T extends ValidateableType<infer U>
+    guard(transform: (data: any, path: string, warnings: ValidationWarning[]) => (
+        T extends ValidateableType<infer U>
         ? ExtractInstanceType<U>
         : T extends ValidateableType<infer U>[] ? ExtractInstanceType<U>[]
         : T extends readonly ValidateableType<infer U>[] ? readonly ExtractInstanceType<U>[]
@@ -1212,7 +1214,7 @@ export class CustomType<T> extends ValidateableType<T> {
         if (value === null || value === void 0) {
             return value;
         } else if (this._guard) {
-            value = this._guard(value);
+            value = this._guard(value, path, options?.warnings ?? []);
         }
 
         if (this.type instanceof Function) {
@@ -1270,7 +1272,7 @@ export class OptionalCustomType<T> extends CustomType<T> {
 }
 
 export class UnionType<T> extends ValidateableType<T> {
-    private _guard: (data: any) => T;
+    private _guard: (data: any, path: string, warnings: ValidationWarning[]) => T;
 
     constructor(public types: T[]) {
         super();
@@ -1308,7 +1310,7 @@ export class UnionType<T> extends ValidateableType<T> {
      * }
      * ```
      */
-    guard(transform: (data: any) => T) {
+    guard(transform: (data: any, path: string, warnings: ValidationWarning[]) => T) {
         this._guard = transform;
         return this;
     }
@@ -1320,13 +1322,16 @@ export class UnionType<T> extends ValidateableType<T> {
         warnings?: ValidationWarning[];
         removeUnknownProps?: boolean;
     } = null): T | never {
-        value = super.validate(path, value, options);
+        if (!this.types.some(type => type instanceof VoidType)) {
+            value = super.validate(path, value, options);
+        }
+
         let _value: T;
 
         if (value === null || value === void 0) {
             return value;
         } else if (this._guard) {
-            value = this._guard(value);
+            value = this._guard(value, path, options?.warnings ?? []);
         }
 
         for (const type of this.types) {
@@ -1537,12 +1542,12 @@ export class OptionalDictType<K extends IndexableType, V> extends DictType<K, V>
     }
 }
 
-export class ArrayType<T extends any[]> extends CustomType<T> {
+export class ArrayType<T> extends CustomType<T[]> {
     private _minItems: number = void 0;
     private _maxItems: number = void 0;
     private _uniqueItems = false;
 
-    constructor(readonly type: T) {
+    constructor(readonly type: T[]) {
         super(type);
     }
 
@@ -1591,15 +1596,15 @@ export class ArrayType<T extends any[]> extends CustomType<T> {
         suppress?: boolean;
         warnings?: ValidationWarning[];
         removeUnknownProps?: boolean;
-    } = null): T | never {
+    } = null): T[] | never {
         value = ValidateableType.prototype.validate.call(this, path, value, options);
-        let _value: T;
+        let _value: T[];
         let err: Error;
 
         if (value === null || value === void 0) {
             return value;
         } else if (this._guard) {
-            value = this._guard(value);
+            value = this._guard(value, path, options?.warnings ?? []);
         }
 
         if (!Array.isArray(value)) {
@@ -1626,7 +1631,7 @@ export class ArrayType<T extends any[]> extends CustomType<T> {
             }
         }
 
-        return validate(_value as any, this.type ?? [], path, options) as T;
+        return validate(_value as any, this.type ?? [], path, options) as T[];
     }
 
     toJSONSchema(): JSONSchema {
@@ -1655,7 +1660,7 @@ export class ArrayType<T extends any[]> extends CustomType<T> {
     }
 }
 
-export class OptionalArrayType<T extends any[]> extends ArrayType<T> {
+export class OptionalArrayType<T> extends ArrayType<T> {
     /** @internal Used for TypeScript to distinguish the type from similar types. */
     // @ts-ignore
     get [Symbol.toStringTag](): "OptionalArrayType" {
@@ -1702,7 +1707,7 @@ export class TupleType<T extends readonly any[]> extends CustomType<T> {
         if (value === null || value === void 0) {
             return value;
         } else if (this._guard) {
-            value = this._guard(value);
+            value = this._guard(value, path, options?.warnings ?? []);
         }
 
         if (!Array.isArray(value)) {
@@ -1820,7 +1825,7 @@ export type ExtractInstanceType<T> = T extends OptionalStringEnum<infer U> ? (U 
     : T extends readonly [infer A, infer B, infer C, infer D] ? readonly [ExtractInstanceType<A>, ExtractInstanceType<B>, ExtractInstanceType<C>, ExtractInstanceType<D>]
     : T extends readonly [...infer U] ? readonly [...ExtractInstanceType<U>]
     : T extends (UnionType<infer U> | OptionalUnionType<infer U>) ? U
-    : T extends (ArrayType<infer U> | OptionalArrayType<infer U>) ? (U extends (infer V)[] ? ExtractInstanceType<V>[] : U)
+    : T extends (ArrayType<infer U> | OptionalArrayType<infer U>) ? (U extends (infer V)[] ? ExtractInstanceType<V>[] : U[])
     : T extends (TupleType<infer U> | OptionalTupleType<infer U>) ? (U extends (infer V)[] ? ExtractInstanceType<V>[] : U)
     : T extends (CustomType<infer U> | OptionalCustomType<infer U>) ? (U extends (infer V)[] ? ExtractInstanceType<V>[] : U)
     : T extends (DictType<infer K, infer V> | OptionalDictType<infer K, infer V>) ? Record<ExtractInstanceType<K>, ExtractInstanceType<V>>
@@ -1884,6 +1889,10 @@ function augmentStaticMethods(ctor: Constructor<any>, type: Constructor<any>) {
     ctor["alternatives"] = (...props: string[]) => ins.alternatives(...props);
     ctor["associates"] = (...props: string[]) => ins.associates(...props);
     ctor["remarks"] = (note: string) => ins.remarks(note);
+
+    if (typeof ins["guard"] === "function") {
+        ctor["guard"] = (transform: (...args: any[]) => any) => ins["guard"](transform);
+    }
 
     Object.getOwnPropertyNames(type.prototype).forEach(prop => {
         if (prop !== "constructor" && !ctor[prop]) {
@@ -1958,6 +1967,12 @@ Object.defineProperties(Array.prototype, {
             return new ArrayType(this).associates(...props);
         },
     },
+    guard: {
+        configurable: true,
+        value: function (this: any[], transform: (...args: any[]) => any[]) { // eslint-disable-line
+            return new ArrayType(this).guard(transform);
+        },
+    },
     minItems: {
         configurable: true,
         value: function (this: any[], count: number) { // eslint-disable-line
@@ -1985,20 +2000,8 @@ declare global {
     interface BooleanConstructor extends BooleanType { } // eslint-disable-line
     interface DateConstructor extends DateType { } // eslint-disable-line
     interface ObjectConstructor extends MixedType { } // eslint-disable-line
-    interface ArrayConstructor extends ArrayType<any[]> { } // eslint-disable-line
-
-    interface Array<T> {
-        optional: OptionalArrayType<T[]>;
-        required: ArrayType<T[]>;
-        default: (value: T[]) => OptionalArrayType<T[]>;
-        remarks: (note: string) => ArrayType<T[]>;
-        deprecated: (message?: string) => ArrayType<T[]>;
-        alternatives: (...props: string[]) => ArrayType<T[]>;
-        associates: (...props: string[]) => ArrayType<T[]>;
-        minItems: (count: number) => ArrayType<T[]>;
-        maxItems: (count: number) => ArrayType<T[]>;
-        uniqueItems: ArrayType<T[]>;
-    }
+    interface ArrayConstructor extends ArrayType<any> { } // eslint-disable-line
+    interface Array<T> extends ArrayType<T> { } // eslint-disable-line
 
     interface Function {
         /**

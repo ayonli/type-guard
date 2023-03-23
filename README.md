@@ -277,8 +277,8 @@ const Int2 = BigInt.enum([-1n, 0n, 1n] as const); // enum values/union types: -1
 Apart from the core features, the array includes the following additional
 properties and methods.
 
-- `guard(transform: (data: any) => any[])` Defines a function that transforms the
-    input data to the desired type.
+- `guard(transform: (data: any, path: string, warnings: ValidationWarning[]) => any[])`
+    Defines a function that transforms the input data to the desired type.
 - `minItems(count: number)` Sets the minimum items of the array.
 - `maxItems(count: number)` Sets the maximum items of the array.
 - `uniqueItems` Restrains the array to have unique items.
@@ -292,8 +292,8 @@ const Arr1 = [String].minItems(1).maxItems(10).uniqueItems;
 Apart from the core features, these types include the following additional
 properties and methods.
 
-- `guard(transform: (data: any) => any)` Defines a function that transforms the
-    input data to the desired type.
+- `guard(transform: (data: any, path: string, warnings: ValidationWarning[]) => any[])`
+    Defines a function that transforms the input data to the desired type.
 
 ### `as()`
 
