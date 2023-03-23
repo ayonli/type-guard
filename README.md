@@ -19,8 +19,8 @@ Runtime type checking for JavaScript variables and function parameters.
 - [Number Specials](#number-specials)
 - [BigInt Specials](#bigint-specials)
 - [Array Specials](#array-specials)
-- [CustomType, UnionType and TupleType](#customtype-uniontype-and-tupletype)
-    - [as()](#as)
+- [CustomType Specials](#customtype-specials)
+- [as()](#as)
     - [Example of CustomType](#example-of-customtype)
     - [Example of UnionType and TupleType](#example-of-uniontype-and-tupletype)
 - [Decorators](#decorators)
@@ -287,15 +287,15 @@ properties and methods.
 const Arr1 = [String].minItems(1).maxItems(10).uniqueItems;
 ```
 
-## `CustomType`, `UnionType` and `TupleType`
+## CustomType Specials
 
-Apart from the core features, these types include the following additional
+Apart from the core features, CustomType include the following additional
 properties and methods.
 
 - `guard(transform: (data: any, path: string, warnings: ValidationWarning[]) => any[])`
     Defines a function that transforms the input data to the desired type.
 
-### `as()`
+## `as()`
 
 By default, any class (aka, type constructors) and object literals can be
 directly used for type checking, but they lacks the ability to be optional,

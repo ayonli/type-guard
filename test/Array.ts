@@ -118,35 +118,6 @@ describe("Object", () => {
         assert(err3 instanceof TypeError);
     });
 
-    it("should emit warnings", () => {
-        const warnings: ValidationWarning[] = [];
-
-        const arr1 = validate([], Array.deprecated("no longer effect"), "arr1", { warnings });
-        assert.deepStrictEqual(arr1, []);
-
-        const arr2 = validate([], Array.deprecated(), "arr2", { warnings });
-        assert.deepStrictEqual(arr2, []);
-
-        // @ts-ignore
-        const arr3 = validate(["123"], [Number], "arr3", { warnings });
-        assert.deepStrictEqual(arr3, [123]);
-
-        assert.deepStrictEqual(warnings, [
-            {
-                path: "arr1",
-                message: "arr1 is deprecated: no longer effect",
-            },
-            {
-                path: "arr2",
-                message: "arr2 is deprecated",
-            },
-            {
-                path: "arr3[0]",
-                message: "a string at arr3[0] has been converted to number",
-            }
-        ] as ValidationWarning[]);
-    });
-
     it("should validate arrays with length limits", () => {
         const arr0 = validate(["hello", "world"], [String].minItems(1).maxItems(2), "arr0");
         assert.deepStrictEqual(arr0, ["hello", "world"]);
@@ -215,6 +186,73 @@ describe("Object", () => {
             );
         }
         assert(err1 instanceof Error);
+    });
+
+    it("should emit various warnings", () => {
+        const warnings: ValidationWarning[] = [];
+
+        const arr1 = validate([], Array.deprecated("no longer effect"), "arr1", { warnings });
+        assert.deepStrictEqual(arr1, []);
+
+        const arr2 = validate([], Array.deprecated(), "arr2", { warnings });
+        assert.deepStrictEqual(arr2, []);
+
+        // @ts-ignore
+        const arr3 = validate(["123"], [Number], "arr3", { warnings });
+        assert.deepStrictEqual(arr3, [123]);
+
+        const arr4 = validate([1, 2, 3, 4, 5, 6], [Number].maxItems(5), "arr4", {
+            warnings,
+            removeUnknownProps: true,
+        });
+        assert.deepStrictEqual(arr4, [1, 2, 3, 4, 5]);
+
+        const arr5 = validate([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [Number].maxItems(5), "arr5", {
+            warnings,
+            removeUnknownProps: true,
+        });
+        assert.deepStrictEqual(arr5, [1, 2, 3, 4, 5]);
+
+        assert.deepStrictEqual(warnings, [
+            {
+                path: "arr1",
+                message: "arr1 is deprecated: no longer effect",
+            },
+            {
+                path: "arr2",
+                message: "arr2 is deprecated",
+            },
+            {
+                path: "arr3[0]",
+                message: "a string at arr3[0] has been converted to number",
+            },
+            {
+                path: "arr4",
+                message: "outranged element arr4[5] has been removed",
+            },
+            {
+                path: "arr5",
+                message: "outranged elements arr5[5...9] have been removed",
+            }
+        ] as ValidationWarning[]);
+    });
+
+    it("should suppress errors as warnings", () => {
+        const warnings: ValidationWarning[] = [];
+
+        // @ts-ignore
+        const arr1 = validate([1, 2, 3, 4, 5, 6], [Number].maxItems(5), "arr1", {
+            warnings,
+            suppress: true,
+        });
+        assert.deepStrictEqual(arr1, [1, 2, 3, 4, 5, 6]);
+
+        assert.deepStrictEqual(warnings, [
+            {
+                path: "arr1",
+                message: "arr1 must contain no more than 5 items",
+            }
+        ] as ValidationWarning[]);
     });
 
     it("should validate arrays with a custom guard function", () => {

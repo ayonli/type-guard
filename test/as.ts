@@ -1,6 +1,6 @@
 import * as assert from "node:assert";
 import { describe, it } from "mocha";
-import { as, validate, ValidationWarning, Void } from "..";
+import { Any, as, validate, ValidationWarning, Void } from "..";
 
 describe("as()", () => {
     describe("CustomType", () => {
@@ -14,22 +14,18 @@ describe("as()", () => {
             assert.strictEqual(buf2, null);
 
             // @ts-ignore
-            const buf3 = validate(null, as(Buffer).optional, "buf3");
-            assert.strictEqual(buf3, null);
-
-            // @ts-ignore
-            const buf4 = validate(null, as(Buffer).default(buf), "buf4");
-            assert.strictEqual(buf4, buf);
+            const buf3 = validate(null, as(Buffer).default(buf), "buf3");
+            assert.strictEqual(buf3, buf);
 
             let err1: any;
             try {
                 // @ts-ignore
-                validate(null, as(Buffer), "buf2");
+                validate(null, as(Buffer), "buf4");
             } catch (err) {
                 err1 = err;
                 assert.strictEqual(
                     String(err),
-                    "Error: buf2 is required, but no value is provided"
+                    "Error: buf4 is required, but no value is provided"
                 );
             }
             assert(err1 instanceof Error);
@@ -37,12 +33,12 @@ describe("as()", () => {
             let err2: any;
             try {
                 // @ts-ignore
-                validate("hello, world!", as(Buffer), "buf3");
+                validate("hello, world!", as(Buffer), "buf5");
             } catch (err) {
                 err2 = err;
                 assert.strictEqual(
                     String(err),
-                    "TypeError: buf3 is expected to be of type Buffer, but a string is given"
+                    "TypeError: buf5 is expected to be of type Buffer, but a string is given"
                 );
             }
             assert(err2 instanceof TypeError);
@@ -153,38 +149,117 @@ describe("as()", () => {
             const nil2 = validate(null, as(String, Number, Void), "nill");
             assert.strictEqual(nil2, null);
         });
+    });
 
-        it("should validate union types with a custom guard function", () => {
+    describe("TupleType", () => {
+        it("should validate tuples with as() function", () => {
+            const value1 = validate(["hello, world", 123], as([String, Number] as const), "value1");
+            assert.deepStrictEqual(value1, ["hello, world", 123]);
+
+            const value2 = validate(["foo", 1], as(["foo", 1] as const), "value2");
+            assert.deepStrictEqual(value2, ["foo", 1]);
+
+            // @ts-ignore
+            const value3 = validate(null, as([String, Number] as const).optional, "value3");
+            assert.strictEqual(value3, null);
+
+            // @ts-ignore
+            const value4 = validate(void 0, as([String, Number] as const).default(["hello", 1]), "value4");
+            assert.deepStrictEqual(value4, ["hello", 1]);
+
+            let err1: any;
+            try {
+                // @ts-ignore
+                validate(null, as([String, Number] as const), "value");
+            } catch (err) {
+                err1 = err;
+                assert.strictEqual(
+                    String(err),
+                    "Error: value is required, but no value is provided"
+                );
+            }
+            assert(err1 instanceof Error);
+        });
+
+        it("should emit warnings when items are outranged", () => {
             const warnings: ValidationWarning[] = [];
 
             // @ts-ignore
-            const value1 = validate(Date.now(), as(String, Date).guard((data, path, warnings) => {
-                if (data instanceof Date || typeof data === "string") {
-                    return data;
-                } else if (typeof data === "number") {
-                    warnings.push({
-                        path,
-                        message: `a number has been converted to Date at ${path}`,
-                    });
+            const value1 = validate(["foo", 1, "bar"], as([String, Number] as const), "value1", {
+                warnings,
+                removeUnknownProps: true,
+            });
+            assert.deepStrictEqual(value1, ["foo", 1]);
 
-                    return new Date(data);
-                } else {
-                    warnings.push({
-                        path,
-                        message: `a ${typeof data} has been converted to string at ${path}`,
-                    });
-
-                    return String(data);
-                }
-            }), "value1", { warnings });
-            assert(value1 instanceof Date);
+            // @ts-ignore
+            const value2 = validate(["foo", 1, "bar", 2, 3], as([String, Number] as const), "value2", {
+                warnings,
+                removeUnknownProps: true,
+            });
+            assert.deepStrictEqual(value2, ["foo", 1]);
 
             assert.deepStrictEqual(warnings, [
                 {
                     path: "value1",
-                    message: `a number has been converted to Date at value1`,
+                    message: "unknown element value1[2] has been removed",
+                },
+                {
+                    path: "value2",
+                    message: "unknown elements value2[2...4] have been removed",
                 }
             ] as ValidationWarning[]);
+        });
+
+        it("should silence element removing warnings when suppressed", () => {
+            const warnings: ValidationWarning[] = [];
+
+            // @ts-ignore
+            const value1 = validate(["foo", 1, "bar"], as([String, Number] as const), "value1", {
+                warnings,
+                removeUnknownProps: true,
+                suppress: true,
+            });
+            assert.deepStrictEqual(value1, ["foo", 1]);
+
+            assert.deepStrictEqual(warnings, [] as ValidationWarning[]);
+        });
+    });
+
+    describe("as-is", () => {
+        it("should return the input type if they are validateable by self", () => {
+            const type1 = as(String);
+            assert.strictEqual(type1, String);
+
+            const type2 = as(Number);
+            assert.strictEqual(type2, Number);
+
+            const type3 = as(BigInt);
+            assert.strictEqual(type3, BigInt);
+
+            const type4 = as(Boolean);
+            assert.strictEqual(type4, Boolean);
+
+            const type5 = as(Date);
+            assert.strictEqual(type5, Date);
+
+            const type6 = as(Object);
+            assert.strictEqual(type6, Object);
+
+            const type7 = as(Array);
+            assert.strictEqual(type7, Array);
+
+            const type8 = as(Any);
+            assert.strictEqual(type8, Any);
+
+            const type9 = as(Void);
+            assert.strictEqual(type9, Void);
+
+            const type10 = as(String.optional);
+            assert.strictEqual(type10, String.optional);
+
+            const BufferType = as(Buffer);
+            const type11 = as(BufferType);
+            assert.strictEqual(type11, BufferType);
         });
     });
 });

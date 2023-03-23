@@ -152,7 +152,7 @@ describe("Object", () => {
         assert(err5 instanceof TypeError);
     });
 
-    it("should emit warnings", () => {
+    it("should emit various warnings", () => {
         const warnings: ValidationWarning[] = [];
 
         const obj1 = validate({}, Object.deprecated("no longer effect"), "obj1", { warnings });
@@ -183,6 +183,13 @@ describe("Object", () => {
         }, "obj5", { warnings });
         assert.deepStrictEqual(obj5, { foo: "123", bar: 123 });
 
+        // @ts-ignore
+        const obj6 = validate({ foo: "123", bar: "456" }, { foo: String }, "obj6", {
+            warnings,
+            removeUnknownProps: true,
+        });
+        assert.deepStrictEqual(obj6, { foo: "123" });
+
         assert.deepStrictEqual(warnings, [
             {
                 path: "obj1",
@@ -211,6 +218,10 @@ describe("Object", () => {
             {
                 path: "obj5.bar",
                 message: "a string at obj5.bar has been converted to number",
+            },
+            {
+                path: "obj6.bar",
+                message: "unknown property obj6.bar bas been removed",
             }
         ] as ValidationWarning[]);
     });
@@ -282,5 +293,48 @@ describe("Object", () => {
             );
         }
         assert(err1 instanceof Error);
+    });
+
+    it("should suppress non-critical errors as warnings", () => {
+        const warnings: ValidationWarning[] = [];
+
+        // @ts-ignore
+        const obj1 = validate({}, {
+            foo: String.optional.alternatives("bar"),
+            bar: String.optional,
+        }, "obj1", { warnings, suppress: true });
+        assert.deepStrictEqual(obj1, {});
+
+        // @ts-ignore
+        const obj2 = validate({ foo: "hello", bar: "world" }, {
+            foo: String.optional.associates("foo1"),
+            bar: String.optional,
+            foo1: String.optional,
+        }, "obj2", { warnings, suppress: true });
+
+        assert.deepStrictEqual(warnings, [
+            {
+                path: "obj1",
+                message: "obj1 must contain one of these properties: 'foo', 'bar'",
+            },
+            {
+                path: "obj2",
+                message: "obj2 must contain property 'foo1' when property 'foo' is provided",
+            }
+        ] as ValidationWarning[]);
+    });
+
+    it("should silence property removing when suppressed", () => {
+        const warnings: ValidationWarning[] = [];
+
+        // @ts-ignore
+        const obj6 = validate({ foo: "123", bar: "456" }, { foo: String }, "obj6", {
+            warnings,
+            removeUnknownProps: true,
+            suppress: true,
+        });
+        assert.deepStrictEqual(obj6, { foo: "123" });
+
+        assert.deepStrictEqual(warnings, []);
     });
 });

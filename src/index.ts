@@ -325,10 +325,7 @@ export class StringType extends ValidateableType<string> {
             if (!options?.suppress) {
                 throw err;
             } else {
-                options?.warnings?.push({
-                    path,
-                    message: err.message
-                });
+                options?.warnings?.push({ path, message: err.message });
             }
         }
 
@@ -563,10 +560,7 @@ export class NumberType extends ValidateableType<number> {
             if (!options?.suppress) {
                 throw err;
             } else {
-                options?.warnings?.push({
-                    path,
-                    message: err.message
-                });
+                options?.warnings?.push({ path, message: err.message });
             }
         }
 
@@ -749,10 +743,7 @@ export class BigIntType extends ValidateableType<bigint> {
             if (!options?.suppress) {
                 throw err;
             } else {
-                options?.warnings?.push({
-                    path,
-                    message: err.message
-                });
+                options?.warnings?.push({ path, message: err.message });
             }
         }
 
@@ -1272,8 +1263,6 @@ export class OptionalCustomType<T> extends CustomType<T> {
 }
 
 export class UnionType<T> extends ValidateableType<T> {
-    private _guard: (data: any, path: string, warnings: ValidationWarning[]) => T;
-
     constructor(public types: T[]) {
         super();
     }
@@ -1290,29 +1279,6 @@ export class UnionType<T> extends ValidateableType<T> {
     // @ts-ignore
     default(value: T) {
         return this.deriveWith({ _optional: true, _default: value }, new OptionalUnionType(this.types));
-    }
-
-    /**
-     * Defines a function that transforms the input data to the desired type.
-     * @example
-     * ```ts
-     * class Example {
-     *     \@param({
-     *         id: String, 
-     *         name: String.optional,
-     *         avatar: as(Avatar, Image)
-     *             .guard(data => [Avatar, Image].includes(data.constructor) ? data : new Avatar(data))
-     *             .optional
-     *     }, "data")
-     *     async create(data: { id: string; name?: string; avatar?: Avatar | Image }) {
-     *         // ...
-     *     }
-     * }
-     * ```
-     */
-    guard(transform: (data: any, path: string, warnings: ValidationWarning[]) => T) {
-        this._guard = transform;
-        return this;
     }
 
     /** @internal */
@@ -1336,8 +1302,6 @@ export class UnionType<T> extends ValidateableType<T> {
 
         if (value === null || value === void 0) {
             return value;
-        } else if (this._guard) {
-            value = this._guard(value, path, options?.warnings ?? []);
         }
 
         for (const type of this.types) {
@@ -1623,8 +1587,25 @@ export class ArrayType<T> extends CustomType<T[]> {
             const count = this._minItems === 1 ? "1 item" : `${this._minItems} items`;
             err = new Error(`${path} must contain at least ${count}`);
         } else if (this._maxItems && _value.length > this._maxItems) {
-            const count = this._maxItems === 1 ? "1 item" : `${this._maxItems} items`;
-            err = new Error(`${path} must contain no more than ${count}`);
+            if (options?.removeUnknownProps) {
+                const offset = this._maxItems;
+                const end = _value.length - 1;
+                _value = _value.slice(0, offset);
+
+                if (!options?.suppress) {
+                    const target = end === offset
+                        ? `element ${path}[${offset}] has`
+                        : `elements ${path}[${offset}...${end}] have`;
+
+                    options?.warnings?.push({
+                        path,
+                        message: `outranged ${target} been removed`,
+                    });
+                }
+            } else {
+                const count = this._maxItems === 1 ? "1 item" : `${this._maxItems} items`;
+                err = new Error(`${path} must contain no more than ${count}`);
+            }
         } else if (this._uniqueItems && new Set(_value).size !== _value.length) {
             err = new Error(`${path} must contain unique items`);
         }
@@ -1679,9 +1660,9 @@ export class OptionalArrayType<T> extends ArrayType<T> {
     }
 }
 
-export class TupleType<T extends readonly any[]> extends CustomType<T> {
+export class TupleType<T extends readonly any[]> extends ValidateableType<T> {
     constructor(readonly type: T) {
-        super(type);
+        super();
     }
 
     /** @internal Used for TypeScript to distinguish the type from similar types. */
@@ -1712,8 +1693,6 @@ export class TupleType<T extends readonly any[]> extends CustomType<T> {
 
         if (value === null || value === void 0) {
             return value;
-        } else if (this._guard) {
-            value = this._guard(value, path, options?.warnings ?? []);
         }
 
         if (!Array.isArray(value)) {
@@ -1729,14 +1708,14 @@ export class TupleType<T extends readonly any[]> extends CustomType<T> {
         }
 
         if (_value.length > this.type.length) {
-            const start = this.type.length;
+            const offset = this.type.length;
             const end = _value.length - 1;
 
             if (options?.removeUnknownProps) {
                 if (!options?.suppress) {
-                    const target = end === start
-                        ? `element ${path}[${start}] has`
-                        : `elements ${path}[${start}...${end}] have`;
+                    const target = end === offset
+                        ? `element ${path}[${offset}] has`
+                        : `elements ${path}[${offset}...${end}] have`;
 
                     options?.warnings?.push({
                         path,
@@ -1744,7 +1723,7 @@ export class TupleType<T extends readonly any[]> extends CustomType<T> {
                     });
                 }
             } else {
-                result.push(..._value.slice(start, end + 1));
+                result.push(..._value.slice(offset, end + 1));
             }
         }
 
@@ -2309,7 +2288,13 @@ export function validate<T>(value: ExtractInstanceType<T>, type: T, variable = "
                         otherProps.every(_prop => isEmptyValue(records[_prop]))
                     ) {
                         const props = [prop, ...otherProps].map(p => `'${p}'`).join(", ");
-                        throw new Error(`${path} must contain one of these properties: ${props}`);
+                        const message = `${path} must contain one of these properties: ${props}`;
+
+                        if (options?.suppress) {
+                            options.warnings?.push({ path, message });
+                        } else {
+                            throw new Error(message);
+                        }
                     }
                 }
 
@@ -2323,9 +2308,14 @@ export function validate<T>(value: ExtractInstanceType<T>, type: T, variable = "
                             const others = missing.length === 1
                                 ? `property '${missing[0]}'`
                                 : `properties ${join(missing.map(p => `'${p}'`))}`;
+                            const message = `${path} must contain ${others} `
+                                + `when property '${prop}' is provided`;
 
-                            throw new Error(
-                                `${path} must contain ${others} when property '${prop}' is provided`);
+                            if (options?.suppress) {
+                                options.warnings?.push({ path, message });
+                            } else {
+                                throw new Error(message);
+                            }
                         }
                     }
                 }
@@ -2344,7 +2334,7 @@ export function validate<T>(value: ExtractInstanceType<T>, type: T, variable = "
                             const _path = path ? `${path}.${prop}` : prop;
                             options?.warnings.push({
                                 path: _path,
-                                message: `${_path} is an unknown property and is removed`,
+                                message: `unknown property ${_path} bas been removed`,
                             });
                         }
                     });

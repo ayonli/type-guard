@@ -437,4 +437,21 @@ describe("String", () => {
             message: "str is deprecated: will no longer effect"
         }] as ValidationWarning[]);
     });
+
+    it("should suppress non-critical errors as warnings", () => {
+        const warnings: ValidationWarning[] = [];
+
+        const str1 = validate("2023-04-01 12:00", String.match("datetime"), "str1", {
+            warnings,
+            suppress: true,
+        });
+        assert.strictEqual(str1, "2023-04-01 12:00");
+
+        assert.deepStrictEqual(warnings, [
+            {
+                path: "str1",
+                message: "str1 is not a valid datetime string (format: YYYY-MM-DD HH:mm:ss)",
+            }
+        ] as ValidationWarning[]);
+    });
 });
