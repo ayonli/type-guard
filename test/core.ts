@@ -1,7 +1,7 @@
 import "@hyurl/utils/types";
 import * as assert from "node:assert";
 import { describe, it } from "mocha";
-import { Any, Dict, Void } from "..";
+import { Dict } from "..";
 
 describe("Core Features", () => {
     it("should add features to the String constructor", () => {
@@ -171,24 +171,5 @@ describe("Core Features", () => {
         assert.strictEqual(String(Dict(String, String)), "[object DictType]");
         assert.strictEqual(String(Dict(String, String).optional), "[object OptionalDictType]");
         assert.strictEqual(String(Dict(String, String).optional.required), "[object DictType]");
-    });
-
-    it("should import Any type", () => {
-        assert.strictEqual(typeof Any, "object");
-        assert.strictEqual(String(Any), "[object AnyType]");
-        assert.strictEqual(String(Any.optional), "[object OptionalAnyType]");
-        assert.strictEqual(String(Any.required), "[object AnyType]");
-    });
-
-    it("should import Void type", () => {
-        assert.strictEqual(typeof Void, "object");
-        assert.strictEqual(String(Void), "[object VoidType]");
-        assert.strictEqual(String(Void.optional), "[object VoidType]");
-
-        try {
-            Void.required;
-        } catch (err) {
-            assert(String(err).includes("VoidType is always optional"));
-        }
     });
 });

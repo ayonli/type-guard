@@ -1062,7 +1062,7 @@ export class AnyType extends ValidateableType<any> {
     }
 
     get optional() {
-        return this.deriveWith({ _optional: true }, new OptionalAnyType());
+        return this.deriveWith({ _optional: true, _default: void 0 }, new OptionalAnyType());
     }
 
     // @ts-ignore
@@ -1103,7 +1103,7 @@ export class VoidType extends ValidateableType<void> {
 
     get optional() {
         console.warn("VoidType is always optional, calling `optional` makes no difference");
-        return this.deriveWith({ _optional: true });
+        return this;
     }
 
     // @ts-ignore
@@ -1120,6 +1120,10 @@ export class VoidType extends ValidateableType<void> {
     validate(path: string, value: any): void {
         if (value !== null && value !== void 0) {
             this.throwTypeError(path, value, "void");
+        } else if (this._default !== void 0) {
+            return this._default;
+        } else {
+            return value;
         }
     }
 
