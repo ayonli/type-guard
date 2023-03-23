@@ -133,6 +133,7 @@ export abstract class ValidateableType<T> {
     }
 
     protected conversionWarning(path: string, value: any, expectedType: string) {
+        expectedType = read(expectedType, true);
         const actualType = readType(value);
         return `${actualType} at ${path} has been converted to ${expectedType}`;
     }
@@ -959,15 +960,15 @@ export class DateType extends ValidateableType<Date> {
         if (value === null || value === void 0) {
             return value;
         } else if (options?.strict && !(value instanceof Date)) {
-            this.throwTypeError(path, value, "type of Date");
+            this.throwTypeError(path, value, "Date");
         } else if (typeof value === "number" || typeof value === "string") {
             _value = new Date(value);
 
             if (String(_value) === "Invalid Date") {
-                this.throwTypeError(path, value, "type of Date");
+                this.throwTypeError(path, value, "Date");
             }
         } else if (!(value instanceof Date)) {
-            this.throwTypeError(path, value, "type of Date");
+            this.throwTypeError(path, value, "Date");
         } else {
             _value = value;
         }
@@ -975,7 +976,7 @@ export class DateType extends ValidateableType<Date> {
         if (_value !== value) {
             options?.warnings?.push({
                 path,
-                message: this.conversionWarning(path, value, "type of Date")
+                message: this.conversionWarning(path, value, "Date")
             });
         }
 
@@ -1218,7 +1219,7 @@ export class CustomType<T> extends ValidateableType<T> {
             if (value instanceof this.type) {
                 return value;
             } else {
-                this.throwTypeError(path, value, "type of " + this.type.name);
+                this.throwTypeError(path, value, this.type.name);
             }
         } else if (isObject(this.type)) {
             if (isObject(value)) {
@@ -1374,7 +1375,7 @@ export class UnionType<T> extends ValidateableType<T> {
             } else if (Object.is(type, Boolean) || Object.is(type, BooleanType)) {
                 return "boolean";
             } else if (Object.is(type, Date) || Object.is(type, DateType)) {
-                return "type of Date";
+                return "Date";
             } else if (Object.is(type, Object) || Object.is(type, MixedType) || isObject(type)) {
                 return "object";
             } else if (Object.is(type, Any) || Object.is(type, AnyType)) {
@@ -1384,9 +1385,9 @@ export class UnionType<T> extends ValidateableType<T> {
             } else if (Array.isArray(type)) {
                 return "array";
             } else if (typeof type === "function") {
-                return "type of " + type.name;
+                return type.name;
             } else if (typeof type.constructor === "function") {
-                return "type of " + type.constructor.name;
+                return type.constructor.name;
             } else {
                 return "unknown";
             }
@@ -2036,13 +2037,13 @@ function join(strings: string[], op: "and" | "or" = "and") {
     }
 }
 
-function read(text: string | string[]): string {
+function read(text: string | string[], noArticle = false): string {
     if (Array.isArray(text)) {
         return join([read(text[0]), ...text.slice(1)], "or");
-    } else if (["any", "unknown", "null", "undefined", "void"].includes(text) ||
-        text.startsWith("type of")
-    ) {
+    } else if (noArticle || ["any", "unknown", "null", "undefined", "void"].includes(text)) {
         return text;
+    } else if (/^[A-Z]/.test(text)) {
+        return "of type " + text;
     } else if (["a", "e", "i", "o", "u"].includes(text[0])) {
         return "an " + text;
     } else {
@@ -2064,9 +2065,15 @@ function readType(value: any) {
     } else if (isObject(value)) {
         type = "an object";
     } else if (typeof value === "object") {
-        type = "type of " + (value as object).constructor.name;
+        const name = (value as object).constructor.name;
+
+        if (["a", "e", "i", "o", "u"].includes(name[0].toLowerCase())) {
+            return "an " + name;
+        } else {
+            return "a " + name;
+        }
     } else {
-        type = "a " + (typeof value);
+        type = read(typeof value);
     }
 
     return type;

@@ -135,7 +135,7 @@ describe("Number", () => {
             },
             {
                 path: "num5",
-                message: "type of Date at num5 has been converted to number",
+                message: "a Date at num5 has been converted to number",
             }
         ] as ValidationWarning[]);
     });
@@ -165,7 +165,7 @@ describe("Number", () => {
         } catch (err) {
             assert.strictEqual(
                 String(err),
-                "TypeError: num is expected to be a number, but type of Buffer is given");
+                "TypeError: num is expected to be a number, but a Buffer is given");
         }
 
         try {
@@ -221,7 +221,7 @@ describe("Number", () => {
         } catch (err) {
             assert.strictEqual(
                 String(err),
-                "TypeError: num is expected to be a number, but type of Date is given");
+                "TypeError: num is expected to be a number, but a Date is given");
         }
     });
 

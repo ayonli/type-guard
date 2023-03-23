@@ -108,7 +108,7 @@ describe("String", () => {
             },
             {
                 path: "str4",
-                message: "type of Date at str4 has been converted to string",
+                message: "a Date at str4 has been converted to string",
             }
         ] as ValidationWarning[]);
     });
@@ -138,7 +138,7 @@ describe("String", () => {
         } catch (err) {
             assert.strictEqual(
                 String(err),
-                "TypeError: str is expected to be a string, but type of Buffer is given");
+                "TypeError: str is expected to be a string, but a Buffer is given");
         }
 
         try {
@@ -185,7 +185,7 @@ describe("String", () => {
         } catch (err) {
             assert.strictEqual(
                 String(err),
-                "TypeError: str is expected to be a string, but type of Date is given");
+                "TypeError: str is expected to be a string, but a Date is given");
         }
     });
 

@@ -70,11 +70,11 @@ describe("Date", () => {
         assert.deepStrictEqual(warnings, [
             {
                 path: "date1",
-                message: "a string at date1 has been converted to type of Date"
+                message: "a string at date1 has been converted to Date"
             },
             {
                 path: "date2",
-                message: "a number at date2 has been converted to type of Date"
+                message: "a number at date2 has been converted to Date"
             }
         ] as ValidationWarning[]);
     });
@@ -86,7 +86,7 @@ describe("Date", () => {
         } catch (err) {
             assert.strictEqual(
                 String(err),
-                "TypeError: date is expected to be type of Date, but a string is given"
+                "TypeError: date is expected to be of type Date, but a string is given"
             );
         }
 
@@ -96,7 +96,7 @@ describe("Date", () => {
         } catch (err) {
             assert.strictEqual(
                 String(err),
-                "TypeError: date is expected to be type of Date, but a number is given"
+                "TypeError: date is expected to be of type Date, but a number is given"
             );
         }
     });
@@ -110,7 +110,7 @@ describe("Date", () => {
         } catch (err) {
             assert.strictEqual(
                 String(err),
-                "TypeError: date is expected to be type of Date, but a string is given"
+                "TypeError: date is expected to be of type Date, but a string is given"
             );
         }
 
@@ -120,7 +120,7 @@ describe("Date", () => {
         } catch (err) {
             assert.strictEqual(
                 String(err),
-                "TypeError: date is expected to be type of Date, but a number is given"
+                "TypeError: date is expected to be of type Date, but a number is given"
             );
         }
     });

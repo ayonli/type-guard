@@ -128,7 +128,7 @@ describe("BigInt", () => {
         } catch (err) {
             assert.strictEqual(
                 String(err),
-                "TypeError: num is expected to be a bigint, but type of Buffer is given");
+                "TypeError: num is expected to be a bigint, but a Buffer is given");
         }
 
         try {
