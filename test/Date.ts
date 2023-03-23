@@ -58,9 +58,14 @@ describe("Date", () => {
         const _date = new Date();
 
         // @ts-ignore
-        const date1 = validate(_date.toISOString(), Date, "date1", { warnings });
+        const date = validate(_date.toISOString(), Date, "date", { warnings });
+        assert(date instanceof Date);
+        assert.strictEqual(date.toISOString(), _date.toISOString());
+
+        // @ts-ignore
+        const date1 = validate("2023-01-01 00:00:00", Date, "date1", { warnings });
         assert(date1 instanceof Date);
-        assert.strictEqual(date1.toISOString(), _date.toISOString());
+        assert.strictEqual(date1.toISOString(), new Date("2023-01-01 00:00:00").toISOString());
 
         // @ts-ignore
         const date2 = validate(_date.valueOf(), Date, "date2", { warnings });

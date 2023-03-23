@@ -973,7 +973,7 @@ export class DateType extends ValidateableType<Date> {
             _value = value;
         }
 
-        if (_value !== value) {
+        if (_value !== value && _value.toISOString() !== value) {
             options?.warnings?.push({
                 path,
                 message: this.conversionWarning(path, value, "Date")
