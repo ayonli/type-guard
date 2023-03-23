@@ -1443,20 +1443,37 @@ export class DictType<K extends IndexableType, V> extends ValidateableType<Recor
 
             for (let [_key, _value] of Object.entries(value)) {
                 try {
-                    _key = validate(_key as any, this.key, path, options);
+                    _key = validate(_key as any, this.key, path, { ...options, suppress: false });
                 } catch (err) {
                     if (err instanceof Error && String(err).includes("must be one of these values")) {
                         err.message = err.message.replace("must be one of these values",
                             "must contain only these properties");
-                    }
 
-                    if (!options?.suppress) {
-                        throw err;
-                    } else {
+                        if (options?.removeUnknownProps) {
+                            if (!options.suppress) {
+                                const _path = path ? `${path}.${_key}` : _key;
+                                options?.warnings?.push({
+                                    path: _path,
+                                    message: `unknown property ${_path} has been removed`,
+                                });
+                            }
+
+                            _key = null;
+                        } else if (options?.suppress) {
+                            options?.warnings?.push({
+                                path,
+                                message: err instanceof Error ? err.message : String(err),
+                            });
+                        } else {
+                            throw err;
+                        }
+                    } else if (options?.suppress) {
                         options?.warnings?.push({
                             path,
                             message: err instanceof Error ? err.message : String(err),
                         });
+                    } else {
+                        throw err;
                     }
                 }
 

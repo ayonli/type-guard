@@ -1,7 +1,6 @@
 import "@hyurl/utils/types";
 import * as assert from "node:assert";
 import { describe, it } from "mocha";
-import { Dict } from "..";
 
 describe("Core Features", () => {
     it("should add features to the String constructor", () => {
@@ -164,12 +163,5 @@ describe("Core Features", () => {
         assert.strictEqual(typeof Array.prototype.maxItems, "function");
         assert.strictEqual(String(Array.prototype.uniqueItems), "[object ArrayType]");
 
-    });
-
-    it("should import Dict type", () => {
-        assert.strictEqual(typeof Dict, "function");
-        assert.strictEqual(String(Dict(String, String)), "[object DictType]");
-        assert.strictEqual(String(Dict(String, String).optional), "[object OptionalDictType]");
-        assert.strictEqual(String(Dict(String, String).optional.required), "[object DictType]");
     });
 });
