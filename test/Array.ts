@@ -71,8 +71,12 @@ describe("Object", () => {
         assert.deepStrictEqual(arr6, []);
 
         const _arr7 = ["hello", "world", 1, 2, true];
-        const arr7 = validate(_arr7, [] as any[], "arr4");
+        const arr7 = validate(_arr7, [] as any[], "arr7");
         assert.deepStrictEqual(arr7, _arr7);
+
+        const _arr8 = ["hello", "world"];
+        const arr8 = validate(_arr8, Array(String), "arr8");
+        assert.deepStrictEqual(arr8, _arr8);
 
         let err1: any;
         try {

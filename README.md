@@ -183,6 +183,7 @@ const Structure = {
     arr1: [String].default([]), // array can use these features directly
     arr2: [String, Number, BigInt], // array of many types: (string | number | bigint)[]
     arr3: [], // array of any types: any[]
+    arr4: Array(String), // is the same as [String]
     union1: as(String, Number), // as() can be used to form Union Types: string | number
     tuple1: as([String, Number] as const), // as() can be used to form tuples: [string, number]
     my1: MyClass, // custom types are supported
