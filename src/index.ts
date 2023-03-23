@@ -2011,6 +2011,8 @@ declare global {
          */
         getJSONSchema: (options?: {
             $id: string;
+            title?: string;
+            description?: string;
         }) => Omit<JSONSchema, "type"> & {
             $schema: string;
             $id: string;
@@ -2441,7 +2443,7 @@ const wrapMethod = (target: any, prop: string | symbol, desc: TypedPropertyDescr
                     return record;
                 }, {} as { [param: string]: any; });
 
-                _args = validate(_args, params, "", options);
+                _args = validate(_args, params, "parameters", options);
                 args = paramList.map(name => _args[name]);
             }
 
@@ -2665,11 +2667,11 @@ export function deprecated(message = ""): MethodDecorator {
     };
 }
 
-export function wrap<A, R>(params: A, returns: R) {
+export function wrap<A, R>(parameters: A, returns: R) {
     return (fn: WrappedFunction<A, R>) => (function (this: any, arg) {
         const warnings: ValidationWarning[] = [];
         const options = { warnings, removeUnknownProps: true };
-        arg = validate(arg, params, "params", options);
+        arg = validate(arg, parameters, "parameters", options);
         let result = fn(arg);
 
         if (result && typeof result === "object" && typeof result["then"] === "function") {
@@ -2835,7 +2837,7 @@ function getJSONSchema(type: any, extra: Partial<JSONSchema> = {}) {
  */
 export function createJSONSchema(type: any, options: {
     $id: string;
-    title: string;
+    title?: string;
     description?: string;
 }) {
     const schema = getJSONSchema(type);
@@ -2853,19 +2855,19 @@ export function createJSONSchema(type: any, options: {
 }
 
 Function.prototype.getJSONSchema = function (options) {
-    const title = this[_title] as string;
+    const title = options?.title || this[_title] as string;
     const $id = options?.$id || title;
     const hasSuffix = $id.endsWith(".schema.json");
     const parentId = hasSuffix ? $id.slice(0, -12) : $id;
     const paramsDef = this[_params] as { type: any; name?: string; remarks?: string; }[];
     const returnDef = this[_returns] as { type: any; name: string; remarks?: string; };
 
-    return title ? {
+    return this[_title] ? {
         $schema: "https://json-schema.org/draft/2020-12/schema",
         $id: options?.$id || title,
         title,
         type: "function",
-        description: this[_remarks],
+        description: options?.description || this[_remarks],
         deprecated: isVoid(this[_deprecated]) ? void 0 : true,
         parameters: paramsDef ? paramsDef.reduce((records, item, index) => {
             const name = item.name || "param" + index;
