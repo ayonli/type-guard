@@ -3,8 +3,9 @@ import omit from "@hyurl/utils/omit";
 import pick from "@hyurl/utils/pick";
 import isVoid from "@hyurl/utils/isVoid";
 
+export type JSONSchemaType = "string" | "number" | "integer" | "boolean" | "array" | "object" | "null";
 export type JSONSchema = {
-    type: "string" | "number" | "integer" | "boolean" | "array" | "object" | "null" | string[];
+    type: JSONSchemaType | JSONSchemaType[];
     description?: string;
     default?: any;
     deprecated?: boolean;
@@ -1303,6 +1304,7 @@ export class UnionType<T> extends ValidateableType<T> {
         }
 
         let _value: T;
+        let _err: any;
 
         if (value === null || value === void 0) {
             return value;
@@ -1322,9 +1324,9 @@ export class UnionType<T> extends ValidateableType<T> {
                 }
             } catch (err) {
                 if (String(err).includes("required")) {
-                    throw err;
+                    _err ??= err;
                 }
-            } // eslint-disable-line
+            }
         }
 
         if (!options?.strict) {
@@ -1343,6 +1345,9 @@ export class UnionType<T> extends ValidateableType<T> {
                 } catch (err) { } // eslint-disable-line
             }
         }
+
+        if (_err)
+            throw _err;
 
         this.throwTypeError(path, value, this.types.map(type => {
             if (Object.is(type, String) || Object.is(type, StringType)) {
@@ -1374,18 +1379,24 @@ export class UnionType<T> extends ValidateableType<T> {
     }
 
     toJSONSchema(): JSONSchema {
-        const types: string[] = [];
+        const types: (JSONSchemaType | JSONSchemaType[])[] = [];
+        const oneOf: JSONSchema[] = [];
 
         for (const type of this.types) {
             const _schema = getJSONSchema(type);
-            types.push(_schema.type as string);
+            types.push(_schema.type);
+            oneOf.push(_schema);
         }
 
+        const _types = [...new Set(types.flat())];
+        const type = _types.length === 1 ? _types[0] : _types;
+
         return {
-            type: types,
+            type,
             description: this._remarks,
             default: this._default,
             deprecated: isVoid(this._deprecated) ? void 0 : true,
+            oneOf,
         };
     }
 }
@@ -1643,25 +1654,22 @@ export class ArrayType<T> extends CustomType<T[]> {
     }
 
     toJSONSchema(): JSONSchema {
-        const type = this.type ? (this.type[0] ?? Any) : Any;
-        const valueSchema = getJSONSchema(type);
         const schema: JSONSchema = {
             type: "array",
             description: this._remarks,
             default: this._default,
             deprecated: isVoid(this._deprecated) ? void 0 : true,
-            items: valueSchema,
             minItems: this._minItems,
             maxItems: this._maxItems,
             uniqueItems: this._uniqueItems || void 0,
         };
 
-        if (type instanceof StringEnum) {
-            schema["enum"] = type.enum() as string[];
-        } else if (type instanceof NumberEnum) {
-            schema["enum"] = type.enum() as number[];
-        } else if (type instanceof BigIntEnum) {
-            schema["enum"] = type.enum() as bigint[];
+        if (this.type.length === 0) {
+            schema["items"] = getJSONSchema(Any);
+        } else if (this.type.length === 1) {
+            schema["items"] = getJSONSchema(this.type[0]);
+        } else {
+            schema["oneOf"] = this.type.map(type => getJSONSchema(type));
         }
 
         return schema;
@@ -1752,15 +1760,14 @@ export class TupleType<T extends readonly any[]> extends ValidateableType<T> {
     }
 
     toJSONSchema(): JSONSchema {
-        const valueSchema = getJSONSchema(this.type);
         return {
             type: "array",
             description: this._remarks,
             default: this._default,
             deprecated: isVoid(this._deprecated) ? void 0 : true,
-            items: valueSchema,
             minItems: this.type.length,
             maxItems: this.type.length,
+            prefixItems: this.type.map(type => getJSONSchema(type))
         };
     }
 }
