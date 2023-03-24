@@ -2372,7 +2372,12 @@ export function validate<T>(value: ExtractInstanceType<T>, type: T, variable = "
         }
     };
 
-    return reduce(type, value, variable);
+    try {
+        return reduce(type, value, variable);
+    } catch (err) {
+        Error.captureStackTrace(err, validate);
+        throw err;
+    }
 }
 
 export type ValidationWarning = { path: string; message: string; };
