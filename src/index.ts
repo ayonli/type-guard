@@ -2375,7 +2375,7 @@ export function validate<T>(value: ExtractInstanceType<T>, type: T, variable = "
     try {
         return reduce(type, value, variable);
     } catch (err) {
-        Error.captureStackTrace(err, validate);
+        err instanceof Error && Error.captureStackTrace(err, validate);
         throw err;
     }
 }
