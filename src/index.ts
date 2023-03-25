@@ -1067,15 +1067,13 @@ export class OptionalMixedType extends MixedType {
 
 // @ts-ignore
 export class AnyType extends ValidateableType<any> {
-    protected _default = null;
-
     /** @internal Used for TypeScript to distinguish the type from similar types. */
     get [Symbol.toStringTag](): "AnyType" {
         return "AnyType";
     }
 
     get optional() {
-        return this.deriveWith({ _optional: true, _default: void 0 }, new OptionalAnyType());
+        return this.deriveWith({ _optional: true }, new OptionalAnyType());
     }
 
     // @ts-ignore
@@ -1960,7 +1958,9 @@ augmentStaticMethods(Date, DateType);
 augmentStaticMethods(Object, MixedType);
 augmentStaticMethods(Array, ArrayType);
 
+/** Any type of value except void values (`null` and `undefined`). */
 export const Any = new AnyType();
+/** `null` and `undefined`. */
 export const Void = new VoidType();
 
 export type Dict<K extends string, V> = Record<K, V>;

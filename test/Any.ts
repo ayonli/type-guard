@@ -1,5 +1,6 @@
 import * as assert from "node:assert";
 import { describe, it } from "mocha";
+import _try from "dotry";
 import { validate, Any } from "..";
 
 describe("Any", () => {
@@ -10,7 +11,7 @@ describe("Any", () => {
         assert.strictEqual(String(Any.required), "[object AnyType]");
     });
 
-    it("should validate Any against various type of values", () => {
+    it("should validate Any against various types of values", () => {
         const value1 = validate("hello, world", Any, "value1");
         assert.strictEqual(value1, "hello, world");
 
@@ -31,14 +32,27 @@ describe("Any", () => {
         const arr = ["hello", "world"];
         const value6 = validate(arr, Any, "value6");
         assert.strictEqual(value6, arr);
+    });
 
-        const value7 = validate(null, Any, "value7");
-        assert.strictEqual(value7, null);
+    it("should report error when the value is not provided", () => {
+        const [err1] = _try(() => validate(void 0, Any, "value11"));
+        assert.strictEqual(String(err1), "Error: value11 is required, but no value is given");
 
+        const [err2] = _try(() => validate(null, Any, "value7"));
+        assert.strictEqual(String(err2), "Error: value7 is required, but no value is given");
+    });
+
+    it("should validate an optional value", () => {
         const value8 = validate(void 0, Any.optional, "value8");
         assert.strictEqual(value8, void 0);
+    });
 
+    it("should validate an optional value with default value", () => {
         const value9 = validate(void 0, Any.default(null), "value9");
         assert.strictEqual(value9, null);
+
+        const date = new Date();
+        const value10 = validate(void 0, Any.default(date), "value10");
+        assert.strictEqual(value10, date);
     });
 });
