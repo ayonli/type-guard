@@ -81,14 +81,14 @@ describe("Date", () => {
         const [err1] = _try(() => validate("Not a date", Date, "date"));
         assert.strictEqual(
             String(err1),
-            "TypeError: date is expected to be of type Date, but a string is given"
+            "TypeError: date is expected to be a Date, but a string is given"
         );
 
         // @ts-ignore
         const [err2] = _try(() => validate(-1, Date, "date"));
         assert.strictEqual(
             String(err2),
-            "TypeError: date is expected to be of type Date, but a number is given"
+            "TypeError: date is expected to be a Date, but a number is given"
         );
     });
 
@@ -99,14 +99,14 @@ describe("Date", () => {
         const [err1] = _try(() => validate(_date.toISOString(), Date, "date", { strict: true }));
         assert.strictEqual(
             String(err1),
-            "TypeError: date is expected to be of type Date, but a string is given"
+            "TypeError: date is expected to be a Date, but a string is given"
         );
 
         // @ts-ignore
         const [err2] = _try(() => validate(_date.valueOf(), Date, "date", { strict: true }));
         assert.strictEqual(
             String(err2),
-            "TypeError: date is expected to be of type Date, but a number is given"
+            "TypeError: date is expected to be a Date, but a number is given"
         );
     });
 

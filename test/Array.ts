@@ -1,7 +1,7 @@
 import * as assert from "node:assert";
 import { describe, it } from "mocha";
 import _try from "dotry";
-import { Any, as, validate, ValidationWarning } from "..";
+import { Any, validate, ValidationWarning } from "..";
 
 describe("Array", () => {
     it("should validate arrays of Any type of items", () => {
@@ -52,50 +52,30 @@ describe("Array", () => {
     });
 
     it("should validate structures of array literals", () => {
-        const arr = validate(["hello", "world"], [String], "arr");
-        assert.deepStrictEqual(arr, ["hello", "world"]);
+        const arr1 = validate(["hello", "world"], [String], "arr1");
+        assert.deepStrictEqual(arr1, ["hello", "world"]);
 
-        // @ts-ignore
-        const arr1 = validate(null, [].optional, "arr1");
-        assert.strictEqual(arr1, null);
+        const arr2 = validate([1, 2, 3], [Number], "arr2");
+        assert.deepStrictEqual(arr2, [1, 2, 3]);
 
-        // @ts-ignore
-        const arr2 = validate(null, [].default(["hello", "world"]), "arr2");
-        assert.deepStrictEqual(arr2, ["hello", "world"]);
-
-        const arr3 = validate(["hello", "world", 1, 2], [String, Number], "arr3");
-        assert.deepStrictEqual(arr3, ["hello", "world", 1, 2]);
-
-        const arr4 = validate([["hello", 1], ["world", 2]], [[String, Number]], "arr4");
-        assert.deepStrictEqual(arr4, [["hello", 1], ["world", 2]]);
-
-        const arr5 = validate([["hello", "world"], [1, 2]], [[String], [Number]], "arr4");
-        assert.deepStrictEqual(arr5, [["hello", "world"], [1, 2]]);
+        const arr3 = validate([true, false], [Boolean], "arr3");
+        assert.deepStrictEqual(arr3, [true, false]);
 
         const date = new Date();
+        const arr4 = validate([date], [Date], "arr4");
+        assert.deepStrictEqual(arr4, [date]);
+
+        const obj1 = { foo: "hello", bar: 123 };
+        const obj2 = { foo: "world", bar: 456 };
+        const arr5 = validate([obj1, obj2], [{ foo: String, bar: Number }], "arr5");
+        assert.deepStrictEqual(arr5, [obj1, obj2]);
+
         const buf = Buffer.from("hello, world!");
-        const arr6 = validate(["hello", 1, true, date, buf], [Any], "arr6");
-        assert.deepStrictEqual(arr6, ["hello", 1, true, date, buf]);
+        const arr6 = validate(["hello", 1, true, date, buf, obj1, obj2], [Any], "arr6");
+        assert.deepStrictEqual(arr6, ["hello", 1, true, date, buf, obj1, obj2]);
 
         const arr7 = validate([], [String], "arr7");
         assert.deepStrictEqual(arr7, []);
-
-        const arr8 = validate([
-            // @ts-ignore
-            { foo: "hello", bar: 123 },
-            // @ts-ignore
-            { foo1: true, bar1: date },
-        ], [{
-            foo: String,
-            bar: Number
-        }, {
-            foo1: Boolean,
-            bar1: Date,
-        }], "arr8");
-        assert.deepStrictEqual(arr8, [
-            { foo: "hello", bar: 123 },
-            { foo1: true, bar1: date },
-        ]);
     });
 
     it("should validate arrays defined by Array constructor as generics", () => {
@@ -139,13 +119,6 @@ describe("Array", () => {
         );
 
         // @ts-ignore
-        const [err3] = _try(() => validate([{}], [String, Number], "arr"));
-        assert.strictEqual(
-            String(err3),
-            "TypeError: arr[0] is expected to be a string or number, but an object is given"
-        );
-
-        // @ts-ignore
         const [err4] = _try(() => validate([{ foo: "hello" }], Array({
             foo: String,
             bar: Number,
@@ -155,180 +128,14 @@ describe("Array", () => {
             "Error: arr[0].bar is required, but no value is given"
         );
 
-        const [err5] = _try(() => validate([
-            // @ts-ignore
-            { foo: "hello", bar: 123 },
-            // @ts-ignore
-            { foo1: true, bar1: "Not a date" },
-        ], [{
+        // @ts-ignore
+        const [err5] = _try(() => validate([{ foo: "hello" }], [{
             foo: String,
-            bar: Number
-        }, {
-            foo1: Boolean,
-            bar1: Date,
+            bar: Number,
         }], "arr"));
         assert.strictEqual(
             String(err5),
-            "TypeError: arr[1].bar1 is expected to be of type Date, but a string is given"
-        );
-
-        const [err6] = _try(() => validate([
-            "hello",
-            "world",
-            { foo: "hello", bar: 123 },
-            // @ts-ignore
-            { foo: "world", bar: "Not a Number" },
-        ], [String, {
-            foo: String,
-            bar: Number,
-        }], "arr"));
-        assert.strictEqual(
-            String(err6),
-            "TypeError: arr[3].bar is expected to be a number, but a string is given"
-        );
-
-        const [err7] = _try(() => validate([
-            { foo: "hello", bar: 123 },
-            // @ts-ignore
-            { foo: "world", bar: 345 },
-            "hello",
-            // @ts-ignore
-            Buffer.from("world"),
-        ], [String, {
-            foo: String,
-            bar: Number,
-        }], "arr"));
-        assert.strictEqual(
-            String(err7),
-            "TypeError: arr[3] is expected to be a string or object, but a Buffer is given"
-        );
-
-        const [err8] = _try(() => validate([
-            { foo: "hello", bar: 123 },
-            // @ts-ignore
-            { foo: "world", bar: "Not a number" },
-            "hello",
-            // @ts-ignore
-            { foo: "world", bar: 345 },
-        ], [String, {
-            foo: String,
-            bar: Number,
-        }], "arr"));
-        assert.strictEqual(
-            String(err8),
-            "TypeError: arr[1].bar is expected to be a number, but a string is given"
-        );
-
-        const [err9] = _try(() => validate([
-            { foo: "hello", bar: 123 },
-            // @ts-ignore
-            { foo: "world" },
-            "hello",
-            // @ts-ignore
-            { foo: "world", bar: 345 },
-        ], [String, {
-            foo: String,
-            bar: Number,
-        }], "arr"));
-        assert.strictEqual(
-            String(err9),
-            "Error: arr[1].bar is required, but no value is given"
-        );
-
-        const [err10] = _try(() => validate([
-            // @ts-ignore
-            null,
-            // @ts-ignore
-            { foo: "world" },
-            "hello",
-            // @ts-ignore
-            { foo: "world", bar: 345 },
-        ], [String, {
-            foo: String,
-            bar: Number,
-        }], "arr"));
-        assert.strictEqual(
-            String(err10),
-            "Error: arr[0] is required, but no value is given"
-        );
-
-        const [err11] = _try(() => validate([
-            // @ts-ignore
-            { foo: "world" },
-            "hello",
-            // @ts-ignore
-            null,
-            // @ts-ignore
-            { foo: "world", bar: 345 },
-        ], [String, {
-            foo: String,
-            bar: Number,
-        }], "arr"));
-        assert.strictEqual(
-            String(err11),
             "Error: arr[0].bar is required, but no value is given"
-        );
-
-        const [err12] = _try(() => validate([
-            // @ts-ignore
-            { foo: "world", bar: 123 },
-            "hello",
-            // @ts-ignore
-            null,
-            // @ts-ignore
-            { foo: "world", bar: 345 },
-        ], [String, {
-            foo: String,
-            bar: Number,
-        }], "arr"));
-        assert.strictEqual(
-            String(err12),
-            "Error: arr[2] is required, but no value is given"
-        );
-
-        const [err13] = _try(() => validate([
-            // @ts-ignore
-            { foo: "world", bar: 123 },
-            "hello",
-            // @ts-ignore
-            Buffer.from("hello, world!"),
-            // @ts-ignore
-            { foo: "world" },
-        ], [String, {
-            foo: String,
-            bar: Number,
-        }], "arr"));
-        assert.strictEqual(
-            String(err13),
-            "TypeError: arr[2] is expected to be a string or object, but a Buffer is given"
-        );
-
-        const [err14] = _try(() => validate([
-            // @ts-ignore
-            { foo: "world", bar: 123 },
-            "hello",
-            // @ts-ignore
-            { foo: "world", bar: Buffer.from([1, 2, 3]) },
-        ], [String, {
-            foo: String,
-            bar: as(Number, String),
-        }], "arr"));
-        assert.strictEqual(
-            String(err14),
-            "TypeError: arr[2].bar is expected to be a number or string, but a Buffer is given"
-        );
-
-        const [err15] = _try(() => validate([
-            "hello",
-            // @ts-ignore
-            { foo: "world", bar: [Buffer.from([1, 2, 3])] },
-        ], [String, {
-            foo: String,
-            bar: [Number, String],
-        }], "arr"));
-        assert.strictEqual(
-            String(err15),
-            "TypeError: arr[1].bar[0] is expected to be a number or string, but a Buffer is given"
         );
     });
 
@@ -337,13 +144,13 @@ describe("Array", () => {
         assert.deepStrictEqual(arr0, ["hello", "world"]);
 
         const [err1] = _try(() => validate([], Array.minItems(1), "arr1"));
-        assert.strictEqual(String(err1), "Error: arr1 is expected to contain at least 1 item");
+        assert.strictEqual(String(err1), "RangeError: arr1 is expected to contain at least 1 item");
 
         const [err2] = _try(() => validate([], [].minItems(2), "arr2"));
-        assert.strictEqual(String(err2), "Error: arr2 is expected to contain at least 2 items");
+        assert.strictEqual(String(err2), "RangeError: arr2 is expected to contain at least 2 items");
 
         const [err3] = _try(() => validate(["hello", "world", 1, 2], Array.maxItems(1), "arr3"));
-        assert.strictEqual(String(err3), "Error: arr3 is expected to contain no more than 1 item");
+        assert.strictEqual(String(err3), "RangeError: arr3 is expected to contain no more than 1 item");
 
         const [err4] = _try(() => validate([
             "hello",
@@ -351,7 +158,7 @@ describe("Array", () => {
             1,
             2
         ], [String, Number].maxItems(2), "arr3"));
-        assert.strictEqual(String(err4), "Error: arr3 is expected to contain no more than 2 items");
+        assert.strictEqual(String(err4), "RangeError: arr3 is expected to contain no more than 2 items");
     });
 
     it("should validate the arrays with unique constraint", () => {

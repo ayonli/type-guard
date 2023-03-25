@@ -263,7 +263,7 @@ describe("Object", () => {
         }, "obj3"));
         assert.strictEqual(
             String(err1),
-            "Error: obj3 must contain one of these properties: 'foo', 'bar'"
+            "Error: obj3 is expected to contain one of these properties: 'foo', 'bar'"
         );
     });
 
@@ -296,7 +296,7 @@ describe("Object", () => {
         }, "obj4"));
         assert.strictEqual(
             String(err1),
-            "Error: obj4 must contain property 'foo1' when property 'foo' is given"
+            "Error: obj4 is expected to contain property 'foo1' when property 'foo' is given"
         );
     });
 
@@ -320,11 +320,11 @@ describe("Object", () => {
         assert.deepStrictEqual(warnings, [
             {
                 path: "obj1",
-                message: "obj1 must contain one of these properties: 'foo', 'bar'",
+                message: "obj1 is expected to contain one of these properties: 'foo', 'bar'",
             },
             {
                 path: "obj2",
-                message: "obj2 must contain property 'foo1' when property 'foo' is given",
+                message: "obj2 is expected to contain property 'foo1' when property 'foo' is given",
             }
         ] as ValidationWarning[]);
     });

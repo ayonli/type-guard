@@ -1,7 +1,7 @@
 import * as assert from "node:assert";
 import { describe, it } from "mocha";
 import _try from "dotry";
-import { validate, Dict, as, ValidationWarning } from "..";
+import { validate, Dict, as, ValidationWarning, Any } from "..";
 
 describe("Dict", () => {
     it("should import Dict type", () => {
@@ -130,5 +130,28 @@ describe("Dict", () => {
                 message: "dict1 is expected to contain only these properties: 'foo', 'bar'",
             }
         ] as ValidationWarning[]);
+    });
+
+    it("should emit deprecation warning", () => {
+        const warnings: ValidationWarning[] = [];
+
+        // @ts-ignore
+        const dict = validate({
+            str: "hello, world!",
+            num: 123,
+            bool: true,
+        }, Dict(String, Any).deprecated("will no longer effect"), "dict", {
+            warnings,
+        });
+        assert.deepStrictEqual(dict, {
+            str: "hello, world!",
+            num: 123,
+            bool: true,
+        });
+
+        assert.deepStrictEqual(warnings, [{
+            path: "dict",
+            message: "dict is deprecated: will no longer effect"
+        }] as ValidationWarning[]);
     });
 });

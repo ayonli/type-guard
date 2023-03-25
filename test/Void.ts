@@ -1,7 +1,7 @@
 import * as assert from "node:assert";
 import { describe, it } from "mocha";
 import _try from "dotry";
-import { validate, Void } from "..";
+import { validate, ValidationWarning, Void } from "..";
 
 describe("Void", () => {
     it("should import Void type", () => {
@@ -26,5 +26,20 @@ describe("Void", () => {
     it("should validate Void of default value null", () => {
         const nil3 = validate(void 0, Void.default(null), "nil3");
         assert.strictEqual(nil3, null);
+    });
+
+    it("should emit deprecation warning", () => {
+        const warnings: ValidationWarning[] = [];
+
+        // @ts-ignore
+        const nil = validate(null, Void.deprecated("will no longer effect"), "nil", {
+            warnings,
+        });
+        assert.strictEqual(nil, null);
+
+        assert.deepStrictEqual(warnings, [{
+            path: "nil",
+            message: "nil is deprecated: will no longer effect"
+        }] as ValidationWarning[]);
     });
 });

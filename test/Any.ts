@@ -1,7 +1,7 @@
 import * as assert from "node:assert";
 import { describe, it } from "mocha";
 import _try from "dotry";
-import { validate, Any } from "..";
+import { validate, Any, ValidationWarning } from "..";
 
 describe("Any", () => {
     it("should import Any type", () => {
@@ -11,7 +11,7 @@ describe("Any", () => {
         assert.strictEqual(String(Any.required), "[object AnyType]");
     });
 
-    it("should validate Any against various types of values", () => {
+    it("should validate Any against values of various types", () => {
         const value1 = validate("hello, world", Any, "value1");
         assert.strictEqual(value1, "hello, world");
 
@@ -54,5 +54,20 @@ describe("Any", () => {
         const date = new Date();
         const value10 = validate(void 0, Any.default(date), "value10");
         assert.strictEqual(value10, date);
+    });
+
+    it("should emit deprecation warning", () => {
+        const warnings: ValidationWarning[] = [];
+
+        // @ts-ignore
+        const value = validate("hello, world!", Any.deprecated("will no longer effect"), "value", {
+            warnings,
+        });
+        assert.strictEqual(value, "hello, world!");
+
+        assert.deepStrictEqual(warnings, [{
+            path: "value",
+            message: "value is deprecated: will no longer effect"
+        }] as ValidationWarning[]);
     });
 });

@@ -1128,14 +1128,24 @@ export class VoidType extends ValidateableType<void> {
     }
 
     /** @internal */
-    validate(path: string, value: any): void {
+    validate(path: string, value: any, options: {
+        warnings?: ValidationWarning[];
+    } = null): void {
         if (value !== null && value !== void 0) {
             this.throwTypeError(path, value, "void");
         } else if (this._default !== void 0) {
             return this._default;
-        } else {
-            return value;
+        } else if (!isVoid(this._deprecated) && options?.warnings) {
+            const message = this._deprecated
+                ? `${path} is deprecated: ${this._deprecated}`
+                : `${path} is deprecated`;
+
+            if (!options.warnings.some(item => item.path === path && item.message === message)) {
+                options.warnings.push({ path, message });
+            }
         }
+
+        return value;
     }
 
     toJSONSchema(): JSONSchema {
@@ -1640,7 +1650,7 @@ export class ArrayType<T> extends CustomType<T[]> {
 
         if (this._minItems && _value.length < this._minItems) {
             const count = this._minItems === 1 ? "1 item" : `${this._minItems} items`;
-            err = new Error(`${path} is expected to contain at least ${count}`);
+            err = new RangeError(`${path} is expected to contain at least ${count}`);
         } else if (this._maxItems && _value.length > this._maxItems) {
             if (options?.removeUnknownProps) {
                 const offset = this._maxItems;
@@ -1659,7 +1669,7 @@ export class ArrayType<T> extends CustomType<T[]> {
                 }
             } else {
                 const count = this._maxItems === 1 ? "1 item" : `${this._maxItems} items`;
-                err = new Error(`${path} is expected to contain no more than ${count}`);
+                err = new RangeError(`${path} is expected to contain no more than ${count}`);
             }
         } else if (this._uniqueItems && new Set(_value).size !== _value.length) {
             err = new Error(`${path} is expected to contain unique items`);
@@ -1766,8 +1776,8 @@ export class TupleType<T extends readonly any[]> extends ValidateableType<T> {
             if (options?.removeUnknownProps) {
                 if (!options?.suppress) {
                     const target = end === offset
-                        ? `element ${path}[${offset}] has`
-                        : `elements ${path}[${offset}...${end}] have`;
+                        ? `item ${path}[${offset}] has`
+                        : `items ${path}[${offset}...${end}] have`;
 
                     options?.warnings?.push({
                         path,
@@ -1776,7 +1786,7 @@ export class TupleType<T extends readonly any[]> extends ValidateableType<T> {
                 }
             } else {
                 const count = this.type.length === 1 ? "1 item" : `${this.type.length} items`;
-                const err = new Error(`${path} must contain no more than ${count}`);
+                const err = new RangeError(`${path} is expected to contain no more than ${count}`);
 
                 if (options?.suppress) {
                     options?.warnings?.push({ path, message: err.message });
@@ -2092,9 +2102,7 @@ function read(text: string | string[], noArticle = false): string {
         return join([read(text[0]), ...text.slice(1)], "or");
     } else if (noArticle || ["any", "unknown", "null", "undefined", "void"].includes(text)) {
         return text;
-    } else if (/^[A-Z]/.test(text)) {
-        return "of type " + text;
-    } else if (["a", "e", "i", "o", "u"].includes(text[0])) {
+    } else if (["a", "e", "i", "o", "u"].includes(text[0].toLowerCase())) {
         return "an " + text;
     } else {
         return "a " + text;
@@ -2351,7 +2359,8 @@ export function validate<T>(value: ExtractInstanceType<T>, type: T, variable = "
                         otherProps.every(_prop => isEmptyValue(records[_prop]))
                     ) {
                         const props = [prop, ...otherProps].map(p => `'${p}'`).join(", ");
-                        const message = `${path} must contain one of these properties: ${props}`;
+                        const message = `${path} is expected to contain `
+                            + `one of these properties: ${props}`;
 
                         if (options?.suppress) {
                             options.warnings?.push({ path, message });
@@ -2371,7 +2380,7 @@ export function validate<T>(value: ExtractInstanceType<T>, type: T, variable = "
                             const others = missing.length === 1
                                 ? `property '${missing[0]}'`
                                 : `properties ${join(missing.map(p => `'${p}'`))}`;
-                            const message = `${path} must contain ${others} `
+                            const message = `${path} is expected to contain ${others} `
                                 + `when property '${prop}' is given`;
 
                             if (options?.suppress) {
@@ -2951,238 +2960,3 @@ Function.prototype.getJSONSchema = function (options) {
         }) : null,
     } : null;
 };
-
-// const test = wrap({ foo: String, bar: Number.optional }, Number)(({ foo, bar }) => {
-//     if (bar) {
-//         return foo + String(bar);
-//     } else {
-//         return foo;
-//     }
-// });
-
-// console.log(test({ foo: "Hello", bar1: "123" }));
-
-// console.log(validate({ foo: "hello, world", bar: 123 }, { foo: String }, "$", { removeUnknownProps: true }));
-
-// const type = {
-//     str: String.remarks("This is a string"),
-//     str1: String.enum(["a", "b", "c"] as const),
-//     str2: String.default(""),
-//     str3: String.optional.enum(["a", "b", "c"] as const),
-//     str4: String.enum(["a", "b", "c"] as const).optional,
-//     num: Number,
-//     num1: Number.enum([1, 2, 3] as const),
-//     num2: Number.optional,
-//     num3: Number.optional.enum([1, 2, 3] as const),
-//     num4: Number.enum([1, 2, 3] as const).optional,
-//     int: BigInt,
-//     int1: BigInt.enum([1n, 2n, 3n] as const),
-//     int2: BigInt.optional,
-//     int3: BigInt.optional.enum([1n, 2n, 3n] as const),
-//     int4: BigInt.enum([1n, 2n, 3n] as const).optional,
-//     bool: Boolean,
-//     bool1: Boolean.optional,
-//     date: Date,
-//     date1: Date.optional,
-//     date2: Date.optional.required,
-//     buf: as(Buffer).optional,
-//     custom: as(Number).optional,
-//     union: as(Number, String).optional,
-//     obj: Object,
-//     any: Any,
-//     arr: [as(String, Number)],
-//     arr1: [String.enum(["foo", "bar"] as const)],
-//     arr2: [String, Number],
-//     arr3: as([String, Number, String] as const),
-//     // arr4: ([String, Number, Boolean] as const),
-//     // arr5: ([String, Number, Boolean, String] as const),
-//     deep: as({
-//         str: String,
-//         str1: String.enum(["a", "b", "c"] as const),
-//         str2: String.optional,
-//         str3: String.optional.enum(["a", "b", "c"] as const),
-//         num: NumberType,
-//         num1: Number.enum([1, 2, 3] as const),
-//         num2: Number.optional,
-//         num3: Number.optional.enum([1, 2, 3] as const),
-//         union: as(Number, Boolean).optional,
-//     }).optional,
-//     dict: Dict(String, Number).optional,
-//     dict1: Dict(String.enum(["foo", "bar"] as const), Number).optional,
-//     dict2: Dict(String.optional.enum(["foo", "bar"] as const), String).optional,
-//     nil: Void,
-// };
-
-// console.log(JSON.stringify(createJSONSchema(type, {
-//     $id: "https://example.com/ExampleType.schema.json",
-//     title: "ExampleType",
-//     description: "This is just an example",
-// }), null, "    "));
-
-// class Example {
-//     @remarks("Echo what you input")
-//     @param("text", String, "the text you want to echo")
-//     @returns(String, "returns what you input")
-//     echo(text: string) {
-//         return text;
-//     }
-// }
-
-// console.log(new Example().echo.getJSONSchema());
-
-// const myType = ensured(type, ["union", "custom"]);
-
-// const value: ExtractInstanceType<typeof type> = null;
-
-// value.arr1;
-
-// type Arr = readonly [number, string];
-
-// value.custom;
-
-// value.deep.num;
-
-// if (typeof value.deep === "string") {
-
-// } else {
-//     value.arr;
-// }
-
-
-// console.log(validate([1, 2, "foo", "bar", { foo: "a" }], [Number, String, Boolean, { foo: String.optional.enum(["a", "b", "c"] as const) }]));
-
-// type _ExtractInstanceType<T> = T extends UnionType<infer U> ? U : T;
-
-// const Union = as(String, Number).optional;
-// const union: ExtractInstanceType<typeof Union> = null;
-
-// console.log(validate({ null: "hollo" }, Dict(String.optional, as(String, Number))));
-
-// export const QueryParams = as({
-//     page: Number.optional,
-//     pageSize: Number.optional,
-//     filters: Dict(String, Any).optional,
-//     orders: Dict(String.enum(["foo", "bar"] as const), String.enum(["asc", "desc"] as const)),
-//     fields: [String].optional,
-//     $project: Dict(String, Boolean).optional,
-// });
-// type QueryParams = ExtractInstanceType<typeof QueryParams>;
-// let params: QueryParams = { orders: { foo: "asc", bar1: "desc" } };
-
-// params = validate(params, QueryParams);
-
-
-// console.log(params);
-
-// const type = {
-//     foo: String.optional,
-//     bar: String.optional,
-//     bar1: String.optional.alternatives("foo", "bar", "bar2").associates("bar2", "bar3"),
-//     bar2: String.optional,
-//     bar3: as(String, Number, Date).optional,
-// };
-// let value = { bar1: "123" };
-
-// console.log(validate(value, type));
-
-// class Example {
-//     @param(Date)
-//     @returns(String)
-//     @throws(ReferenceError, TypeError)
-//     transform(date) {
-//         return date.toString();
-//         // throw new TypeError("something is wrong");
-//     }
-// }
-
-// (async () => {
-//     const example = new Example();
-//     const value = example.transform(new Date().toISOString());
-
-//     console.log(value);
-// })().catch(err => {
-//     console.error(err);
-// });
-
-// const type = {
-//     any: as(as(String, Number)).default("abc"),
-//     dict: Dict(String, Number).default({ foo: 123 }),
-// };
-
-// console.log(validate({}, type));
-
-// class Example {
-
-// }
-
-// const Type = {
-//     my: Object.optional
-// };
-
-// const warnings: ValidationWarning[] = [];
-
-// console.log(validate({
-//     foo: ["A", 1],
-//     bar: ["B", 2, 3, 4],
-//     str: "ABC",
-//     union1: "ABCD",
-//     union2: 123,
-//     dict2: { }
-// }, {
-//     foo: as([String, Number] as const),
-//     bar: [String, Number],
-//     str: as(String),
-//     union1: as(String, Number),
-//     union2: as(String, Number),
-//     dict2: Dict(String.enum(["foo", "bar"] as const).optional, String),
-// }, "variable", { warnings, removeUnknownProps: true }));
-
-
-// console.log(warnings);
-
-// const Type = {
-//     str: String.optional.enum(["A", "B", "C"] as const),
-// };
-// type Type = ExtractInstanceType<typeof Type>;
-
-
-// console.log(validate({
-//     arr1: [1, 2, 3],
-//     // @ts-ignore
-//     arr2: [1, 2, 3, 3, "hello", "world"],
-//     // @ts-ignore
-//     tuple: [1, 2, 3],
-// }, {
-//     arr1: [Number],
-//     arr2: [Number, String].maxItems(6).uniqueItems,
-//     tuple: as([String, Number] as const),
-// }, "$", { removeUnknownProps: true }));
-
-// console.log(validate("1,2,3", [String, Number], "$", { removeUnknownProps: true }));
-
-// const Article = {
-//     id: Number.remarks("The ID of article"),
-//     title: String.remarks("The title of the article"),
-//     content: String.remarks("The content of the article"),
-//     status: String.enum(["created", "published", "archived"] as const).remarks("The status of the article"),
-//     tags: [String].optional.remarks("The tags of the article"),
-// };
-
-// type Article = ExtractInstanceType<typeof Article>; // type declaration
-
-// const ArticleSchema = createJSONSchema(Article, { // and JSON Schema
-//     $id: "https://myapi.com/article.schema.json",
-//     title: "Article",
-//     description: "",
-// });
-
-// class ArticleController {
-//     @remarks("Create a new article")
-//     @param(Article, "article")
-//     @returns(Article)
-//     async create(article: Article) {
-//         return article;
-//     }
-// }
-
-// console.log(JSON.stringify(ArticleController.prototype.create.getJSONSchema(), null, "    "));
