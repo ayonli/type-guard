@@ -5,6 +5,7 @@ import { as, validate, ValidationWarning } from "..";
 
 describe("TupleType", () => {
     it("should validate tuples with as() function", () => {
+        // @ts-ignore
         const value1 = validate(["hello, world", 123], as([String, Number] as const), "value1");
         assert.deepStrictEqual(value1, ["hello, world", 123]);
 

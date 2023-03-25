@@ -6,6 +6,7 @@ import { as, validate, ValidationWarning } from "..";
 describe("CustomType", () => {
     it("should validate values of custom types without as() function", () => {
         const buf = Buffer.from("hello, world");
+        // @ts-ignore
         const buf1 = validate(buf, Buffer, "buf1");
         assert.strictEqual(buf1, buf);
 

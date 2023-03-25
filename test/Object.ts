@@ -6,6 +6,7 @@ import { as, validate, ValidationWarning } from "..";
 describe("Object", () => {
     it("should validate values of mixed types", () => {
         const obj = { foo: "hello", bar: "world" };
+        // @ts-ignore
         const obj1 = validate(obj, Object, "obj1");
         assert.strictEqual(obj1, obj);
 

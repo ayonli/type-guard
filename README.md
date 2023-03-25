@@ -25,6 +25,7 @@ Runtime type checking for JavaScript variables and function parameters.
     - [Example of UnionType and TupleType](#example-of-uniontype-and-tupletype)
 - [Decorators](#decorators)
 - [Validation](#validation)
+    - [Dealing With TS2589 Error](#dealing-with-ts2589-error)
 - [Set Warning Handler](#set-warning-handler)
 - [Advanced Usage](#advanced-usage)
     - [Extending Types or Intersection Types](#extending-types-or-intersection-types)
@@ -434,6 +435,7 @@ NOTE: Both `@param()` and `@returns()` will set `removeUnknownProps` to `true`,
 import { validate, as } from "@hyurl/type-guard";
 
 const str = "Hello, World!";
+// @ts-ignore
 validate(str, String, "str"); // => "Hello, World!";
 validate(str, Number, "str"); // throw type error
 
@@ -457,6 +459,21 @@ validate(obj, {
     }).optional,
 }, "obj"); // => { str: "Hello, World!", num: [123], bool: false }
 ```
+
+### Dealing With TS2589 Error
+
+When coding in TypeScript and calling the `validate()` function, or using the
+`ExtractInstanceType<T>` (real reason) utility type, the compiler may throw an
+error:
+
+```
+error TS2589: Type instantiation is excessively deep and possibly infinite.
+```
+
+This error just tells that the TypeScript compiler detects some reference is
+very deep, and to prevent infinite call stack (which is not), it stops the
+compilation process, we can simply use `// @ts-ignore` directive to bypass the
+error and continue, just as the above example shows.
 
 ## Set Warning Handler
 

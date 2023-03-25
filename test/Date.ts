@@ -6,6 +6,7 @@ import { validate, ValidationWarning } from "..";
 describe("Date", () => {
     it("should validate a Date instance", () => {
         const _date = new Date();
+        // @ts-ignore
         const date = validate(_date, Date, "date");
         assert.strictEqual(date, _date);
     });

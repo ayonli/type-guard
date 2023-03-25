@@ -5,6 +5,7 @@ import { validate, ValidationWarning } from "..";
 
 describe("Boolean", () => {
     it("should validate boolean values", () => {
+        // @ts-ignore
         const bool1 = validate(true, Boolean, "bool1");
         assert.strictEqual(bool1, true);
 

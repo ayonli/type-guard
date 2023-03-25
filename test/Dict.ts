@@ -13,6 +13,7 @@ describe("Dict", () => {
 
     it("should validate Dict against objects", () => {
         const obj1 = { foo: "hello", bar: "world" } as const;
+        // @ts-ignore
         const dict1 = validate(obj1, Dict(String, String), "dict1");
         assert.deepStrictEqual(dict1, obj1);
 

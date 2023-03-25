@@ -5,6 +5,7 @@ import { validate, ValidationWarning } from "..";
 
 describe("Number", () => {
     it("should validate a number", () => {
+        // @ts-ignore
         const num = validate(123, Number, "num");
         assert.strictEqual(num, 123);
 

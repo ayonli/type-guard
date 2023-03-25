@@ -5,6 +5,7 @@ import { as, validate, ValidationWarning, Void } from "..";
 
 describe("UnionType", () => {
     it("should validate values of union types with as() function", () => {
+        // @ts-ignore
         const value1 = validate("hello, world!", as(String, Number, Boolean), "str");
         assert.strictEqual(value1, "hello, world!");
 

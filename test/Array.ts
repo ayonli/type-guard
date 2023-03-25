@@ -5,6 +5,7 @@ import { Any, validate, ValidationWarning } from "..";
 
 describe("Array", () => {
     it("should validate arrays of Any type of items", () => {
+        // @ts-ignore
         const arr1 = validate([], Array, "arr1");
         assert.deepStrictEqual(arr1, []);
 

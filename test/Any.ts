@@ -12,6 +12,7 @@ describe("Any", () => {
     });
 
     it("should validate Any against values of various types", () => {
+        // @ts-ignore
         const value1 = validate("hello, world", Any, "value1");
         assert.strictEqual(value1, "hello, world");
 

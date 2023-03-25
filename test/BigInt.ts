@@ -5,6 +5,7 @@ import { validate, ValidationWarning } from "..";
 
 describe("BigInt", () => {
     it("should validate a bigint", () => {
+        // @ts-ignore
         const num = validate(BigInt(123), BigInt, "num");
         assert.strictEqual(num, BigInt(123));
 

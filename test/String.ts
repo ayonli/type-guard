@@ -5,6 +5,7 @@ import { validate, ValidationWarning } from "..";
 
 describe("String", () => {
     it("should validate a string", () => {
+        // @ts-ignore
         const str = validate("hello, world!", String, "str");
         assert.strictEqual(str, "hello, world!");
     });

@@ -1180,12 +1180,7 @@ export class CustomType<T> extends ValidateableType<T> {
     }
 
     // @ts-ignore
-    default(value: T extends ValidateableType<infer U>
-        ? ExtractInstanceType<U>
-        : T extends ValidateableType<infer U>[] ? ExtractInstanceType<U>[]
-        : T extends readonly ValidateableType<infer U>[] ? readonly ExtractInstanceType<U>[]
-        : T
-    ) {
+    default(value: ExtractInstanceType<T>) {
         return this.deriveWith({ _optional: true, _default: value }, new OptionalCustomType<T>(this.type));
     }
 
@@ -1287,8 +1282,8 @@ export class OptionalCustomType<T> extends CustomType<T> {
     }
 }
 
-export class UnionType<T> extends ValidateableType<T> {
-    constructor(public types: T[]) {
+export class UnionType<T extends any[]> extends ValidateableType<T[]> {
+    constructor(public types: T) {
         super();
     }
 
@@ -1302,7 +1297,7 @@ export class UnionType<T> extends ValidateableType<T> {
     }
 
     // @ts-ignore
-    default(value: T) {
+    default(value: ExtractInstanceType<T>[0]) {
         return this.deriveWith({ _optional: true, _default: value }, new OptionalUnionType(this.types));
     }
 
@@ -1434,7 +1429,7 @@ export class UnionType<T> extends ValidateableType<T> {
     }
 }
 
-export class OptionalUnionType<T> extends UnionType<T> {
+export class OptionalUnionType<T extends any[]> extends UnionType<T> {
     /** @internal Used for TypeScript to distinguish the type from similar types. */
     // @ts-ignore
     get [Symbol.toStringTag](): "OptionalUnionType" {
@@ -1598,7 +1593,7 @@ export class ArrayType<T> extends CustomType<T[]> {
     }
 
     // @ts-ignore
-    default(value: T) {
+    default(value: ExtractInstanceType<T>[]) {
         return this.deriveWith({ _optional: true, _default: value }, new OptionalArrayType(this.type));
     }
 
@@ -1739,7 +1734,7 @@ export class TupleType<T extends readonly any[]> extends ValidateableType<T> {
     }
 
     // @ts-ignore
-    default(value: T) {
+    default(value: ExtractInstanceType<T>) {
         return this.deriveWith({ _optional: true, _default: value }, new OptionalTupleType(this.type));
     }
 
@@ -1843,8 +1838,8 @@ export type OptionalTypes = OptionalStringType
     | OptionalMixedType
     | OptionalAnyType
     | OptionalCustomType<any>
-    | OptionalUnionType<any>
-    | OptionalTupleType<any>
+    | OptionalUnionType<any[]>
+    | OptionalTupleType<any[]>
     | OptionalDictType<IndexableType, any>
     | OptionalArrayType<any>
     | VoidType;
@@ -1877,10 +1872,10 @@ export type ExtractInstanceType<T> = T extends OptionalStringEnum<infer U> ? (U 
     : T extends readonly [infer A, infer B, infer C] ? readonly [ExtractInstanceType<A>, ExtractInstanceType<B>, ExtractInstanceType<C>]
     : T extends readonly [infer A, infer B, infer C, infer D] ? readonly [ExtractInstanceType<A>, ExtractInstanceType<B>, ExtractInstanceType<C>, ExtractInstanceType<D>]
     : T extends readonly [...infer U] ? readonly [...ExtractInstanceType<U>]
-    : T extends (UnionType<infer U> | OptionalUnionType<infer U>) ? U
-    : T extends (ArrayType<infer U> | OptionalArrayType<infer U>) ? (U extends (infer V)[] ? ExtractInstanceType<V>[] : U[])
-    : T extends (TupleType<infer U> | OptionalTupleType<infer U>) ? (U extends (infer V)[] ? ExtractInstanceType<V>[] : U)
-    : T extends (CustomType<infer U> | OptionalCustomType<infer U>) ? (U extends (infer V)[] ? ExtractInstanceType<V>[] : U)
+    : T extends (UnionType<infer U> | OptionalUnionType<infer U>) ? ExtractInstanceType<U>[0]
+    : T extends (ArrayType<infer U> | OptionalArrayType<infer U>) ? ExtractInstanceType<U>[]
+    : T extends (TupleType<infer U> | OptionalTupleType<infer U>) ? ExtractInstanceType<U>
+    : T extends (CustomType<infer U> | OptionalCustomType<infer U>) ? ExtractInstanceType<U>
     : T extends (DictType<infer K, infer V> | OptionalDictType<infer K, infer V>) ? Record<ExtractInstanceType<K>, ExtractInstanceType<V>>
     : T extends Record<string, unknown> ? (
         {
@@ -2219,9 +2214,9 @@ export function as(type: DateConstructor): DateConstructor;
 export function as(type: ObjectConstructor): ObjectConstructor;
 export function as(type: ArrayConstructor): ArrayConstructor;
 export function as<T extends ValidateableType<any>>(type: T): T;
-export function as<T extends readonly any[]>(type: T): TupleType<ExtractInstanceType<T>>;
-export function as<T>(type: T): CustomType<ExtractInstanceType<T>>;
-export function as<T extends any[]>(...types: T): UnionType<ExtractInstanceType<T>[0]>;
+export function as<T extends readonly any[]>(type: T): TupleType<T>;
+export function as<T>(type: T): CustomType<T>;
+export function as<T extends any[]>(...types: T): UnionType<T>;
 export function as<T>(...types: (T | Constructor<T>)[]) {
     if (types.length === 1) {
         const [type] = types;
