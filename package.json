@@ -5,6 +5,7 @@
   "main": "dist/index.js",
   "types": "src/index.ts",
   "scripts": {
+    "build": "npx tsc",
     "test": "npx mocha -r ts-node/register test/*.ts"
   },
   "repository": {
