@@ -62,7 +62,7 @@ describe("Dict", () => {
             err3 = err;
             assert.strictEqual(
                 String(err),
-                "Error: dict3 must contain only these properties: 'foo', 'bar'"
+                "RangeError: dict3 is expected to contain only these properties: 'foo', 'bar'"
             );
         }
         assert(err3 instanceof Error);
@@ -78,7 +78,7 @@ describe("Dict", () => {
             err4 = err;
             assert.strictEqual(
                 String(err),
-                "Error: dict4.foo1 must be one of these values: 'hello', 'world'"
+                "RangeError: dict4.foo1 is expected to be one of these values: 'hello', 'world'"
             );
         }
         assert(err4 instanceof Error);
@@ -135,7 +135,7 @@ describe("Dict", () => {
         assert.deepStrictEqual(warnings, [
             {
                 path: "dict1",
-                message: "dict1 must contain only these properties: 'foo', 'bar'",
+                message: "dict1 is expected to contain only these properties: 'foo', 'bar'",
             }
         ] as ValidationWarning[]);
     });

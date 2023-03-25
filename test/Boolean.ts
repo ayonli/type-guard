@@ -1,5 +1,6 @@
 import * as assert from "node:assert";
 import { describe, it } from "mocha";
+import _try from "dotry";
 import { validate, ValidationWarning } from "..";
 
 describe("Boolean", () => {
@@ -9,6 +10,16 @@ describe("Boolean", () => {
 
         const bool2 = validate(false, Boolean, "bool2");
         assert.strictEqual(bool2, false);
+    });
+
+    it("should report error when the boolean is not provided", () => {
+        // @ts-ignore
+        const [err1] = _try(() => validate(null, Boolean, "bool"));
+        assert.strictEqual(String(err1), "Error: bool is required, but no value is given");
+
+        // @ts-ignore
+        const [err2] = _try(() => validate(void 0, Boolean, "bool"));
+        assert.strictEqual(String(err2), "Error: bool is required, but no value is given");
     });
 
     it("should validate an optional boolean", () => {
@@ -29,28 +40,6 @@ describe("Boolean", () => {
         // @ts-ignore
         const bool2 = validate(void 0, Boolean.default(true), "bool2");
         assert.strictEqual(bool2, true);
-    });
-
-    it("should report error when the boolean is not provided", () => {
-        try {
-            // @ts-ignore
-            validate(null, Boolean, "bool");
-        } catch (err) {
-            assert.strictEqual(
-                String(err),
-                "Error: bool is required, but no value is given"
-            );
-        }
-
-        try {
-            // @ts-ignore
-            validate(void 0, Boolean, "bool");
-        } catch (err) {
-            assert.strictEqual(
-                String(err),
-                "Error: bool is required, but no value is given"
-            );
-        }
     });
 
     it("should convert compatible values to booleans and emit warnings", () => {
@@ -93,47 +82,35 @@ describe("Boolean", () => {
     });
 
     it("should throw error when the value is not compatible", () => {
-        try {
-            // @ts-ignore
-            validate("Yes", Boolean, "bool");
-        } catch (err) {
-            assert.strictEqual(
-                String(err),
-                "TypeError: bool is expected to be a boolean, but a string is given"
-            );
-        }
+        // @ts-ignore
+        const [err1] = _try(() => validate("Yes", Boolean, "bool"));
+        assert.strictEqual(
+            String(err1),
+            "TypeError: bool is expected to be a boolean, but a string is given"
+        );
 
-        try {
-            // @ts-ignore
-            validate(10, Boolean, "bool");
-        } catch (err) {
-            assert.strictEqual(
-                String(err),
-                "TypeError: bool is expected to be a boolean, but a number is given"
-            );
-        }
+        // @ts-ignore
+        const [err2] = _try(() => validate(10, Boolean, "bool"));
+        assert.strictEqual(
+            String(err2),
+            "TypeError: bool is expected to be a boolean, but a number is given"
+        );
     });
 
     it("should not convert type when in strict mode", () => {
-        try {
-            // @ts-ignore
-            validate("true", Boolean, "bool", { strict: true });
-        } catch (err) {
-            assert.strictEqual(
-                String(err),
-                "TypeError: bool is expected to be a boolean, but a string is given"
-            );
-        }
+        // @ts-ignore
+        const [err1] = _try(() => validate("true", Boolean, "bool", { strict: true }));
+        assert.strictEqual(
+            String(err1),
+            "TypeError: bool is expected to be a boolean, but a string is given"
+        );
 
-        try {
-            // @ts-ignore
-            validate(1, Boolean, "bool", { strict: true });
-        } catch (err) {
-            assert.strictEqual(
-                String(err),
-                "TypeError: bool is expected to be a boolean, but a number is given"
-            );
-        }
+        // @ts-ignore
+        const [err2] = _try(() => validate(1, Boolean, "bool", { strict: true }));
+        assert.strictEqual(
+            String(err2),
+            "TypeError: bool is expected to be a boolean, but a number is given"
+        );
     });
 
     it("should emit deprecation warning", () => {

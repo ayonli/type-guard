@@ -412,7 +412,8 @@ check the value we want.
     - `options`
         - `strict?: boolean` Use strict mode, will disable any implicit type
             conversion.
-        - `suppress?: boolean` Suppress non-critical errors to warnings.
+        - `suppress?: boolean` Suppress non-critical errors as warnings, or
+            suppress unknown property/element removing warnings (when enabled).
         - `warnings?: ValidationWarning[]` A list used to
             store all the warnings occurred during the validation process.
         - `removeUnknownProps?: boolean` Remove all properties in the value

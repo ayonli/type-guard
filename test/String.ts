@@ -1,11 +1,31 @@
 import * as assert from "node:assert";
 import { describe, it } from "mocha";
+import _try from "dotry";
 import { validate, ValidationWarning } from "..";
 
 describe("String", () => {
     it("should validate a string", () => {
         const str = validate("hello, world!", String, "str");
         assert.strictEqual(str, "hello, world!");
+    });
+
+    it("should report error when the string is not provided or empty", () => {
+        // @ts-ignore
+        const [err1] = _try(() => validate(null, String, "str"));
+        assert.strictEqual(String(err1), "Error: str is required, but no value is given");
+
+        // @ts-ignore
+        const [err2] = _try(() => validate(void 0, String, "str"));
+        assert.strictEqual(String(err2), "Error: str is required, but no value is given");
+
+        const [err3] = _try(() => validate("", String, "str"));
+        assert.strictEqual(String(err3), "Error: str is expected to be a non-empty string");
+
+        const [err4] = _try(() => validate("", String.optional.required, "str"));
+        assert.strictEqual(String(err4), "Error: str is expected to be a non-empty string");
+
+        const str1 = validate("", String.default(""), "str1");
+        assert.strictEqual(str1, "");
     });
 
     it("should validate optional strings", () => {
@@ -32,48 +52,7 @@ describe("String", () => {
         assert.strictEqual(str2, "hello, world!");
     });
 
-    it("should report error when the string is empty", () => {
-        try {
-            // @ts-ignore
-            validate(null, String, "str");
-        } catch (err) {
-            assert.strictEqual(
-                String(err),
-                "Error: str is required, but no value is given"
-            );
-        }
-
-        try {
-            // @ts-ignore
-            validate(void 0, String, "str");
-        } catch (err) {
-            assert.strictEqual(
-                String(err),
-                "Error: str is required, but no value is given"
-            );
-        }
-
-        try {
-            validate("", String, "str");
-        } catch (err) {
-            assert.strictEqual(
-                String(err),
-                "RangeError: str must be provided and cannot be empty");
-        }
-
-        try {
-            validate("", String.optional.required, "str");
-        } catch (err) {
-            assert.strictEqual(
-                String(err),
-                "RangeError: str must be provided and cannot be empty");
-        }
-
-        const str1 = validate("", String.default(""), "str1");
-        assert.strictEqual(str1, "");
-    });
-
-    it("should convert compatible values to strings and record warnings", () => {
+    it("should convert compatible values to strings and emit warnings", () => {
         const warnings: ValidationWarning[] = [];
 
         // @ts-ignore
@@ -114,79 +93,63 @@ describe("String", () => {
     });
 
     it("should throw error when the value is not compatible", () => {
-        try {
-            // @ts-ignore
-            validate({ hello: "world" }, String, "str");
-        } catch (err) {
-            assert.strictEqual(
-                String(err),
-                "TypeError: str is expected to be a string, but an object is given");
-        }
+        // @ts-ignore
+        const [err1] = _try(() => validate({ hello: "world" }, String, "str"));
+        assert.strictEqual(
+            String(err1),
+            "TypeError: str is expected to be a string, but an object is given"
+        );
 
-        try {
-            // @ts-ignore
-            validate(["hello", "world"], String, "str");
-        } catch (err) {
-            assert.strictEqual(
-                String(err),
-                "TypeError: str is expected to be a string, but an array is given");
-        }
+        // @ts-ignore
+        const [err2] = _try(() => validate(["hello", "world"], String, "str"));
+        assert.strictEqual(
+            String(err2),
+            "TypeError: str is expected to be a string, but an array is given"
+        );
 
-        try {
-            // @ts-ignore
-            validate(Buffer.from("hello, world!"), String, "str");
-        } catch (err) {
-            assert.strictEqual(
-                String(err),
-                "TypeError: str is expected to be a string, but a Buffer is given");
-        }
+        // @ts-ignore
+        const [err3] = _try(() => validate(Buffer.from("hello, world!"), String, "str"));
+        assert.strictEqual(
+            String(err3),
+            "TypeError: str is expected to be a string, but a Buffer is given"
+        );
 
-        try {
-            // @ts-ignore
-            validate(() => "hello, world!", String, "str");
-        } catch (err) {
-            assert.strictEqual(
-                String(err),
-                "TypeError: str is expected to be a string, but a function is given");
-        }
+        // @ts-ignore
+        const [err4] = _try(() => validate(() => "hello, world!", String, "str"));
+        assert.strictEqual(
+            String(err4),
+            "TypeError: str is expected to be a string, but a function is given"
+        );
     });
 
     it("should not convert type when in strict mode", () => {
-        try {
-            // @ts-ignore
-            validate(123, String, "str", { strict: true });
-        } catch (err) {
-            assert.strictEqual(
-                String(err),
-                "TypeError: str is expected to be a string, but a number is given");
-        }
+        // @ts-ignore
+        const [err1] = _try(() => validate(123, String, "str", { strict: true }));
+        assert.strictEqual(
+            String(err1),
+            "TypeError: str is expected to be a string, but a number is given"
+        );
 
-        try {
-            // @ts-ignore
-            validate(BigInt(123), String, "str", { strict: true });
-        } catch (err) {
-            assert.strictEqual(
-                String(err),
-                "TypeError: str is expected to be a string, but a bigint is given");
-        }
+        // @ts-ignore
+        const [err2] = _try(() => validate(BigInt(123), String, "str", { strict: true }));
+        assert.strictEqual(
+            String(err2),
+            "TypeError: str is expected to be a string, but a bigint is given"
+        );
 
-        try {
-            // @ts-ignore
-            validate(true, String, "str", { strict: true });
-        } catch (err) {
-            assert.strictEqual(
-                String(err),
-                "TypeError: str is expected to be a string, but a boolean is given");
-        }
+        // @ts-ignore
+        const [err3] = _try(() => validate(true, String, "str", { strict: true }));
+        assert.strictEqual(
+            String(err3),
+            "TypeError: str is expected to be a string, but a boolean is given"
+        );
 
-        try {
-            // @ts-ignore
-            validate(new Date(), String, "str", { strict: true });
-        } catch (err) {
-            assert.strictEqual(
-                String(err),
-                "TypeError: str is expected to be a string, but a Date is given");
-        }
+        // @ts-ignore
+        const [err4] = _try(() => validate(new Date(), String, "str", { strict: true }));
+        assert.strictEqual(
+            String(err4),
+            "TypeError: str is expected to be a string, but a Date is given"
+        );
     });
 
     it("should trim leading and tailing spaces of the string", () => {
@@ -228,24 +191,17 @@ describe("String", () => {
         const str1 = validate("hello, world!", String.minLength(10), "str1");
         assert.strictEqual(str1, "hello, world!");
 
-        try {
-            validate("hello, world!", String.minLength(20), "str");
-        } catch (err) {
-            assert.strictEqual(
-                String(err),
-                "RangeError: str must not be shorter than 20");
-        }
+        const [err1] = _try(() => validate("hello, world!", String.minLength(20), "str"));
+        assert.strictEqual(String(err1), "Error: str is expected to contain at least 20 characters");
 
         const str2 = validate("hello, world!", String.maxLength(20), "str2");
         assert.strictEqual(str2, "hello, world!");
 
-        try {
-            validate("hello, world!", String.maxLength(10), "str");
-        } catch (err) {
-            assert.strictEqual(
-                String(err),
-                "RangeError: str must not be longer than 10");
-        }
+        const [err2] = _try(() => validate("hello, world!", String.maxLength(10), "str"));
+        assert.strictEqual(
+            String(err2),
+            "Error: str is expected to contain no more than 10 characters"
+        );
 
         const str3 = validate("hello, world!", String.minLength(10).maxLength(20), "str3");
         assert.strictEqual(str3, "hello, world!");
@@ -255,84 +211,53 @@ describe("String", () => {
         const str1 = validate("hello", String.enum(["hello", "world"] as const), "str1");
         assert.strictEqual(str1, "hello");
 
-        try {
-            // @ts-ignore
-            validate("hi", String.enum(["hello", "world"] as const), "str");
-        } catch (err) {
-            assert.strictEqual(
-                String(err),
-                "Error: str must be one of these values: 'hello', 'world'");
-        }
+        // @ts-ignore
+        const [err1] = _try(() => validate("hi", String.enum(["hello", "world"] as const), "str"));
+        assert.strictEqual(
+            String(err1),
+            "RangeError: str is expected to be one of these values: 'hello', 'world'"
+        );
     });
 
     it("should constrain by a constant string", () => {
         const str1 = validate("hello", "hello" as const, "str1");
         assert.strictEqual(str1, "hello");
 
-        try {
-            // @ts-ignore
-            validate("hi", "hello" as const, "str");
-        } catch (err) {
-            assert.strictEqual(
-                String(err),
-                "Error: str must be 'hello'");
-        }
+        // @ts-ignore
+        const [err1] = _try(() => validate("hi", "hello" as const, "str"));
+        assert.strictEqual(String(err1), "TypeError: str is expected to be 'hello'");
     });
 
     it("should match an email address", () => {
         const str = validate("i@hyurl.com", String.match("email"), "str");
         assert.strictEqual(str, "i@hyurl.com");
 
-        try {
-            validate("hello, world!", String.match("email"), "str");
-        } catch (err) {
-            assert.strictEqual(
-                String(err),
-                "TypeError: str is not a valid email address"
-            );
-        }
+        const [err] = _try(() => validate("hello, world!", String.match("email"), "str"));
+        assert.strictEqual(String(err), "TypeError: str is not a valid email address");
     });
 
     it("should match a phone number", () => {
         const str = validate("13800774500", String.match("phone"), "str");
         assert.strictEqual(str, "13800774500");
 
-        try {
-            validate("hello, world!", String.match("phone"), "str");
-        } catch (err) {
-            assert.strictEqual(
-                String(err),
-                "TypeError: str is not a valid phone number"
-            );
-        }
+        const [err] = _try(() => validate("hello, world!", String.match("phone"), "str"));
+        assert.strictEqual(String(err), "TypeError: str is not a valid phone number");
     });
 
     it("should match an IPv4 address", () => {
         const str = validate("127.0.0.1", String.match("ip"), "str");
         assert.strictEqual(str, "127.0.0.1");
 
-        try {
-            validate("::1", String.match("ip"), "str");
-        } catch (err) {
-            assert.strictEqual(
-                String(err),
-                "TypeError: str is not a valid IP address"
-            );
-        }
+        const [err] = _try(() => validate("::1", String.match("ip"), "str"));
+        assert.strictEqual(String(err), "TypeError: str is not a valid IP address");
     });
 
     it("should match a URL address", () => {
         const str = validate("https://example.com", String.match("url"), "str");
         assert.strictEqual(str, "https://example.com");
 
-        try {
-            validate("//example.com", String.match("url"), "str");
-        } catch (err) {
-            assert.strictEqual(
-                String(err),
-                "TypeError: str is not a valid URL address"
-            );
-        }
+        const [err] = _try(() => validate("//example.com", String.match("url"), "str"));
+        assert.strictEqual(String(err), "TypeError: str is not a valid URL address");
     });
 
     it("should match a hostname", () => {
@@ -342,28 +267,19 @@ describe("String", () => {
         const str2 = validate("www.example.com", String.match("hostname"), "str2");
         assert.strictEqual(str2, "www.example.com");
 
-        try {
-            validate("//example.com", String.match("hostname"), "str");
-        } catch (err) {
-            assert.strictEqual(
-                String(err),
-                "TypeError: str is not a valid hostname"
-            );
-        }
+        const [err] = _try(() => validate("//example.com", String.match("hostname"), "str"));
+        assert.strictEqual(String(err), "TypeError: str is not a valid hostname");
     });
 
     it("should match a date string", () => {
         const str = validate("2023-04-01", String.match("date"), "str");
         assert.strictEqual(str, "2023-04-01");
 
-        try {
-            validate("2023/04/01", String.match("date"), "str");
-        } catch (err) {
-            assert.strictEqual(
-                String(err),
-                "TypeError: str is not a valid date string (format: YYYY-MM-DD)"
-            );
-        }
+        const [err] = _try(() => validate("2023/04/01", String.match("date"), "str"));
+        assert.strictEqual(
+            String(err),
+            "TypeError: str is not a valid date string (format: YYYY-MM-DD)"
+        );
     });
 
     it("should match a time string", () => {
@@ -373,28 +289,22 @@ describe("String", () => {
         const str2 = validate("12:00", String.match("time"), "str2");
         assert.strictEqual(str2, "12:00");
 
-        try {
-            validate("12.00.00", String.match("time"), "str");
-        } catch (err) {
-            assert.strictEqual(
-                String(err),
-                "TypeError: str is not a valid time string (format: HH:mm[:ss])"
-            );
-        }
+        const [err] = _try(() => validate("12.00.00", String.match("time"), "str"));
+        assert.strictEqual(
+            String(err),
+            "TypeError: str is not a valid time string (format: HH:mm[:ss])"
+        );
     });
 
     it("should match a datetime string", () => {
         const str1 = validate("2023-04-01 12:00:00", String.match("datetime"), "str1");
         assert.strictEqual(str1, "2023-04-01 12:00:00");
 
-        try {
-            validate("2023-04-01 12:00", String.match("datetime"), "str");
-        } catch (err) {
-            assert.strictEqual(
-                String(err),
-                "TypeError: str is not a valid datetime string (format: YYYY-MM-DD HH:mm:ss)"
-            );
-        }
+        const [err] = _try(() => validate("2023-04-01 12:00", String.match("datetime"), "str"));
+        assert.strictEqual(
+            String(err),
+            "TypeError: str is not a valid datetime string (format: YYYY-MM-DD HH:mm:ss)"
+        );
     });
 
     it("should match the regex", () => {
@@ -402,14 +312,11 @@ describe("String", () => {
         const str = validate("123456", String.match(regex), "str");
         assert.strictEqual(str, "123456");
 
-        try {
-            validate("hello, world!", String.match(regex), "str");
-        } catch (err) {
-            assert.strictEqual(
-                String(err),
-                "Error: str does not match the pattern: " + String(regex)
-            );
-        }
+        const [err] = _try(() => validate("hello, world!", String.match(regex), "str"));
+        assert.strictEqual(
+            String(err),
+            "Error: str does not match the pattern: " + String(regex)
+        );
     });
 
     it("should match by a custom function", () => {
@@ -417,20 +324,17 @@ describe("String", () => {
         const str = validate("123456", String.match(test), "str");
         assert.strictEqual(str, "123456");
 
-        try {
-            validate("hello, world!", String.match(test), "str");
-        } catch (err) {
-            assert.strictEqual(
-                String(err),
-                "Error: str does not fulfill the requirement"
-            );
-        }
+        const [err] = _try(() => validate("hello, world!", String.match(test), "str"));
+        assert.strictEqual(String(err), "Error: str does not fulfill the requirement");
     });
 
     it("should emit deprecation warning", () => {
         const warnings: ValidationWarning[] = [];
 
-        validate("hello, world!", String.deprecated("will no longer effect"), "str", { warnings });
+        const str = validate("hello, world!", String.deprecated("will no longer effect"), "str", {
+            warnings,
+        });
+        assert.strictEqual(str, "hello, world!");
 
         assert.deepStrictEqual(warnings, [{
             path: "str",
@@ -441,16 +345,62 @@ describe("String", () => {
     it("should suppress non-critical errors as warnings", () => {
         const warnings: ValidationWarning[] = [];
 
-        const str1 = validate("2023-04-01 12:00", String.match("datetime"), "str1", {
+        const str1 = validate("", String, "str1", { warnings, suppress: true });
+        assert.strictEqual(str1, "");
+
+        const str2 = validate("hello, world!", String.minLength(20), "str2", {
             warnings,
             suppress: true,
         });
-        assert.strictEqual(str1, "2023-04-01 12:00");
+        assert.strictEqual(str2, "hello, world!");
+
+        const str3 = validate("hello, world!", String.maxLength(10), "str3", {
+            warnings,
+            suppress: true,
+        });
+        assert.strictEqual(str3, "hello, world!");
+
+        // @ts-ignore
+        const str4 = validate("hi", String.enum(["hello", "world"] as const), "str4", {
+            warnings,
+            suppress: true,
+        });
+        assert.strictEqual(str4, "hi");
+
+        // @ts-ignore
+        const str5 = validate("hi", "hello" as const, "str5", { warnings, suppress: true });
+        assert.strictEqual(str5, "hi");
+
+        const str10 = validate("2023-04-01 12:00", String.match("datetime"), "str10", {
+            warnings,
+            suppress: true,
+        });
+        assert.strictEqual(str10, "2023-04-01 12:00");
 
         assert.deepStrictEqual(warnings, [
             {
                 path: "str1",
-                message: "str1 is not a valid datetime string (format: YYYY-MM-DD HH:mm:ss)",
+                message: "str1 is expected to be a non-empty string"
+            },
+            {
+                path: "str2",
+                message: "str2 is expected to contain at least 20 characters"
+            },
+            {
+                path: "str3",
+                message: "str3 is expected to contain no more than 10 characters"
+            },
+            {
+                path: "str4",
+                message: "str4 is expected to be one of these values: 'hello', 'world'"
+            },
+            {
+                path: "str5",
+                message: "str5 is expected to be 'hello'"
+            },
+            {
+                path: "str10",
+                message: "str10 is not a valid datetime string (format: YYYY-MM-DD HH:mm:ss)"
             }
         ] as ValidationWarning[]);
     });

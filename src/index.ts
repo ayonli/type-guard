@@ -127,10 +127,13 @@ export abstract class ValidateableType<T> {
     }
 
     protected throwTypeError(path: string, value: any, expectedType: string | string[]) {
-        expectedType = read(expectedType);
+        const _expectedType = read(expectedType);
         const actualType = readType(value);
+        const err = new TypeError(
+            `${path} is expected to be ${_expectedType}, but ${actualType} is given`
+        );
 
-        throw new TypeError(`${path} is expected to be ${expectedType}, but ${actualType} is given`);
+        throw Object.assign(err, { path, value, expectedType });
     }
 
     protected conversionWarning(path: string, value: any, expectedType: string) {
@@ -160,7 +163,7 @@ export class StringType extends ValidateableType<string> {
     private static EmailRegex = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/;
     private static PhoneRegex = /^\s*(?:\+?(\d{1,3}))?([-. (]*(\d{3})[-. )]*)?((\d{3})[-. ]*(\d{2,4})(?:[-.x ]*(\d+))?)\s*$/;
     private static IpRegex = /^(?:(?:2(?:[0-4][0-9]|5[0-5])|[0-1]?[0-9]?[0-9])\.){3}(?:(?:2([0-4][0-9]|5[0-5])|[0-1]?[0-9]?[0-9]))$/;
-    private static UrlRegex = /^[(http(s)?)://(www.)?a-zA-Z0-9@:%._+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_+.~#?&//=]*)$/;
+    private static UrlRegex = /^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)$/;
     private static HostnameRegex = /^localhost$|^(([a-z0-9A-Z]\.)*[a-z0-9-]+\.)?([a-z0-9]{2,24})+(\.co\.([a-z0-9]{2,24})|\.([a-z0-9]{2,24}))$/;
     private static DateRegex = /^(19[0-9]{2}|2[0-9]{3})-(0[1-9]|1[012])-([123]0|[012][1-9]|31)$/;
     private static TimeRegex = /^([01][0-9]|2[0-3]):([0-5][0-9])(:[0-5][0-9])?$/;
@@ -287,18 +290,20 @@ export class StringType extends ValidateableType<string> {
             if (this._optional || this._default === "" || this._enum?.includes("")) {
                 return _value;
             } else {
-                err = new RangeError(`${path} must be provided and cannot be empty`);
+                err = new Error(`${path} is expected to be a non-empty string`);
             }
         } else if (this._minLength && _value.length < this._minLength) {
-            err = new RangeError(`${path} must not be shorter than ${this._minLength}`);
+            const unit = this._minLength === 1 ? "character" : `characters`;
+            err = new Error(`${path} is expected to contain at least ${this._minLength} ${unit}`);
         } else if (this._maxLength && _value.length > this._maxLength) {
-            err = new RangeError(`${path} must not be longer than ${this._maxLength}`);
+            const unit = this._maxLength === 1 ? "character" : `characters`;
+            err = new Error(`${path} is expected to contain no more than ${this._maxLength} ${unit}`);
         } else if (this._enum?.length && !this._enum.includes(_value)) {
             if (this._enum.length === 1) {
-                err = new Error(`${path} must be '${this._enum[0]}'`);
+                err = new TypeError(`${path} is expected to be '${this._enum[0]}'`);
             } else {
                 const values = this._enum.map(value => `'${value}'`).join(", ");
-                err = new Error(`${path} must be one of these values: ${values}`);
+                err = new RangeError(`${path} is expected to be one of these values: ${values}`);
             }
         } else if (this._match === "email" && !StringType.EmailRegex.test(_value)) {
             err = new TypeError(`${path} is not a valid email address`);
@@ -544,16 +549,17 @@ export class NumberType extends ValidateableType<number> {
         }
 
         if (this._integer && !Number.isInteger(_value)) {
-            err = new TypeError(`${path} must be an integer`);
+            err = new TypeError(`${path} is expected to be an integer`);
         } else if (this._min && _value < this._min) {
-            err = new RangeError(`${path} must not be less than ${this._min}`);
+            err = new RangeError(`${path} is expected not to be less than ${this._min}`);
         } else if (this._max && _value > this._max) {
-            err = new RangeError(`${path} must not be greater than ${this._max}`);
+            err = new RangeError(`${path} is expected not to be greater than ${this._max}`);
         } else if (this._enum?.length && !this._enum.includes(_value)) {
             if (this._enum.length === 1) {
-                err = new Error(`${path} must be ${this._enum[0]}`);
+                err = new Error(`${path} is expected to be ${this._enum[0]}`);
             } else {
-                err = new Error(`${path} must be one of these values: ${this._enum.join(", ")}`);
+                const values = this._enum.join(", ");
+                err = new Error(`${path} is expected to be one of these values: ${values}`);
             }
         }
 
@@ -729,14 +735,14 @@ export class BigIntType extends ValidateableType<bigint> {
         }
 
         if (this._min && _value < this._min) {
-            err = new RangeError(`${path} must not be less than ${this._min}`);
+            err = new RangeError(`${path} is expected not to be less than ${this._min}`);
         } else if (this._max && _value > this._max) {
-            err = new RangeError(`${path} must not be greater than ${this._max}`);
+            err = new RangeError(`${path} is expected not to be greater than ${this._max}`);
         } else if (this._enum?.length && !this._enum.includes(_value)) {
             if (this._enum.length === 1) {
-                err = new Error(`${path} must be ${this._enum[0]}`);
+                err = new Error(`${path} is expected to be ${this._enum[0]}`);
             } else {
-                err = new Error(`${path} must be one of these values: ${this._enum.join(", ")}`);
+                err = new Error(`${path} is expected to be one of these values: ${this._enum.join(", ")}`);
             }
         }
 
@@ -953,10 +959,16 @@ export class DateType extends ValidateableType<Date> {
             return value;
         } else if (options?.strict && !(value instanceof Date)) {
             this.throwTypeError(path, value, "Date");
-        } else if (typeof value === "number" || typeof value === "string") {
+        } else if (typeof value === "string") {
             _value = new Date(value);
 
             if (String(_value) === "Invalid Date") {
+                this.throwTypeError(path, value, "Date");
+            }
+        } else if (typeof value === "number") {
+            if (value >= 0) {
+                _value = new Date(value);
+            } else {
                 this.throwTypeError(path, value, "Date");
             }
         } else if (!(value instanceof Date)) {
@@ -1304,7 +1316,8 @@ export class UnionType<T> extends ValidateableType<T> {
         }
 
         let _value: T;
-        let _err: any;
+        let requireErr: any;
+        let lastError: any;
 
         if (value === null || value === void 0) {
             return value;
@@ -1323,8 +1336,8 @@ export class UnionType<T> extends ValidateableType<T> {
                     return _value;
                 }
             } catch (err) {
-                if (String(err).includes("required")) {
-                    _err ??= err;
+                if (!isObject(type) && !Array.isArray(type) && String(err).includes("required")) {
+                    requireErr ??= err;
                 }
             }
         }
@@ -1342,14 +1355,17 @@ export class UnionType<T> extends ValidateableType<T> {
                     if (_value !== null && _value !== void 0) {
                         return _value;
                     }
-                } catch (err) { } // eslint-disable-line
+                } catch (err) {
+                    lastError = err;
+                } // eslint-disable-line
             }
         }
 
-        if (_err)
-            throw _err;
+        if (requireErr) {
+            throw requireErr;
+        }
 
-        this.throwTypeError(path, value, this.types.map(type => {
+        let types = this.types.map(type => {
             if (Object.is(type, String) || Object.is(type, StringType)) {
                 return "string";
             } else if (Object.is(type, Number) || Object.is(type, NumberType)) {
@@ -1375,7 +1391,16 @@ export class UnionType<T> extends ValidateableType<T> {
             } else {
                 return "unknown";
             }
-        }));
+        });
+        types = [...new Set(types)];
+
+        if (types.includes("object") && isObject(value)) {
+            throw lastError;
+        } else if (types.includes("array") && Array.isArray(value)) {
+            throw lastError;
+        } else {
+            this.throwTypeError(path, value, types.length > 1 ? types : types[0]);
+        }
     }
 
     toJSONSchema(): JSONSchema {
@@ -1456,9 +1481,9 @@ export class DictType<K extends IndexableType, V> extends ValidateableType<Recor
                 try {
                     _key = validate(_key as any, this.key, path, { ...options, suppress: false });
                 } catch (err) {
-                    if (err instanceof Error && String(err).includes("must be one of these values")) {
-                        err.message = err.message.replace("must be one of these values",
-                            "must contain only these properties");
+                    if (err instanceof Error && String(err).includes("be one of these values")) {
+                        err.message = err.message.replace("be one of these values",
+                            "contain only these properties");
 
                         if (options?.removeUnknownProps) {
                             if (!options.suppress) {
@@ -1603,7 +1628,7 @@ export class ArrayType<T> extends CustomType<T[]> {
         let _value: T[];
         let err: Error;
 
-        if (value === null || value === void 0) {
+        if (value === null || value === void 0 || (this._default && value === this._default)) {
             return value;
         } else if (this._guard) {
             value = this._guard(value, path, options?.warnings ?? []);
@@ -1617,7 +1642,7 @@ export class ArrayType<T> extends CustomType<T[]> {
 
         if (this._minItems && _value.length < this._minItems) {
             const count = this._minItems === 1 ? "1 item" : `${this._minItems} items`;
-            err = new Error(`${path} must contain at least ${count}`);
+            err = new Error(`${path} is expected to contain at least ${count}`);
         } else if (this._maxItems && _value.length > this._maxItems) {
             if (options?.removeUnknownProps) {
                 const offset = this._maxItems;
@@ -1636,10 +1661,10 @@ export class ArrayType<T> extends CustomType<T[]> {
                 }
             } else {
                 const count = this._maxItems === 1 ? "1 item" : `${this._maxItems} items`;
-                err = new Error(`${path} must contain no more than ${count}`);
+                err = new Error(`${path} is expected to contain no more than ${count}`);
             }
         } else if (this._uniqueItems && new Set(_value).size !== _value.length) {
-            err = new Error(`${path} must contain unique items`);
+            err = new Error(`${path} is expected to contain unique items`);
         }
 
         if (err) {
@@ -1752,7 +1777,14 @@ export class TupleType<T extends readonly any[]> extends ValidateableType<T> {
                     });
                 }
             } else {
-                result.push(..._value.slice(offset, end + 1));
+                const count = this.type.length === 1 ? "1 item" : `${this.type.length} items`;
+                const err = new Error(`${path} must contain no more than ${count}`);
+
+                if (options?.suppress) {
+                    options?.warnings?.push({ path, message: err.message });
+                } else {
+                    throw err;
+                }
             }
         }
 
@@ -2241,7 +2273,10 @@ export function as<T>(...types: (T | Constructor<T>)[]) {
 export function validate<T>(value: ExtractInstanceType<T>, type: T, variable = "$", options: {
     /** Use strict mode, will disable any implicit type conversion. */
     strict?: boolean;
-    /** Suppress non-critical errors to warnings. */
+    /**
+     * Suppress non-critical errors as warnings, or suppress unknown
+     * property/element removing warnings (when enabled).
+     */
     suppress?: boolean;
     /**
      * A list used to  store all the warnings occurred during the validation
@@ -2337,7 +2372,7 @@ export function validate<T>(value: ExtractInstanceType<T>, type: T, variable = "
                                 ? `property '${missing[0]}'`
                                 : `properties ${join(missing.map(p => `'${p}'`))}`;
                             const message = `${path} must contain ${others} `
-                                + `when property '${prop}' is provided`;
+                                + `when property '${prop}' is given`;
 
                             if (options?.suppress) {
                                 options.warnings?.push({ path, message });

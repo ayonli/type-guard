@@ -1,5 +1,6 @@
 import * as assert from "node:assert";
 import { describe, it } from "mocha";
+import _try from "dotry";
 import { validate, ValidationWarning } from "..";
 
 describe("Date", () => {
@@ -7,6 +8,19 @@ describe("Date", () => {
         const _date = new Date();
         const date = validate(_date, Date, "date");
         assert.strictEqual(date, _date);
+    });
+
+    it("should report error when the date is not provided", () => {
+        // @ts-ignore
+        const [err1] = _try(() => validate(null, Date, "date"));
+        assert.strictEqual(String(err1), "Error: date is required, but no value is given");
+
+        // @ts-ignore
+        const [err2] = _try(() => validate(void 0, Date, "date"));
+        assert.strictEqual(
+            String(err2),
+            "Error: date is required, but no value is given"
+        );
     });
 
     it("should validate an optional Date", () => {
@@ -29,28 +43,6 @@ describe("Date", () => {
         // @ts-ignore
         const date2 = validate(void 0, Date.default(_date), "date2");
         assert.strictEqual(date2, _date);
-    });
-
-    it("should report error when the date is not provided", () => {
-        try {
-            // @ts-ignore
-            validate(null, Date, "date");
-        } catch (err) {
-            assert.strictEqual(
-                String(err),
-                "Error: date is required, but no value is given"
-            );
-        }
-
-        try {
-            // @ts-ignore
-            validate(void 0, Date, "date");
-        } catch (err) {
-            assert.strictEqual(
-                String(err),
-                "Error: date is required, but no value is given"
-            );
-        }
     });
 
     it("should convert compatible values to date and emit warnings", () => {
@@ -85,49 +77,37 @@ describe("Date", () => {
     });
 
     it("should throw error when the value is not compatible", () => {
-        try {
-            // @ts-ignore
-            validate("Not a date", Date, "date");
-        } catch (err) {
-            assert.strictEqual(
-                String(err),
-                "TypeError: date is expected to be of type Date, but a string is given"
-            );
-        }
+        // @ts-ignore
+        const [err1] = _try(() => validate("Not a date", Date, "date"));
+        assert.strictEqual(
+            String(err1),
+            "TypeError: date is expected to be of type Date, but a string is given"
+        );
 
-        try {
-            // @ts-ignore
-            validate(-1, Date, "date");
-        } catch (err) {
-            assert.strictEqual(
-                String(err),
-                "TypeError: date is expected to be of type Date, but a number is given"
-            );
-        }
+        // @ts-ignore
+        const [err2] = _try(() => validate(-1, Date, "date"));
+        assert.strictEqual(
+            String(err2),
+            "TypeError: date is expected to be of type Date, but a number is given"
+        );
     });
 
     it("should not convert type when in strict mode", () => {
         const _date = new Date();
 
-        try {
-            // @ts-ignore
-            validate(_date.toISOString(), Date, "date", { strict: true });
-        } catch (err) {
-            assert.strictEqual(
-                String(err),
-                "TypeError: date is expected to be of type Date, but a string is given"
-            );
-        }
+        // @ts-ignore
+        const [err1] = _try(() => validate(_date.toISOString(), Date, "date", { strict: true }));
+        assert.strictEqual(
+            String(err1),
+            "TypeError: date is expected to be of type Date, but a string is given"
+        );
 
-        try {
-            // @ts-ignore
-            validate(_date.valueOf(), Date, "date", { strict: true });
-        } catch (err) {
-            assert.strictEqual(
-                String(err),
-                "TypeError: date is expected to be of type Date, but a number is given"
-            );
-        }
+        // @ts-ignore
+        const [err2] = _try(() => validate(_date.valueOf(), Date, "date", { strict: true }));
+        assert.strictEqual(
+            String(err2),
+            "TypeError: date is expected to be of type Date, but a number is given"
+        );
     });
 
     it("should emit deprecation warning", () => {

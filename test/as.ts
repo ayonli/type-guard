@@ -139,6 +139,19 @@ describe("as()", () => {
                 );
             }
             assert(err1 instanceof Error);
+
+            let err2: any;
+            try {
+                // @ts-ignore
+                validate(Buffer.from("hello, world!"), as(String, Number), "value");
+            } catch (err) {
+                err2 = err;
+                assert.strictEqual(
+                    String(err),
+                    "TypeError: value is expected to be a string or number, but a Buffer is given"
+                );
+            }
+            assert(err2 instanceof TypeError);
         });
 
         it("should validate null against union types with Void", () => {
@@ -179,6 +192,45 @@ describe("as()", () => {
                 );
             }
             assert(err1 instanceof Error);
+
+            let err2: any;
+            try {
+                // @ts-ignore
+                validate(["hello", Buffer.from([1, 2, 3])], as([String, Number] as const), "value");
+            } catch (err) {
+                err2 = err;
+                assert.strictEqual(
+                    String(err),
+                    "TypeError: value[1] is expected to be a number, but a Buffer is given"
+                );
+            }
+            assert(err2 instanceof TypeError);
+
+            let err3: any;
+            try {
+                // @ts-ignore
+                validate(["hello"], as([String, Number] as const), "value");
+            } catch (err) {
+                err3 = err;
+                assert.strictEqual(
+                    String(err),
+                    "Error: value[1] is required, but no value is given"
+                );
+            }
+            assert(err3 instanceof Error);
+
+            let err4: any;
+            try {
+                // @ts-ignore
+                validate(["hello", 1, 2, 3], as([String, Number] as const), "value");
+            } catch (err) {
+                err4 = err;
+                assert.strictEqual(
+                    String(err),
+                    "Error: value must contain no more than 2 items"
+                );
+            }
+            assert(err4 instanceof Error);
         });
 
         it("should emit warnings when items are outranged", () => {
