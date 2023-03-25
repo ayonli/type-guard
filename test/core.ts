@@ -1,5 +1,5 @@
 import "@hyurl/utils/types";
-import * as assert from "node:assert";
+import * as assert from "assert";
 import { describe, it } from "mocha";
 
 describe("Core Features", () => {

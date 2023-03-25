@@ -1,4 +1,4 @@
-import * as assert from "node:assert";
+import * as assert from "assert";
 import { describe, it } from "mocha";
 import _try from "dotry";
 import { as, validate, ValidationWarning } from "..";
@@ -213,7 +213,7 @@ describe("Object", () => {
             },
             {
                 path: "obj6.bar",
-                message: "unknown property obj6.bar bas been removed",
+                message: "unknown property obj6.bar has been removed",
             }
         ] as ValidationWarning[]);
     });

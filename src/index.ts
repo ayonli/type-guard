@@ -2406,7 +2406,7 @@ export function validate<T>(value: ExtractInstanceType<T>, type: T, variable = "
                             const _path = path ? `${path}.${prop}` : prop;
                             options?.warnings.push({
                                 path: _path,
-                                message: `unknown property ${_path} bas been removed`,
+                                message: `unknown property ${_path} has been removed`,
                             });
                         }
                     });
@@ -2426,7 +2426,7 @@ export function validate<T>(value: ExtractInstanceType<T>, type: T, variable = "
     try {
         return reduce(type, value, variable);
     } catch (err) {
-        err instanceof Error && Error.captureStackTrace(err, validate);
+        err instanceof Error && Error.captureStackTrace?.(err, validate);
         throw err;
     }
 }
@@ -2474,6 +2474,7 @@ class ValidationError extends Error {
         // @ts-ignore
         super(message, options);
         this.cause ??= options.cause;
+        Error.captureStackTrace?.(this, ValidationError);
     }
 }
 
@@ -2483,7 +2484,7 @@ const wrapMethod = (target: any, prop: string | symbol, desc: TypedPropertyDescr
 
         const fn = desc.value = (function (this: any, ...args: any[]) {
             const method = target[_methods][prop] as (...arg: any[]) => any;
-            const paramsDef = fn[_params] as { type: any; name?: string; }[];
+            let paramsDef = fn[_params] as { type: any; name?: string; }[];
             const returnDef = fn[_returns] as { type: any; name: string; };
             const throwDef = fn[_throws] as { type: any; name: string; };
             const warnings: ValidationWarning[] = [];
@@ -2497,12 +2498,18 @@ const wrapMethod = (target: any, prop: string | symbol, desc: TypedPropertyDescr
             }
 
             if (paramsDef) {
-                if (paramsDef.length === 1 &&
-                    [Void, VoidType].includes(paramsDef[0].type) &&
-                    (args.length > 1 || (args.length === 1 && ![null, undefined].includes(args[0])))
-                ) {
-                    throw new TypeError(`${String(prop)}() is expected to have no argument, `
-                        + `but ${readType(args[0])} is given`);
+                if (paramsDef.length === 1 && [Void, VoidType].includes(paramsDef[0].type)) {
+                    paramsDef = [];
+
+                    if (args.length === 1 && [null, undefined].includes(args[0])) {
+                        args = [];
+                    } else if (args.length > 1 || ![null, undefined].includes(args[0])) {
+                        warnings.push({
+                            path: `${String(prop)}()`,
+                            message: `${String(prop)}() is expected to have no argument, `
+                                + `but ${readType(args[0])} is given`
+                        });
+                    }
                 }
 
                 let _args = {};
@@ -2516,7 +2523,17 @@ const wrapMethod = (target: any, prop: string | symbol, desc: TypedPropertyDescr
                     return record;
                 }, {} as { [param: string]: any; });
 
-                _args = validate(_args, params, "parameters", options);
+                for (let i = paramList.length; i < args.length; i++) {
+                    _args[`param${i}`] = args[i];
+                }
+
+                try {
+                    _args = validate(_args, params, "parameters", options);
+                } catch (err) {
+                    err instanceof Error && Error.captureStackTrace?.(err, fn);
+                    throw err;
+                }
+
                 args = paramList.map(name => _args[name]);
             }
 
@@ -2545,6 +2562,8 @@ const wrapMethod = (target: any, prop: string | symbol, desc: TypedPropertyDescr
                         ...options,
                         suppress: true,
                     });
+                    Error.captureStackTrace?.(_err, handleError);
+
                     throw _err;
                 } else {
                     throw err;
@@ -2583,6 +2602,7 @@ const wrapMethod = (target: any, prop: string | symbol, desc: TypedPropertyDescr
             try {
                 return handleResult();
             } catch (err) {
+                err instanceof Error && Error.captureStackTrace?.(err, fn);
                 handleError(err);
             }
         }) as any;

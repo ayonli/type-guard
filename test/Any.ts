@@ -1,4 +1,4 @@
-import * as assert from "node:assert";
+import * as assert from "assert";
 import { describe, it } from "mocha";
 import _try from "dotry";
 import { validate, Any, ValidationWarning } from "..";

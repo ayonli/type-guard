@@ -1,4 +1,4 @@
-import * as assert from "node:assert";
+import * as assert from "assert";
 import { describe, it } from "mocha";
 import { Any, as, Void } from "..";
 

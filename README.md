@@ -37,8 +37,16 @@ Runtime type checking for JavaScript variables and function parameters.
 
 ## Install
 
-```sh
-npm i @hyurl/type-guard
+This package has not yet been fully tested, and is not published to NPM. If you
+want to use it in your program, add the following configuration in your
+`package.json`.
+
+```json
+{
+  "dependencies": {
+    "@hyurl/type-guard": "git+https://github.com/hyurl/type-guard.git"
+  }
+}
 ```
 
 
