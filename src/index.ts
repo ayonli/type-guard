@@ -164,14 +164,14 @@ export class StringType extends ValidateableType<string> {
         | "time"
         | "datetime"
         | RegExp | ((value: string) => boolean) = null;
-    private static EmailRegex = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/;
-    private static PhoneRegex = /^\s*(?:\+?(\d{1,3}))?([-. (]*(\d{3})[-. )]*)?((\d{3})[-. ]*(\d{2,4})(?:[-.x ]*(\d+))?)\s*$/;
-    private static IpRegex = /^(?:(?:2(?:[0-4][0-9]|5[0-5])|[0-1]?[0-9]?[0-9])\.){3}(?:(?:2([0-4][0-9]|5[0-5])|[0-1]?[0-9]?[0-9]))$/;
-    private static UrlRegex = /^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)$/;
-    private static HostnameRegex = /^localhost$|^(([a-z0-9A-Z]\.)*[a-z0-9-]+\.)?([a-z0-9]{2,24})+(\.co\.([a-z0-9]{2,24})|\.([a-z0-9]{2,24}))$/;
-    private static DateRegex = /^(19[0-9]{2}|2[0-9]{3})-(0[1-9]|1[012])-([123]0|[012][1-9]|31)$/;
-    private static TimeRegex = /^([01][0-9]|2[0-3]):([0-5][0-9])(:[0-5][0-9])?$/;
-    private static DatetimeRegex = /^(19[0-9]{2}|2[0-9]{3})-(0[1-9]|1[012])-([123]0|[012][1-9]|31) ([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])$/;
+    static EmailRegex = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/;
+    static PhoneRegex = /^\s*(?:\+?(\d{1,3}))?([-. (]*(\d{3})[-. )]*)?((\d{3})[-. ]*(\d{2,4})(?:[-.x ]*(\d+))?)\s*$/;
+    static IpRegex = /^(?:(?:2(?:[0-4][0-9]|5[0-5])|[0-1]?[0-9]?[0-9])\.){3}(?:(?:2([0-4][0-9]|5[0-5])|[0-1]?[0-9]?[0-9]))$/;
+    static UrlRegex = /^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)$/;
+    static HostnameRegex = /^localhost$|^(([a-z0-9A-Z]\.)*[a-z0-9-]+\.)?([a-z0-9]{2,24})+(\.co\.([a-z0-9]{2,24})|\.([a-z0-9]{2,24}))$/;
+    static DateRegex = /^(19[0-9]{2}|2[0-9]{3})-(0[1-9]|1[012])-([123]0|[012][1-9]|31)$/;
+    static TimeRegex = /^([01][0-9]|2[0-3]):([0-5][0-9])(:[0-5][0-9])?$/;
+    static DatetimeRegex = /^(19[0-9]{2}|2[0-9]{3})-(0[1-9]|1[012])-([123]0|[012][1-9]|31) ([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])$/;
 
     /** @internal Used for TypeScript to distinguish the type from similar types. */
     get [Symbol.toStringTag](): "StringType" {
@@ -387,7 +387,7 @@ export class StringType extends ValidateableType<string> {
             }
         }
 
-        return schema;
+        return omitUndefined(schema);
     }
 }
 
@@ -599,7 +599,7 @@ export class NumberType extends ValidateableType<number> {
             }
         }
 
-        return schema;
+        return omitUndefined(schema);
     }
 }
 
@@ -767,15 +767,24 @@ export class BigIntType extends ValidateableType<bigint> {
     }
 
     toJSONSchema(): JSONSchema {
-        return {
+        const schema: JSONSchema = {
             type: "integer",
             description: this._remarks,
-            default: this._default,
+            default: isVoid(this._default) ? void 0 : Number(this._default),
             deprecated: isVoid(this._deprecated) ? void 0 : true,
-            enum: this._enum ?? void 0,
-            minimum: this._min,
-            maximum: this._max,
+            minimum: isVoid(this._min) ? void 0 : Number(this._min),
+            maximum: isVoid(this._max) ? void 0 : Number(this._max),
         };
+
+        if (this._enum) {
+            if (this._enum.length === 1) {
+                schema["const"] = Number(this._enum[0]);
+            } else {
+                schema["enum"] = this._enum.map(Number);
+            }
+        }
+
+        return omitUndefined(schema);
     }
 }
 
@@ -919,12 +928,12 @@ export class BooleanType extends ValidateableType<boolean> {
     }
 
     toJSONSchema(): JSONSchema {
-        return {
+        return omitUndefined({
             type: "boolean",
             description: this._remarks,
             default: this._default,
             deprecated: isVoid(this._deprecated) ? void 0 : true,
-        };
+        } as JSONSchema);
     }
 }
 
@@ -997,13 +1006,13 @@ export class DateType extends ValidateableType<Date> {
     }
 
     toJSONSchema(): JSONSchema {
-        return {
+        return omitUndefined({
             type: "string",
             description: this._remarks,
-            default: this._default,
+            default: this._default ? this._default.toISOString() : void 0,
             deprecated: isVoid(this._deprecated) ? void 0 : true,
             format: "date-time",
-        };
+        } as JSONSchema);
     }
 }
 
@@ -1020,18 +1029,22 @@ export class OptionalDateType extends DateType {
     }
 }
 
-export class MixedType extends ValidateableType<object> {
+export class ObjectType extends ValidateableType<object> {
     /** @internal Used for TypeScript to distinguish the type from similar types. */
-    get [Symbol.toStringTag](): "MixedType" {
-        return "MixedType";
+    get [Symbol.toStringTag](): "ObjectType" {
+        return "ObjectType";
     }
 
     get optional() {
-        return this.deriveWith({ _optional: true }, new OptionalMixedType());
+        return this.deriveWith({ _optional: true }, new OptionalObjectType());
     }
 
-    default(value: object) {
-        return this.deriveWith({ _optional: true, _default: value }, new OptionalMixedType());
+    default(value: object | null) {
+        if (Array.isArray(value)) {
+            throw new TypeError("value must be an object but not an array");
+        }
+
+        return this.deriveWith({ _optional: true, _default: value }, new OptionalObjectType());
     }
 
     /** @internal */
@@ -1044,7 +1057,7 @@ export class MixedType extends ValidateableType<object> {
 
         if (value === null || value === void 0) {
             return value;
-        } else if (!(value instanceof Object)) {
+        } else if (!(value instanceof Object) || Array.isArray(value)) {
             throw this.createTypeError(path, value, "object");
         } else {
             return value;
@@ -1052,25 +1065,25 @@ export class MixedType extends ValidateableType<object> {
     }
 
     toJSONSchema(): JSONSchema {
-        return {
+        return omitUndefined({
             type: "object",
             description: this._remarks,
             default: this._default,
             deprecated: isVoid(this._deprecated) ? void 0 : true,
-        };
+        } as JSONSchema);
     }
 }
 
-export class OptionalMixedType extends MixedType {
+export class OptionalObjectType extends ObjectType {
     /** @internal Used for TypeScript to distinguish the type from similar types. */
     // @ts-ignore
-    get [Symbol.toStringTag](): "OptionalMixedType" {
-        return "OptionalMixedType";
+    get [Symbol.toStringTag](): "OptionalObjectType" {
+        return "OptionalObjectType";
     }
 
     // @ts-ignore
     get required() {
-        return this.deriveWith({ _optional: false }, new MixedType());
+        return this.deriveWith({ _optional: false }, new ObjectType());
     }
 }
 
@@ -1091,12 +1104,12 @@ export class AnyType extends ValidateableType<any> {
     }
 
     toJSONSchema(): JSONSchema {
-        return {
+        return omitUndefined({
             type: ["string", "number", "integer", "boolean", "object", "array", "null"],
             description: this._remarks,
             default: this._default,
             deprecated: isVoid(this._deprecated) ? void 0 : true,
-        };
+        } as JSONSchema);
     }
 }
 
@@ -1158,12 +1171,12 @@ export class VoidType extends ValidateableType<void> {
     }
 
     toJSONSchema(): JSONSchema {
-        return {
+        return omitUndefined({
             type: "null",
             description: this._remarks,
             default: this._default,
             deprecated: isVoid(this._deprecated) ? void 0 : true,
-        };
+        } as JSONSchema);
     }
 }
 
@@ -1273,17 +1286,25 @@ export class CustomType<T> extends ValidateableType<T> {
     }
 
     toJSONSchema(): JSONSchema {
-        if (this.type instanceof Function) {
-            return {
+        if (typeof this.type === "boolean") {
+            return omitUndefined({
+                type: "boolean",
+                description: this._remarks,
+                default: toJSON(this._default),
+                deprecated: isVoid(this._deprecated) ? void 0 : true,
+                const: this.type,
+            } as JSONSchema);
+        } else if (this.type instanceof Function) {
+            return omitUndefined({
                 type: "object",
                 description: this._remarks,
-                default: this._default,
+                default: toJSON(this._default),
                 deprecated: isVoid(this._deprecated) ? void 0 : true,
-            };
+            } as JSONSchema);
         } else {
             return toJSONSchema(this.type, {
                 description: this._remarks,
-                default: this._default,
+                default: toJSON(this._default),
                 deprecated: isVoid(this._deprecated) ? void 0 : true,
             });
         }
@@ -1304,7 +1325,9 @@ export class OptionalCustomType<T> extends CustomType<T> {
 }
 
 export class UnionType<T extends any[]> extends ValidateableType<T[]> {
-    constructor(public types: T) {
+    protected _default: T[0];
+
+    constructor(readonly types: T) {
         super();
     }
 
@@ -1401,7 +1424,7 @@ export class UnionType<T extends any[]> extends ValidateableType<T[]> {
                 return "boolean";
             } else if (Object.is(type, Date) || Object.is(type, DateType)) {
                 return "Date";
-            } else if (Object.is(type, Object) || Object.is(type, MixedType) || isObject(type)) {
+            } else if (Object.is(type, Object) || Object.is(type, ObjectType) || isObject(type)) {
                 return "object";
             } else if (Object.is(type, Any) || Object.is(type, AnyType)) {
                 return "any";
@@ -1449,13 +1472,22 @@ export class UnionType<T extends any[]> extends ValidateableType<T[]> {
         const _types = [...new Set(types.flat())];
         const type = _types.length === 1 ? _types[0] : _types;
 
-        return {
+        const schema: JSONSchema = {
             type,
             description: this._remarks,
-            default: this._default,
+            default: toJSON(this._default),
             deprecated: isVoid(this._deprecated) ? void 0 : true,
-            oneOf,
         };
+
+        if (typeof type === "string") {
+            if (type !== "boolean" && oneOf.every(item => item.const !== undefined)) {
+                schema["enum"] = oneOf.map(item => item.const);
+            }
+        } else if (oneOf.some(item => Object.keys(item).length >= 2)) {
+            schema["oneOf"] = oneOf;
+        }
+
+        return omitUndefined(schema);
     }
 }
 
@@ -1596,6 +1628,8 @@ export class DictType<K extends IndexableType, V> extends ValidateableType<Recor
             if (!(this.key instanceof OptionalStringEnum)) {
                 schema["required"] = keys;
             }
+
+            schema["additionalProperties"] = false;
         }
 
         return schema;
@@ -1753,15 +1787,21 @@ export class ArrayType<T> extends CustomType<T[]> {
             uniqueItems: this._uniqueItems || void 0,
         };
 
-        if (this.type.length === 0) {
-            schema["items"] = toJSONSchema(Any);
-        } else if (this.type.length === 1) {
-            schema["items"] = toJSONSchema(this.type[0]);
-        } else {
-            schema["oneOf"] = this.type.map(type => toJSONSchema(type));
+        if (this.type?.length > 0) {
+            if (this.type.length === 1 && !(this.type[0] instanceof AnyType)) {
+                schema["items"] = toJSONSchema(this.type[0]);
+            } else if (this.type.length > 1) {
+                const oneOf = this.type.map(type => toJSONSchema(type));
+
+                if (oneOf.every(item => Object.keys(item).length === 1)) {
+                    schema["items"] = { type: oneOf.map(item => item.type) };
+                } else {
+                    schema["oneOf"] = oneOf;
+                }
+            }
         }
 
-        return schema;
+        return omitUndefined(schema);
     }
 }
 
@@ -1819,10 +1859,17 @@ export class TupleType<T extends readonly any[]> extends ValidateableType<T> {
             _value = value as any;
         }
 
-        const result = [];
+        let items = [];
 
         for (let i = 0; i < this.type.length; i++) {
-            result.push(validate(_value[i], this.type[i], `${path}[${i}]`, options));
+            items.push(validate(_value[i], this.type[i], `${path}[${i}]`, options));
+        }
+
+        let offset = [...items].reverse().findIndex(item => item !== undefined);
+
+        if (offset !== -1) {
+            offset = items.length - offset;
+            items = items.slice(0, offset);
         }
 
         if (_value.length > this.type.length) {
@@ -1852,19 +1899,24 @@ export class TupleType<T extends readonly any[]> extends ValidateableType<T> {
             }
         }
 
-        return result as any as T;
+        return items as any as T;
     }
 
     toJSONSchema(): JSONSchema {
-        return {
+        const schema: JSONSchema = {
             type: "array",
             description: this._remarks,
             default: this._default,
             deprecated: isVoid(this._deprecated) ? void 0 : true,
-            minItems: this.type.length,
+            minItems: this.type.filter(type => {
+                return !(type instanceof ValidateableType)
+                    || !type["_optional"];
+            }).length,
             maxItems: this.type.length,
-            prefixItems: this.type.map(type => toJSONSchema(type))
+            prefixItems: this.type.map(type => toJSONSchema(type)),
         };
+
+        return omitUndefined(schema);
     }
 }
 
@@ -1896,7 +1948,7 @@ export type OptionalTypes = OptionalStringType
     | OptionalBigIntEnum<any>
     | OptionalBooleanType
     | OptionalDateType
-    | OptionalMixedType
+    | OptionalObjectType
     | OptionalAnyType
     | OptionalCustomType<any>
     | OptionalUnionType<any[]>
@@ -1924,7 +1976,7 @@ export type ExtractInstanceType<T> = T extends OptionalStringEnum<infer U> ? (U 
     : T extends (BigIntConstructor | typeof BigIntType | BigIntType | OptionalBigIntType) ? bigint
     : T extends (BooleanConstructor | typeof BooleanType | BooleanType | OptionalBooleanType) ? boolean
     : T extends (DateConstructor | typeof DateType | DateType | OptionalDateType) ? Date
-    : T extends (ObjectConstructor | typeof MixedType | MixedType | OptionalMixedType) ? object
+    : T extends (ObjectConstructor | typeof ObjectType | ObjectType | OptionalObjectType) ? object
     : T extends (ArrayConstructor | typeof ArrayType) ? any[]
     : T extends (typeof AnyType | AnyType | OptionalAnyType) ? any
     : T extends (typeof VoidType | VoidType) ? void
@@ -1959,7 +2011,7 @@ export type EnsureOptionalProperties<T extends Record<string, unknown>> = {
     : T[K] extends (BigIntConstructor | typeof BigIntType | BigIntType) ? OptionalBigIntType
     : T[K] extends (BooleanConstructor | typeof BooleanType | BooleanType) ? OptionalBooleanType
     : T[K] extends (DateConstructor | typeof DateType | DateType) ? OptionalDateType
-    : T[K] extends (ObjectConstructor | typeof MixedType | MixedType) ? OptionalMixedType
+    : T[K] extends (ObjectConstructor | typeof ObjectType | ObjectType) ? OptionalObjectType
     : T[K] extends (typeof AnyType | AnyType) ? OptionalAnyType
     : T[K] extends CustomType<infer U> ? OptionalCustomType<U>
     : T[K] extends ArrayType<infer U> ? OptionalArrayType<U>
@@ -1979,7 +2031,7 @@ export type EnsureRequiredProperties<T extends Record<string, unknown>> = {
     : T[K] extends OptionalBigIntEnum<infer U> ? BigIntEnum<U>
     : T[K] extends OptionalBooleanType ? BooleanType
     : T[K] extends OptionalDateType ? DateType
-    : T[K] extends OptionalMixedType ? MixedType
+    : T[K] extends OptionalObjectType ? ObjectType
     : T[K] extends OptionalAnyType ? AnyType
     : T[K] extends OptionalCustomType<infer U> ? CustomType<U>
     : T[K] extends OptionalArrayType<infer U> ? ArrayType<U>
@@ -2021,7 +2073,7 @@ augmentStaticMethods(Number, NumberType);
 augmentStaticMethods(BigInt as any, BigIntType);
 augmentStaticMethods(Boolean, BooleanType);
 augmentStaticMethods(Date, DateType);
-augmentStaticMethods(Object, MixedType);
+augmentStaticMethods(Object, ObjectType);
 augmentStaticMethods(Array, ArrayType);
 
 /** Any type of value except void values (`null` and `undefined`). */
@@ -2110,7 +2162,7 @@ declare global {
     interface BigIntConstructor extends BigIntType { } // eslint-disable-line
     interface BooleanConstructor extends BooleanType { } // eslint-disable-line
     interface DateConstructor extends DateType { } // eslint-disable-line
-    interface ObjectConstructor extends MixedType { } // eslint-disable-line
+    interface ObjectConstructor extends ObjectType { } // eslint-disable-line
     interface ArrayConstructor extends ArrayType<any> { } // eslint-disable-line
     interface Array<T> extends ArrayType<T> { } // eslint-disable-line
 
@@ -2121,7 +2173,7 @@ declare global {
          * `returns` keywords. Otherwise, `null` is returned.
          */
         getJSONSchema: (options?: {
-            $id: string;
+            $id?: string;
             title?: string;
             description?: string;
         }) => Omit<JSONSchema, "type"> & {
@@ -2213,6 +2265,35 @@ function readType(value: any, asConst = false) {
     return type;
 }
 
+function omitUndefined<T extends object>(obj: T): T {
+    return Object.keys(obj).reduce((record, prop) => {
+        if (obj[prop] !== undefined) {
+            record[prop] = obj[prop];
+        }
+
+        return record;
+    }, {} as T);
+}
+
+function toJSON(value: any) {
+    let json: any;
+
+    if (value === null) {
+        json = null;
+    } else if (value !== void 0) {
+        if (Array.isArray(value) ||
+            isObject(value) ||
+            isConst(value)
+        ) {
+            json = typeof value === "bigint" ? Number(value) : value;
+        } else if (typeof value === "object" && typeof value.toJSON === "function") {
+            json = value.toJSON();
+        }
+    }
+
+    return json;
+}
+
 function ensureType(type: any, path = "$", deep = false) {
     const reduce = (type: any, path: string) => {
         if (type instanceof ValidateableType) {
@@ -2227,8 +2308,8 @@ function ensureType(type: any, path = "$", deep = false) {
             return new BooleanType();
         } else if (Object.is(type, Date) || Object.is(type, DateType)) {
             return new DateType();
-        } else if (Object.is(type, Object) || Object.is(type, MixedType)) {
-            return new MixedType();
+        } else if (Object.is(type, Object) || Object.is(type, ObjectType)) {
+            return new ObjectType();
         } else if (Object.is(type, Array) || Object.is(type, ArrayType)) {
             return new ArrayType([]);
         } else if (Object.is(type, AnyType)) {
@@ -2957,11 +3038,9 @@ export function ensured<T extends Record<string, unknown>, K extends keyof T>(ty
 function toJSONSchema(type: any, extra: Partial<JSONSchema> = {}) {
     if (Array.isArray(type)) {
         if (!type.length) {
-            return { ...new ArrayType([Any]).toJSONSchema(), ...extra };
-        } else if (type.length === 1) {
-            return { ...new ArrayType(type).toJSONSchema(), ...extra };
+            return omitUndefined({ ...new ArrayType([Any]).toJSONSchema(), ...extra });
         } else {
-            return { ...as(...type).toJSONSchema(), ...extra }; // as union type
+            return omitUndefined({ ...new ArrayType(type).toJSONSchema(), ...extra });
         }
     } else if (isObject(type)) {
         const required: string[] = [];
@@ -2992,16 +3071,14 @@ function toJSONSchema(type: any, extra: Partial<JSONSchema> = {}) {
         };
 
         schema["required"] = required;
-        return { ...schema, ...extra };
+        schema["additionalProperties"] = false;
+
+        return omitUndefined({ ...schema, ...extra });
     } else {
-        try {
-            return {
-                ...ensureType(type, "", true).toJSONSchema(),
-                ...extra,
-            };
-        } catch {
-            return null;
-        }
+        return omitUndefined({
+            ...ensureType(type, "", true).toJSONSchema(),
+            ...extra,
+        });
     }
 }
 
@@ -3026,7 +3103,7 @@ export function getJSONSchema(type: any, options: {
     const schema = toJSONSchema(type);
 
     if (options?.$id) {
-        return {
+        return omitUndefined({
             $schema: "https://json-schema.org/draft/2020-12/schema",
             $id: options.$id,
             title: options.title,
@@ -3036,7 +3113,7 @@ export function getJSONSchema(type: any, options: {
             $schema: string;
             $id: string;
             title?: string;
-        } & JSONSchema;
+        } & JSONSchema);
     } else {
         return schema;
     }
@@ -3049,15 +3126,16 @@ Function.prototype.getJSONSchema = function (options) {
     const parentId = hasSuffix ? $id.slice(0, -12) : $id;
     const paramsDef = this[_params] as { type: any; name?: string; remarks?: string; }[];
     const returnDef = this[_returns] as { type: any; name: string; remarks?: string; };
+    const isVoidParam = paramsDef.length === 1 && paramsDef[0].type instanceof VoidType;
 
-    return this[_title] ? {
+    return this[_title] ? omitUndefined({
         $schema: "https://json-schema.org/draft/2020-12/schema",
         $id: options?.$id || title,
         title,
         type: "function",
         description: options?.description || this[_remarks],
         deprecated: isVoid(this[_deprecated]) ? void 0 : true,
-        parameters: paramsDef ? paramsDef.reduce((records, item, index) => {
+        parameters: paramsDef && !isVoidParam ? paramsDef.reduce((records, item, index) => {
             const name = item.name || "param" + index;
 
             records[name] = getJSONSchema(item.type, {
@@ -3068,10 +3146,10 @@ Function.prototype.getJSONSchema = function (options) {
 
             return records;
         }, {}) : null,
-        returns: returnDef ? getJSONSchema(returnDef.type, {
+        returns: returnDef && !(returnDef.type instanceof VoidType) ? getJSONSchema(returnDef.type, {
             $id: `${parentId}.${returnDef.name}` + (hasSuffix ? ".schema.json" : ""),
             title: `${title}.${returnDef.name}`,
             description: returnDef.remarks,
         }) : null,
-    } : null;
+    }) : null;
 };

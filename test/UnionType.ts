@@ -277,6 +277,18 @@ describe("UnionType", () => {
         assert.strictEqual(value1, "hello");
 
         // @ts-ignore
+        const _value1 = validate(void 0,
+            as("hello" as const, "world" as const).optional,
+            "value1");
+        assert.strictEqual(_value1, void 0);
+
+        // @ts-ignore
+        const __value1 = validate(void 0,
+            as("hello" as const, "world" as const).default("hello"),
+            "value1");
+        assert.strictEqual(__value1, "hello");
+
+        // @ts-ignore
         const [err1] = _try(() => validate("hi", as("hello" as const, "world" as const), "value1"));
         assert.strictEqual(
             String(err1),
@@ -285,6 +297,14 @@ describe("UnionType", () => {
 
         const value2 = validate(1, as(1 as const, 2 as const), "value2");
         assert.strictEqual(value2, 1);
+
+        // @ts-ignore
+        const _value2 = validate(void 0, as(1 as const, 2 as const).optional, "value2");
+        assert.strictEqual(_value2, void 0);
+
+        // @ts-ignore
+        const __value2 = validate(void 0, as(1 as const, 2 as const).default(1), "value2");
+        assert.strictEqual(__value2, 1);
 
         // @ts-ignore
         const [err2] = _try(() => validate(3, as(1 as const, 2 as const), "value2"));
@@ -297,6 +317,14 @@ describe("UnionType", () => {
         assert.strictEqual(value3, 1n);
 
         // @ts-ignore
+        const _value3 = validate(void 0, as(1n as const, 2n as const).optional, "value3");
+        assert.strictEqual(_value3, void 0);
+
+        // @ts-ignore
+        const __value3 = validate(void 0, as(1n as const, 2n as const).default(1n), "value3");
+        assert.strictEqual(__value3, 1n);
+
+        // @ts-ignore
         const [err3] = _try(() => validate(3n, as(1n as const, 2n as const), "value3"));
         assert.strictEqual(
             String(err3),
@@ -305,6 +333,14 @@ describe("UnionType", () => {
 
         const value4 = validate(true, as(true as const, false as const), "value4");
         assert.strictEqual(value4, true);
+
+        // @ts-ignore
+        const _value4 = validate(void 0, as(true as const, false as const).optional, "value4");
+        assert.strictEqual(_value4, void 0);
+
+        // @ts-ignore
+        const __value4 = validate(void 0, as(true as const, false as const).default(true), "value4");
+        assert.strictEqual(__value4, true);
 
         // @ts-ignore
         const [err4] = _try(() => validate("yes", as(true as const, false as const), "value4"));

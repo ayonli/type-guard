@@ -53,6 +53,28 @@ describe("TupleType", () => {
         assert.strictEqual(value1, null);
     });
 
+    it("should validate optional items in tuple", () => {
+        // @ts-ignore
+        const value1 = validate(["hello"], as([String, Number.optional] as const).optional, "value1");
+        assert.deepStrictEqual(value1, ["hello"]);
+
+        // @ts-ignore
+        const value2 = validate(["hello", void 0, true], as([
+            String,
+            Number.optional,
+            Boolean.optional
+        ] as const).optional, "value1");
+        assert.deepStrictEqual(value2, ["hello", void 0, true]);
+
+        // @ts-ignore
+        const value3 = validate(["hello", void 0, null], as([
+            String,
+            Number.optional,
+            Boolean.optional
+        ] as const).optional, "value1");
+        assert.deepStrictEqual(value3, ["hello", void 0, null]);
+    });
+
     it("should validate tuple with default value", () => {
         // @ts-ignore
         const value1 = validate(void 0, as([String, Number] as const).default(["hello", 1]), "value1");
@@ -62,7 +84,7 @@ describe("TupleType", () => {
     it("should validate tuple of constant values", () => {
         const value1 = validate(["foo", 1], as(["foo", 1] as const), "value1");
         assert.deepStrictEqual(value1, ["foo", 1]);
-    })
+    });
 
     it("should remove unknown items and emit warnings", () => {
         const warnings: ValidationWarning[] = [];
@@ -123,5 +145,5 @@ describe("TupleType", () => {
                 message: "value1 is expected to contain no more than 2 items"
             }
         ] as ValidationWarning[]);
-    })
+    });
 });

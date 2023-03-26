@@ -115,11 +115,11 @@ describe("Core Features", () => {
 
     it("should add features to the Object constructor", () => {
         assert.strictEqual(typeof Object.optional, "object");
-        assert.strictEqual(String(Object.optional), "[object OptionalMixedType]");
+        assert.strictEqual(String(Object.optional), "[object OptionalObjectType]");
         assert.strictEqual(Object.optional, Object.optional);
 
         assert.strictEqual(typeof Object.required, "object");
-        assert.strictEqual(String(Object.required), "[object MixedType]");
+        assert.strictEqual(String(Object.required), "[object ObjectType]");
         assert.strictEqual(Object.required, Object.required);
         assert(Object.optional.required !== Object.required);
 

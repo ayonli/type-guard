@@ -4,7 +4,7 @@ import _try from "dotry";
 import { as, validate, ValidationWarning } from "..";
 
 describe("Object", () => {
-    it("should validate values of mixed types", () => {
+    it("should validate objects", () => {
         const obj = { foo: "hello", bar: "world" };
         // @ts-ignore
         const obj1 = validate(obj, Object, "obj1");
@@ -17,10 +17,6 @@ describe("Object", () => {
         const buf = Buffer.from("hello, world!");
         const obj3 = validate(buf, Object, "obj3");
         assert.strictEqual(obj3, buf);
-
-        const arr = [1, 2, 3];
-        const obj4 = validate(arr, Object, "obj4");
-        assert.strictEqual(obj4, arr);
     });
 
     it("should report error when the value is not provided", () => {
@@ -33,7 +29,7 @@ describe("Object", () => {
         assert.strictEqual(String(err2), "Error: obj is required, but no value is given");
     });
 
-    it("should validate optional values of mixed types", () => {
+    it("should validate optional objects", () => {
         // @ts-ignore
         const obj1 = validate(null, Object.optional, "obj1");
         assert.strictEqual(obj1, null);
@@ -43,7 +39,7 @@ describe("Object", () => {
         assert.deepStrictEqual(obj2, void 0);
     });
 
-    it("should validate values of mixed types with default values", () => {
+    it("should validate objects with default values", () => {
         const obj = {};
         // @ts-ignore
         const obj1 = validate(null, Object.default(obj), "obj1");
@@ -53,6 +49,10 @@ describe("Object", () => {
         // @ts-ignore
         const obj2 = validate(void 0, Object.default(date), "obj2");
         assert.strictEqual(obj2, date);
+
+        // @ts-ignore
+        const obj3 = validate(null, Object.default(null), "obj3");
+        assert.strictEqual(obj3, null);
     });
 
     it("should validate structures of object literals", () => {

@@ -2,7 +2,7 @@
 
 Runtime type checking for JavaScript variables and function parameters.
 
-*Inspired by TypeScript and JSDoc.*
+*Inspired by TypeScript, JSDoc and JSON Schema.*
 
 ## Table of Contents
 
@@ -32,8 +32,8 @@ Runtime type checking for JavaScript variables and function parameters.
     - [Generic Type](#generic-types)
 - [Utility Functions](#utility-functions)
     - [Utility Types](#utility-types)
-- [Work with Common Functions](#work-with-common-functions)
-- [Work with JSON Schema](#work-with-json-schema)
+- [Working with Common Functions](#working-with-common-functions)
+- [Working with JSON Schema](#working-with-json-schema)
     - [JSON Schema for Functions](#json-schema-for-functions)
 
 ## Install
@@ -121,7 +121,7 @@ definitions are plain objects, which can be reused any where, and even
 - `Number` and `BigInt`
 - `Boolean`
 - `Date`
-- `Object` for mixed value
+- `Object` for objects (exclude array)
 - `Array` for an array of any type of elements
 - `{}` and `[]` literals are used to define deep structures
   - Specifically, `[]` with no elements serves as the same as `Array`
@@ -198,7 +198,7 @@ const Structure = {
     my1: MyClass, // custom types are supported
     my2: as(MyClass).optional, // use as().optional to form an optional custom type
     any: Any, // any type of value
-    mixed: Object, // mixed type, aka: std-object
+    obj: Object, // object type
     dict1: Dict(String, Number), // equivalent to Record<string, number> in TypeScript
     dict2: Dict(String.enum(["foo", "bar"] as const), String), // Record<"foo" | "bar", number>
     nil: Void, // void type: null or undefined
@@ -655,7 +655,7 @@ type Struct = ExtractInstanceType<typeof Struct>;
 // will resolve in: { foo: string; bar?: number; deep: { foo1: Date; bar2?: object; } }
 ```
 
-## Work with Common Functions
+## Working with Common Functions
 
 Well, generators only works on class methods, so if we want to use type
 validation in a common function, there are two ways (with limited support) to do
@@ -690,13 +690,13 @@ const wrappedSum = wrap(
 });
 ```
 
-## Work with JSON Schema
+## Working with JSON Schema
 
 The type definition can be easily converted to JSON Schema, and exported to
 other clients or languages for wider adoption.
 
 ```ts
-import { ExtractInstanceType, createJSONSchema } from "@hyurl/type-guard";
+import { ExtractInstanceType, getJSONSchema } from "@hyurl/type-guard";
 
 const Article = {
     id: Number.remarks("The ID of article"),
@@ -708,7 +708,7 @@ const Article = {
 
 type Article = ExtractInstanceType<typeof Article>; // type declaration
 
-const ArticleSchema = createJSONSchema(Article, { // and JSON schema
+const ArticleSchema = getJSONSchema(Article, { // and JSON schema
     $id: "https://myapi.com/article.schema.json",
     title: "Article",
     description: "",
