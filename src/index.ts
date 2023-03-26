@@ -1240,7 +1240,7 @@ export class CustomType<T> extends ValidateableType<T> {
         strict?: boolean;
         suppress?: boolean;
         warnings?: ValidationWarning[];
-        removeUnknownProps?: boolean;
+        removeUnknownItems?: boolean;
     } = null): T | never {
         value = super.validate(path, value, options);
 
@@ -1350,7 +1350,7 @@ export class UnionType<T extends any[]> extends ValidateableType<T[]> {
         strict?: boolean;
         suppress?: boolean;
         warnings?: ValidationWarning[];
-        removeUnknownProps?: boolean;
+        removeUnknownItems?: boolean;
     } = null): T | never {
         try {
             value = super.validate(path, value, options);
@@ -1376,7 +1376,7 @@ export class UnionType<T extends any[]> extends ValidateableType<T[]> {
                     strict: true,
                     suppress: options?.suppress,
                     warnings: options?.warnings,
-                    removeUnknownProps: options?.removeUnknownProps,
+                    removeUnknownItems: options?.removeUnknownItems,
                 }) as any;
 
                 if (_value !== null && _value !== void 0) {
@@ -1396,7 +1396,7 @@ export class UnionType<T extends any[]> extends ValidateableType<T[]> {
                         strict: false,
                         suppress: options?.suppress,
                         warnings: options?.warnings,
-                        removeUnknownProps: options?.removeUnknownProps,
+                        removeUnknownItems: options?.removeUnknownItems,
                     }) as any;
 
                     if (_value !== null && _value !== void 0) {
@@ -1531,7 +1531,7 @@ export class DictType<K extends IndexableType, V> extends ValidateableType<Recor
         strict?: boolean;
         suppress?: boolean;
         warnings?: ValidationWarning[];
-        removeUnknownProps?: boolean;
+        removeUnknownItems?: boolean;
     } = null): Record<ExtractInstanceType<K>, ExtractInstanceType<V>> | never {
         value = super.validate(path, value, options);
 
@@ -1563,7 +1563,7 @@ export class DictType<K extends IndexableType, V> extends ValidateableType<Recor
                     }
                 } catch (err) {
                     if (err instanceof Error && String(err).includes("expected to contain only")) {
-                        if (options?.removeUnknownProps) {
+                        if (options?.removeUnknownItems) {
                             if (!options.suppress) {
                                 const _path = path ? `${path}.${_key}` : _key;
                                 options?.warnings?.push({
@@ -1720,7 +1720,7 @@ export class ArrayType<T> extends CustomType<T[]> {
         strict?: boolean;
         suppress?: boolean;
         warnings?: ValidationWarning[];
-        removeUnknownProps?: boolean;
+        removeUnknownItems?: boolean;
     } = null): T[] | never {
         value = ValidateableType.prototype.validate.call(this, path, value, options);
         let _value: T[];
@@ -1742,7 +1742,7 @@ export class ArrayType<T> extends CustomType<T[]> {
             const count = this._minItems === 1 ? "1 item" : `${this._minItems} items`;
             err = new RangeError(`${path} is expected to contain at least ${count}`);
         } else if (this._maxItems && _value.length > this._maxItems) {
-            if (options?.removeUnknownProps) {
+            if (options?.removeUnknownItems) {
                 const offset = this._maxItems;
                 const end = _value.length - 1;
                 _value = _value.slice(0, offset);
@@ -1844,7 +1844,7 @@ export class TupleType<T extends readonly any[]> extends ValidateableType<T> {
         strict?: boolean;
         suppress?: boolean;
         warnings?: ValidationWarning[];
-        removeUnknownProps?: boolean;
+        removeUnknownItems?: boolean;
     } = null): T | never {
         value = ValidateableType.prototype.validate.call(this, path, value, options);
         let _value: T;
@@ -1876,7 +1876,7 @@ export class TupleType<T extends readonly any[]> extends ValidateableType<T> {
             const offset = this.type.length;
             const end = _value.length - 1;
 
-            if (options?.removeUnknownProps) {
+            if (options?.removeUnknownItems) {
                 if (!options?.suppress) {
                     const target = end === offset
                         ? `item ${path}[${offset}] has`
@@ -2453,10 +2453,10 @@ export function validate<T>(value: ExtractInstanceType<T>, type: T, variable = "
      */
     warnings?: ValidationWarning[];
     /**
-     * Remove all properties in the value (if it's an object or tuple) that are
-     * not defined if the type.
+     * Remove unknown properties in the object or the items that exceed the
+     * length limit of the array.
      */
-    removeUnknownProps?: boolean;
+    removeUnknownItems?: boolean;
 } = null): ExtractInstanceType<T> | never {
     const reduce = (type: any, value: any, path: string) => {
         if (Array.isArray(type)) {
@@ -2553,7 +2553,7 @@ export function validate<T>(value: ExtractInstanceType<T>, type: T, variable = "
                     }
                 }
 
-                if (!options?.removeUnknownProps) {
+                if (!options?.removeUnknownItems) {
                     Object.keys(value).reduce((records, prop) => {
                         if (!knownProps.includes(prop) && value[prop] !== void 0) {
                             records[prop] = value[prop];
@@ -2649,7 +2649,7 @@ const wrapMethod = (target: any, prop: string | symbol, desc: TypedPropertyDescr
             const returnDef = fn[_returns] as { type: any; name: string; };
             const throwDef = fn[_throws] as { type: any; name: string; };
             const warnings: ValidationWarning[] = [];
-            const options = { warnings, removeUnknownProps: true };
+            const options = { warnings, removeUnknownItems: true };
 
             if (!isVoid(fn[_deprecated])) {
                 const message = fn[_deprecated]
@@ -2924,7 +2924,7 @@ export function deprecated(message = ""): MethodDecorator {
 export function wrap<A, R>(parameters: A, returns: R) {
     return (fn: WrappedFunction<A, R>) => (function (this: any, arg) {
         const warnings: ValidationWarning[] = [];
-        const options = { warnings, removeUnknownProps: true };
+        const options = { warnings, removeUnknownItems: true };
         arg = validate(arg, parameters, "parameters", options);
         let result = fn(arg);
 

@@ -131,7 +131,7 @@ describe("Object", () => {
     it("should remove unknown properties of the object literal", () => {
         // @ts-ignore
         const obj1 = validate({ foo: "123", bar: "456" }, { foo: String }, "obj6", {
-            removeUnknownProps: true,
+            removeUnknownItems: true,
         });
         assert.deepStrictEqual(obj1, { foo: "123" });
 
@@ -140,7 +140,7 @@ describe("Object", () => {
             // @ts-ignore
             foo: { foo: "123", bar: "456" }, bar: "123"
         }, { foo: { bar: String } }, "obj6", {
-            removeUnknownProps: true,
+            removeUnknownItems: true,
         });
         assert.deepStrictEqual(obj2, { foo: { bar: "456" } });
     });
@@ -179,7 +179,7 @@ describe("Object", () => {
         // @ts-ignore
         const obj6 = validate({ foo: "123", bar: "456" }, { foo: String }, "obj6", {
             warnings,
-            removeUnknownProps: true,
+            removeUnknownItems: true,
         });
         assert.deepStrictEqual(obj6, { foo: "123" });
 
@@ -225,7 +225,7 @@ describe("Object", () => {
         // @ts-ignore
         const obj1 = validate({ foo: "123", bar: "456" }, { foo: String }, "obj1", {
             warnings,
-            removeUnknownProps: true,
+            removeUnknownItems: true,
             suppress: true,
         });
         assert.deepStrictEqual(obj1, { foo: "123" });
@@ -236,7 +236,7 @@ describe("Object", () => {
             foo: { foo: "123", bar: "456" }, bar: "123"
         }, { foo: { bar: String } }, "obj6", {
             warnings,
-            removeUnknownProps: true,
+            removeUnknownItems: true,
             suppress: true,
         });
         assert.deepStrictEqual(obj2, { foo: { bar: "456" } });

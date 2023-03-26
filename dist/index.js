@@ -1198,7 +1198,7 @@ class UnionType extends ValidateableType {
                     strict: true,
                     suppress: options === null || options === void 0 ? void 0 : options.suppress,
                     warnings: options === null || options === void 0 ? void 0 : options.warnings,
-                    removeUnknownProps: options === null || options === void 0 ? void 0 : options.removeUnknownProps,
+                    removeUnknownItems: options === null || options === void 0 ? void 0 : options.removeUnknownItems,
                 }));
                 if (_value !== null && _value !== void 0) {
                     return _value;
@@ -1217,7 +1217,7 @@ class UnionType extends ValidateableType {
                         strict: false,
                         suppress: options === null || options === void 0 ? void 0 : options.suppress,
                         warnings: options === null || options === void 0 ? void 0 : options.warnings,
-                        removeUnknownProps: options === null || options === void 0 ? void 0 : options.removeUnknownProps,
+                        removeUnknownItems: options === null || options === void 0 ? void 0 : options.removeUnknownItems,
                     }));
                     if (_value !== null && _value !== void 0) {
                         return _value;
@@ -1376,7 +1376,7 @@ class DictType extends ValidateableType {
                 }
                 catch (err) {
                     if (err instanceof Error && String(err).includes("expected to contain only")) {
-                        if (options === null || options === void 0 ? void 0 : options.removeUnknownProps) {
+                        if (options === null || options === void 0 ? void 0 : options.removeUnknownItems) {
                             if (!options.suppress) {
                                 const _path = path ? `${path}.${_key}` : _key;
                                 (_a = options === null || options === void 0 ? void 0 : options.warnings) === null || _a === void 0 ? void 0 : _a.push({
@@ -1529,7 +1529,7 @@ class ArrayType extends CustomType {
             err = new RangeError(`${path} is expected to contain at least ${count}`);
         }
         else if (this._maxItems && _value.length > this._maxItems) {
-            if (options === null || options === void 0 ? void 0 : options.removeUnknownProps) {
+            if (options === null || options === void 0 ? void 0 : options.removeUnknownItems) {
                 const offset = this._maxItems;
                 const end = _value.length - 1;
                 _value = _value.slice(0, offset);
@@ -1646,7 +1646,7 @@ class TupleType extends ValidateableType {
         if (_value.length > this.type.length) {
             const offset = this.type.length;
             const end = _value.length - 1;
-            if (options === null || options === void 0 ? void 0 : options.removeUnknownProps) {
+            if (options === null || options === void 0 ? void 0 : options.removeUnknownItems) {
                 if (!(options === null || options === void 0 ? void 0 : options.suppress)) {
                     const target = end === offset
                         ? `item ${path}[${offset}] has`
@@ -2124,7 +2124,7 @@ function validate(value, type, variable = "$", options = null) {
                         }
                     }
                 }
-                if (!(options === null || options === void 0 ? void 0 : options.removeUnknownProps)) {
+                if (!(options === null || options === void 0 ? void 0 : options.removeUnknownItems)) {
                     Object.keys(value).reduce((records, prop) => {
                         if (!knownProps.includes(prop) && value[prop] !== void 0) {
                             records[prop] = value[prop];
@@ -2213,7 +2213,7 @@ const wrapMethod = (target, prop, desc) => {
             const returnDef = fn[_returns];
             const throwDef = fn[_throws];
             const warnings = [];
-            const options = { warnings, removeUnknownProps: true };
+            const options = { warnings, removeUnknownItems: true };
             if (!(0, isVoid_1.default)(fn[_deprecated])) {
                 const message = fn[_deprecated]
                     ? `${String(prop)}() is deprecated: ${fn[_deprecated]}`
@@ -2443,7 +2443,7 @@ exports.deprecated = deprecated;
 function wrap(parameters, returns) {
     return (fn) => (function (arg) {
         const warnings = [];
-        const options = { warnings, removeUnknownProps: true };
+        const options = { warnings, removeUnknownItems: true };
         arg = validate(arg, parameters, "parameters", options);
         let result = fn(arg);
         if (result && typeof result === "object" && typeof result["then"] === "function") {

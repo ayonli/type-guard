@@ -185,13 +185,13 @@ describe("Array", () => {
 
         const arr4 = validate([1, 2, 3, 4, 5, 6], [Number].maxItems(5), "arr4", {
             warnings,
-            removeUnknownProps: true,
+            removeUnknownItems: true,
         });
         assert.deepStrictEqual(arr4, [1, 2, 3, 4, 5]);
 
         const arr5 = validate([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [Number].maxItems(5), "arr5", {
             warnings,
-            removeUnknownProps: true,
+            removeUnknownItems: true,
         });
         assert.deepStrictEqual(arr5, [1, 2, 3, 4, 5]);
 
@@ -224,14 +224,14 @@ describe("Array", () => {
 
         const arr1 = validate([1, 2, 3, 4, 5, 6], [Number].maxItems(5), "arr4", {
             warnings,
-            removeUnknownProps: true,
+            removeUnknownItems: true,
             suppress: true,
         });
         assert.deepStrictEqual(arr1, [1, 2, 3, 4, 5]);
 
         const arr2 = validate([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [Number].maxItems(5), "arr5", {
             warnings,
-            removeUnknownProps: true,
+            removeUnknownItems: true,
             suppress: true,
         });
         assert.deepStrictEqual(arr2, [1, 2, 3, 4, 5]);

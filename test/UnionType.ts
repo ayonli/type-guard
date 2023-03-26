@@ -382,7 +382,7 @@ describe("UnionType", () => {
             "world"
         ], [Number, String].maxItems(5), "value4", {
             warnings,
-            removeUnknownProps: true,
+            removeUnknownItems: true,
         });
         assert.deepStrictEqual(value4, [1, "2", 3, "4", "hello"]);
 
@@ -397,7 +397,7 @@ describe("UnionType", () => {
             6,
         ], [Number, String].maxItems(5), "value5", {
             warnings,
-            removeUnknownProps: true,
+            removeUnknownItems: true,
         });
         assert.deepStrictEqual(value5, [1, "2", 3, "4", "hello"]);
 

@@ -92,14 +92,14 @@ describe("TupleType", () => {
         // @ts-ignore
         const value1 = validate(["foo", 1, "bar"], as([String, Number] as const), "value1", {
             warnings,
-            removeUnknownProps: true,
+            removeUnknownItems: true,
         });
         assert.deepStrictEqual(value1, ["foo", 1]);
 
         // @ts-ignore
         const value2 = validate(["foo", 1, "bar", 2, 3], as([String, Number] as const), "value2", {
             warnings,
-            removeUnknownProps: true,
+            removeUnknownItems: true,
         });
         assert.deepStrictEqual(value2, ["foo", 1]);
 
@@ -121,7 +121,7 @@ describe("TupleType", () => {
         // @ts-ignore
         const value1 = validate(["foo", 1, "bar"], as([String, Number] as const), "value1", {
             warnings,
-            removeUnknownProps: true,
+            removeUnknownItems: true,
             suppress: true,
         });
         assert.deepStrictEqual(value1, ["foo", 1]);

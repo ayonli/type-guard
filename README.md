@@ -154,6 +154,7 @@ And these abstract types can be created via the wrapper function `as()`:
     variable/property/parameter when it is omitted. NOTE: this function will
     implicitly force `optional`.
 - `remarks(note: string)` Adds a remark message to the variable/property/parameter.
+    This could be useful when generating JSON Schema.
 - `deprecated(message?: string)` Marks the current variable/property/parameter
     as deprecated and provide a message.
 - `alternatives(...props: string[])` Sets the current property and the other
@@ -382,6 +383,7 @@ There are also other non-frequently used decorators:
     method. 
     - `type` The type of the thrown error, usually a class or a string.
 - `@remarks(note: string)` A decorator that adds remark message to the method.
+    This could be useful when generating JSON Schema.
 - `@deprecated(message?: string)` A decorator that deprecates the method and
     emit warning message when the method is called.
     - `message` The warning message, can be used to provide suggestions.
@@ -425,10 +427,10 @@ check the value we want.
             suppress unknown property/element removing warnings (when enabled).
         - `warnings?: ValidationWarning[]` A list used to
             store all the warnings occurred during the validation process.
-        - `removeUnknownProps?: boolean` Remove all properties in the value
-            (if it's an object or tuple) that are not defined if the type.
+        - `removeUnknownItems?: boolean` Remove unknown properties in the object
+            or the items that exceed the length limit of the array.
 
-NOTE: Both `@param()` and `@returns()` will set `removeUnknownProps` to `true`,
+NOTE: Both `@param()` and `@returns()` will set `removeUnknownItems` to `true`,
 `@returns()` sets `suppress` as well.
 
 ```ts 

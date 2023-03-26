@@ -85,7 +85,7 @@ describe("Dict", () => {
             foo: "hello", bar: "world", foo1: "hi"
         }, Dict(String.enum(["foo", "bar"] as const), String), "dict1", {
             warnings,
-            removeUnknownProps: true,
+            removeUnknownItems: true,
         });
         assert.deepStrictEqual(dict1, { foo: "hello", bar: "world" });
 
@@ -105,7 +105,7 @@ describe("Dict", () => {
             foo: "hello", bar: "world", foo1: "hi"
         }, Dict(String.enum(["foo", "bar"] as const), String), "dict1", {
             warnings,
-            removeUnknownProps: true,
+            removeUnknownItems: true,
             suppress: true,
         });
         assert.deepStrictEqual(dict1, { foo: "hello", bar: "world" });
