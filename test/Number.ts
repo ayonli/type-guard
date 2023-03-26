@@ -67,7 +67,7 @@ describe("Number", () => {
         assert.strictEqual(num1, 123);
 
         // @ts-ignore
-        const num2 = validate(BigInt(123), Number, "num2", { warnings });
+        const num2 = validate(123n, Number, "num2", { warnings });
         assert.strictEqual(num2, 123);
 
         // @ts-ignore
@@ -116,7 +116,7 @@ describe("Number", () => {
         );
 
         // @ts-ignore
-        const [err2] = _try(() => validate(BigInt("1000000000000000000"), Number, "num2"));
+        const [err2] = _try(() => validate(1000000000000000000n, Number, "num2"));
         assert.strictEqual(
             String(err2),
             "TypeError: num2 is expected to be a number, but a bigint is given",
@@ -160,7 +160,7 @@ describe("Number", () => {
         );
 
         // @ts-ignore
-        const [err2] = _try(() => validate(BigInt(123), Number, "num", { strict: true }));
+        const [err2] = _try(() => validate(123n, Number, "num", { strict: true }));
         assert.strictEqual(
             String(err2),
             "TypeError: num is expected to be a number, but a bigint is given"
@@ -221,7 +221,7 @@ describe("Number", () => {
         const [err1] = _try(() => validate(2, Number.enum([-1, 0, 1] as const), "num"));
         assert.strictEqual(
             String(err1),
-            "Error: num is expected to be one of these values: -1, 0, 1"
+            "TypeError: num is expected to be -1, 0 or 1, but 2 is given"
         );
     });
 
@@ -231,7 +231,7 @@ describe("Number", () => {
 
         // @ts-ignore
         const [err1] = _try(() => validate(0, 1 as const, "num"));
-        assert.strictEqual(String(err1), "Error: num is expected to be 1");
+        assert.strictEqual(String(err1), "TypeError: num is expected to be 1, but 0 is given");
     });
 
     it("should emit deprecation warning", () => {
@@ -285,11 +285,11 @@ describe("Number", () => {
             },
             {
                 path: "num4",
-                message: "num4 is expected to be one of these values: -1, 0, 1"
+                message: "num4 is expected to be -1, 0 or 1, but 2 is given"
             },
             {
                 path: "num5",
-                message: "num5 is expected to be 1"
+                message: "num5 is expected to be 1, but 0 is given"
             }
         ] as ValidationWarning[]);
     });

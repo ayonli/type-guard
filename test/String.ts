@@ -61,7 +61,7 @@ describe("String", () => {
         assert.strictEqual(str1, "123");
 
         // @ts-ignore
-        const str2 = validate(BigInt(123), String, "str2", { warnings });
+        const str2 = validate(123n, String, "str2", { warnings });
         assert.strictEqual(str2, "123");
 
         // @ts-ignore
@@ -132,7 +132,7 @@ describe("String", () => {
         );
 
         // @ts-ignore
-        const [err2] = _try(() => validate(BigInt(123), String, "str", { strict: true }));
+        const [err2] = _try(() => validate(123n, String, "str", { strict: true }));
         assert.strictEqual(
             String(err2),
             "TypeError: str is expected to be a string, but a bigint is given"
@@ -216,7 +216,7 @@ describe("String", () => {
         const [err1] = _try(() => validate("hi", String.enum(["hello", "world"] as const), "str"));
         assert.strictEqual(
             String(err1),
-            "RangeError: str is expected to be one of these values: 'hello', 'world'"
+            "TypeError: str is expected to be 'hello' or 'world', but 'hi' is given"
         );
     });
 
@@ -226,7 +226,10 @@ describe("String", () => {
 
         // @ts-ignore
         const [err1] = _try(() => validate("hi", "hello" as const, "str"));
-        assert.strictEqual(String(err1), "TypeError: str is expected to be 'hello'");
+        assert.strictEqual(
+            String(err1),
+            "TypeError: str is expected to be 'hello', but 'hi' is given"
+        );
     });
 
     it("should match an email address", () => {
@@ -393,11 +396,11 @@ describe("String", () => {
             },
             {
                 path: "str4",
-                message: "str4 is expected to be one of these values: 'hello', 'world'"
+                message: "str4 is expected to be 'hello' or 'world', but 'hi' is given"
             },
             {
                 path: "str5",
-                message: "str5 is expected to be 'hello'"
+                message: "str5 is expected to be 'hello', but 'hi' is given"
             },
             {
                 path: "str10",

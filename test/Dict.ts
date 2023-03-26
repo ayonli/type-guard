@@ -57,7 +57,7 @@ describe("Dict", () => {
         }, Dict(String.enum(["foo", "bar"] as const), String), "dict1"));
         assert.strictEqual(
             String(err1),
-            "RangeError: dict1 is expected to contain only these properties: 'foo', 'bar'"
+            "RangeError: dict1 is expected to contain only properties 'foo' and 'bar'"
         );
     });
 
@@ -73,7 +73,7 @@ describe("Dict", () => {
         }, Dict(String, String.enum(["hello", "world"] as const)), "dict1"));
         assert.strictEqual(
             String(err1),
-            "RangeError: dict1.foo is expected to be one of these values: 'hello', 'world'"
+            "TypeError: dict1.foo is expected to be 'hello' or 'world', but 'hi' is given"
         );
     });
 
@@ -128,7 +128,7 @@ describe("Dict", () => {
         assert.deepStrictEqual(warnings, [
             {
                 path: "dict1",
-                message: "dict1 is expected to contain only these properties: 'foo', 'bar'",
+                message: "dict1 is expected to contain only properties 'foo' and 'bar'",
             }
         ] as ValidationWarning[]);
     });

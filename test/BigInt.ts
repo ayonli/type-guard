@@ -6,14 +6,14 @@ import { validate, ValidationWarning } from "..";
 describe("BigInt", () => {
     it("should validate a bigint", () => {
         // @ts-ignore
-        const num = validate(BigInt(123), BigInt, "num");
-        assert.strictEqual(num, BigInt(123));
+        const num = validate(123n, BigInt, "num");
+        assert.strictEqual(num, 123n);
 
-        const num1 = validate(BigInt(0), BigInt, "num1");
-        assert.strictEqual(num1, BigInt(0));
+        const num1 = validate(0n, BigInt, "num1");
+        assert.strictEqual(num1, 0n);
 
-        const num2 = validate(BigInt(-100), BigInt, "num2");
-        assert.strictEqual(num2, BigInt(-100));
+        const num2 = validate(-100n, BigInt, "num2");
+        assert.strictEqual(num2, -100n);
     });
 
     it("should report error when the bigint is not provided", () => {
@@ -46,12 +46,12 @@ describe("BigInt", () => {
 
     it("should validate optional bigints with default value", () => {
         // @ts-ignore
-        const num1 = validate(null, BigInt.default(BigInt(0)), "num1");
-        assert.strictEqual(num1, BigInt(0));
+        const num1 = validate(null, BigInt.default(0n), "num1");
+        assert.strictEqual(num1, 0n);
 
         // @ts-ignore
-        const num2 = validate(void 0, BigInt.default(BigInt(123)), "num2");
-        assert.strictEqual(num2, BigInt(123));
+        const num2 = validate(void 0, BigInt.default(123n), "num2");
+        assert.strictEqual(num2, 123n);
     });
 
     it("should convert compatible values to bigints and record warnings", () => {
@@ -59,19 +59,19 @@ describe("BigInt", () => {
 
         // @ts-ignore
         const num1 = validate("123", BigInt, "num1", { warnings });
-        assert.strictEqual(num1, BigInt(123));
+        assert.strictEqual(num1, 123n);
 
         // @ts-ignore
         const num2 = validate(123, BigInt, "num2", { warnings });
-        assert.strictEqual(num2, BigInt(123));
+        assert.strictEqual(num2, 123n);
 
         // @ts-ignore
         const num3 = validate(true, BigInt, "num3", { warnings });
-        assert.strictEqual(num3, BigInt(1));
+        assert.strictEqual(num3, 1n);
 
         // @ts-ignore
         const num4 = validate(false, BigInt, "num4", { warnings });
-        assert.strictEqual(num4, BigInt(0));
+        assert.strictEqual(num4, 0n);
 
         assert.deepStrictEqual(warnings, [
             {
@@ -154,39 +154,39 @@ describe("BigInt", () => {
     });
 
     it("should constrain the range of the bigint", () => {
-        const num1 = validate(BigInt(10), BigInt.min(BigInt(1)), "num1");
-        assert.strictEqual(num1, BigInt(10));
+        const num1 = validate(10n, BigInt.min(1n), "num1");
+        assert.strictEqual(num1, 10n);
 
-        const [err1] = _try(() => validate(BigInt(10), BigInt.min(BigInt(20)), "num"));
+        const [err1] = _try(() => validate(10n, BigInt.min(20n), "num"));
         assert.strictEqual(String(err1), "RangeError: num is expected not to be less than 20",);
 
-        const num2 = validate(BigInt(10), BigInt.max(BigInt(20)), "num");
-        assert.strictEqual(num2, BigInt(10));
+        const num2 = validate(10n, BigInt.max(20n), "num");
+        assert.strictEqual(num2, 10n);
 
-        const [err2] = _try(() => validate(BigInt(20), BigInt.max(BigInt(10)), "num"));
+        const [err2] = _try(() => validate(20n, BigInt.max(10n), "num"));
         assert.strictEqual(String(err2), "RangeError: num is expected not to be greater than 10",);
 
-        const num3 = validate(BigInt(10), BigInt.min(BigInt(1)).max(BigInt(20)), "num3");
-        assert.strictEqual(num3, BigInt(10));
+        const num3 = validate(10n, BigInt.min(1n).max(20n), "num3");
+        assert.strictEqual(num3, 10n);
     });
 
     it("should constrain the options of the bigint", () => {
-        const enums = BigInt.enum([BigInt(-1), BigInt(0), BigInt(1)] as const);
-        const num1 = validate(BigInt(1), enums, "num1");
-        assert.strictEqual(num1, BigInt(1));
+        const enums = BigInt.enum([-1n, 0n, 1n] as const);
+        const num1 = validate(1n, enums, "num1");
+        assert.strictEqual(num1, 1n);
 
         // @ts-ignore
-        const [err1] = _try(() => validate(BigInt(2), enums, "num"));
+        const [err1] = _try(() => validate(2n, enums, "num"));
         assert.strictEqual(
             String(err1),
-            "Error: num is expected to be one of these values: -1, 0, 1"
+            "TypeError: num is expected to be -1, 0 or 1, but 2 is given"
         );
     });
 
     it("should emit deprecation warning", () => {
         const warnings: ValidationWarning[] = [];
 
-        validate(BigInt(1), BigInt.deprecated("will no longer effect"), "num", { warnings });
+        validate(1n, BigInt.deprecated("will no longer effect"), "num", { warnings });
 
         assert.deepStrictEqual(warnings, [{
             path: "num",
@@ -197,28 +197,28 @@ describe("BigInt", () => {
     it("should suppress non-critical errors as warnings", () => {
         const warnings: ValidationWarning[] = [];
 
-        const num2 = validate(BigInt(10), BigInt.min(BigInt(20)), "num2", {
+        const num2 = validate(10n, BigInt.min(20n), "num2", {
             warnings,
             suppress: true,
         });
-        assert.strictEqual(num2, BigInt(10));
+        assert.strictEqual(num2, 10n);
 
-        const num3 = validate(BigInt(20), BigInt.max(BigInt(10)), "num3", {
+        const num3 = validate(20n, BigInt.max(10n), "num3", {
             warnings,
             suppress: true,
         });
-        assert.strictEqual(num3, BigInt(20));
+        assert.strictEqual(num3, 20n);
 
         // @ts-ignore
-        const num4 = validate(BigInt(2), BigInt.enum([
-            BigInt(-1),
-            BigInt(0),
-            BigInt(1)
+        const num4 = validate(2n, BigInt.enum([
+            -1n,
+            0n,
+            1n
         ] as const), "num4", {
             warnings,
             suppress: true,
         });
-        assert.strictEqual(num4, BigInt(2));
+        assert.strictEqual(num4, 2n);
 
         assert.deepStrictEqual(warnings, [
             {
@@ -231,7 +231,7 @@ describe("BigInt", () => {
             },
             {
                 path: "num4",
-                message: "num4 is expected to be one of these values: -1, 0, 1"
+                message: "num4 is expected to be -1, 0 or 1, but 2 is given"
             }
         ] as ValidationWarning[]);
     });

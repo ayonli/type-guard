@@ -272,6 +272,48 @@ describe("UnionType", () => {
         );
     });
 
+    it("should validate union types of constant values", () => {
+        const value1 = validate("hello", as("hello" as const, "world" as const), "value1");
+        assert.strictEqual(value1, "hello");
+
+        // @ts-ignore
+        const [err1] = _try(() => validate("hi", as("hello" as const, "world" as const), "value1"));
+        assert.strictEqual(
+            String(err1),
+            "TypeError: value1 is expected to be 'hello' or 'world', but 'hi' is given"
+        );
+
+        const value2 = validate(1, as(1 as const, 2 as const), "value2");
+        assert.strictEqual(value2, 1);
+
+        // @ts-ignore
+        const [err2] = _try(() => validate(3, as(1 as const, 2 as const), "value2"));
+        assert.strictEqual(
+            String(err2),
+            "TypeError: value2 is expected to be 1 or 2, but 3 is given"
+        );
+
+        const value3 = validate(1n, as(1n as const, 2n as const), "value3");
+        assert.strictEqual(value3, 1n);
+
+        // @ts-ignore
+        const [err3] = _try(() => validate(3n, as(1n as const, 2n as const), "value3"));
+        assert.strictEqual(
+            String(err3),
+            "TypeError: value3 is expected to be 1 or 2, but 3 is given"
+        );
+
+        const value4 = validate(true, as(true as const, false as const), "value4");
+        assert.strictEqual(value4, true);
+
+        // @ts-ignore
+        const [err4] = _try(() => validate("yes", as(true as const, false as const), "value4"));
+        assert.strictEqual(
+            String(err4),
+            "TypeError: value4 is expected to be true or false, but a string is given"
+        );
+    });
+
     it("should emit various warnings", () => {
         const warnings: ValidationWarning[] = [];
 

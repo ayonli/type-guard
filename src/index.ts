@@ -126,14 +126,18 @@ export abstract class ValidateableType<T> {
         return ins;
     }
 
-    protected throwTypeError(path: string, value: any, expectedType: string | string[]) {
+    protected createTypeError(
+        path: string,
+        value: any,
+        expectedType: string | string[],
+        asConst = false
+    ) {
         const _expectedType = read(expectedType);
-        const actualType = readType(value);
-        const err = new TypeError(
+        const actualType = readType(value, asConst);
+
+        return new TypeError(
             `${path} is expected to be ${_expectedType}, but ${actualType} is given`
         );
-
-        throw Object.assign(err, { path, value, expectedType });
     }
 
     protected conversionWarning(path: string, value: any, expectedType: string) {
@@ -256,7 +260,7 @@ export class StringType extends ValidateableType<string> {
         if (value === null || value === void 0) {
             return value;
         } else if (options?.strict && typeof value !== "string") {
-            this.throwTypeError(path, value, "string");
+            throw this.createTypeError(path, value, "string");
         } else if (typeof value === "number" ||
             typeof value === "bigint" ||
             typeof value === "boolean"
@@ -265,7 +269,7 @@ export class StringType extends ValidateableType<string> {
         } else if (value instanceof Date) {
             _value = value.toISOString();
         } else if (typeof value !== "string") {
-            this.throwTypeError(path, value, "string");
+            throw this.createTypeError(path, value, "string");
         } else {
             _value = value;
         }
@@ -299,11 +303,13 @@ export class StringType extends ValidateableType<string> {
             const unit = this._maxLength === 1 ? "character" : `characters`;
             err = new Error(`${path} is expected to contain no more than ${this._maxLength} ${unit}`);
         } else if (this._enum?.length && !this._enum.includes(_value)) {
+            const asConst = typeof value === "string";
+
             if (this._enum.length === 1) {
-                err = new TypeError(`${path} is expected to be '${this._enum[0]}'`);
+                err = this.createTypeError(path, value, `'${this._enum[0]}'`, asConst);
             } else {
-                const values = this._enum.map(value => `'${value}'`).join(", ");
-                err = new RangeError(`${path} is expected to be one of these values: ${values}`);
+                const types = this._enum.map(value => `'${value}'`);
+                err = this.createTypeError(path, value, types, asConst);
             }
         } else if (this._match === "email" && !StringType.EmailRegex.test(_value)) {
             err = new TypeError(`${path} is not a valid email address`);
@@ -518,12 +524,12 @@ export class NumberType extends ValidateableType<number> {
         if (value === null || value === void 0) {
             return value;
         } else if (options?.strict && typeof value !== "number") {
-            this.throwTypeError(path, value, "number");
+            throw this.createTypeError(path, value, "number");
         } else if (typeof value === "bigint") {
             if (value <= Number.MAX_SAFE_INTEGER) {
                 _value = Number(value);
             } else {
-                this.throwTypeError(path, value, "number");
+                throw this.createTypeError(path, value, "number");
             }
         } else if (typeof value === "boolean") {
             _value = Number(value);
@@ -531,12 +537,12 @@ export class NumberType extends ValidateableType<number> {
             _value = Number(value);
 
             if (Number.isNaN(_value) || _value > Number.MAX_SAFE_INTEGER) {
-                this.throwTypeError(path, value, "number");
+                throw this.createTypeError(path, value, "number");
             }
         } else if (value instanceof Date) {
             _value = value.valueOf();
         } else if (typeof value !== "number") {
-            this.throwTypeError(path, value, "number");
+            throw this.createTypeError(path, value, "number");
         } else {
             _value = value;
         }
@@ -555,11 +561,12 @@ export class NumberType extends ValidateableType<number> {
         } else if (this._max && _value > this._max) {
             err = new RangeError(`${path} is expected not to be greater than ${this._max}`);
         } else if (this._enum?.length && !this._enum.includes(_value)) {
+            const asConst = ["number", "bigint"].includes(typeof value);
+
             if (this._enum.length === 1) {
-                err = new Error(`${path} is expected to be ${this._enum[0]}`);
+                err = this.createTypeError(path, value, String(this._enum[0]), asConst);
             } else {
-                const values = this._enum.join(", ");
-                err = new Error(`${path} is expected to be one of these values: ${values}`);
+                err = this.createTypeError(path, value, this._enum.map(String), asConst);
             }
         }
 
@@ -714,7 +721,7 @@ export class BigIntType extends ValidateableType<bigint> {
         if (value === null || value === void 0) {
             return value;
         } else if (options?.strict && typeof value !== "bigint") {
-            this.throwTypeError(path, value, "bigint");
+            throw this.createTypeError(path, value, "bigint");
         } else if (typeof value === "number") {
             _value = BigInt(value);
         } else if (typeof value === "boolean") {
@@ -722,7 +729,7 @@ export class BigIntType extends ValidateableType<bigint> {
         } else if (typeof value === "string" && !Number.isNaN(Number(value))) {
             _value = BigInt(value);
         } else if (typeof value !== "bigint") {
-            this.throwTypeError(path, value, "bigint");
+            throw this.createTypeError(path, value, "bigint");
         } else {
             _value = value;
         }
@@ -739,10 +746,12 @@ export class BigIntType extends ValidateableType<bigint> {
         } else if (this._max && _value > this._max) {
             err = new RangeError(`${path} is expected not to be greater than ${this._max}`);
         } else if (this._enum?.length && !this._enum.includes(_value)) {
+            const asConst = ["number", "bigint"].includes(typeof value);
+
             if (this._enum.length === 1) {
-                err = new Error(`${path} is expected to be ${this._enum[0]}`);
+                err = this.createTypeError(path, value, String(this._enum[0]), asConst);
             } else {
-                err = new Error(`${path} is expected to be one of these values: ${this._enum.join(", ")}`);
+                err = this.createTypeError(path, value, this._enum.map(String), asConst);
             }
         }
 
@@ -868,14 +877,14 @@ export class BooleanType extends ValidateableType<boolean> {
         if (value === null || value === void 0) {
             return value;
         } else if (options?.strict && typeof value !== "boolean") {
-            this.throwTypeError(path, value, "boolean");
+            throw this.createTypeError(path, value, "boolean");
         } else if (typeof value === "number") {
             if (value === 1) {
                 _value = true;
             } else if (value === 0) {
                 _value = false;
             } else {
-                this.throwTypeError(path, value, "boolean");
+                throw this.createTypeError(path, value, "boolean");
             }
         } else if (typeof value === "bigint") {
             if (value === BigInt(1)) {
@@ -883,7 +892,7 @@ export class BooleanType extends ValidateableType<boolean> {
             } else if (value === BigInt(0)) {
                 _value = false;
             } else {
-                this.throwTypeError(path, value, "boolean");
+                throw this.createTypeError(path, value, "boolean");
             }
         } else if (typeof value === "string") {
             if (value === "true") {
@@ -891,10 +900,10 @@ export class BooleanType extends ValidateableType<boolean> {
             } else if (value === "false") {
                 _value = false;
             } else {
-                this.throwTypeError(path, value, "boolean");
+                throw this.createTypeError(path, value, "boolean");
             }
         } else if (typeof value !== "boolean") {
-            this.throwTypeError(path, value, "boolean");
+            throw this.createTypeError(path, value, "boolean");
         } else {
             _value = value;
         }
@@ -958,21 +967,21 @@ export class DateType extends ValidateableType<Date> {
         if (value === null || value === void 0) {
             return value;
         } else if (options?.strict && !(value instanceof Date)) {
-            this.throwTypeError(path, value, "Date");
+            throw this.createTypeError(path, value, "Date");
         } else if (typeof value === "string") {
             _value = new Date(value);
 
             if (String(_value) === "Invalid Date") {
-                this.throwTypeError(path, value, "Date");
+                throw this.createTypeError(path, value, "Date");
             }
         } else if (typeof value === "number") {
             if (value >= 0) {
                 _value = new Date(value);
             } else {
-                this.throwTypeError(path, value, "Date");
+                throw this.createTypeError(path, value, "Date");
             }
         } else if (!(value instanceof Date)) {
-            this.throwTypeError(path, value, "Date");
+            throw this.createTypeError(path, value, "Date");
         } else {
             _value = value;
         }
@@ -1036,7 +1045,7 @@ export class MixedType extends ValidateableType<object> {
         if (value === null || value === void 0) {
             return value;
         } else if (!(value instanceof Object)) {
-            this.throwTypeError(path, value, "object");
+            throw this.createTypeError(path, value, "object");
         } else {
             return value;
         }
@@ -1132,7 +1141,7 @@ export class VoidType extends ValidateableType<void> {
         warnings?: ValidationWarning[];
     } = null): void {
         if (value !== null && value !== void 0) {
-            this.throwTypeError(path, value, "void");
+            throw this.createTypeError(path, value, "void");
         } else if (this._default !== void 0) {
             return this._default;
         } else if (!isVoid(this._deprecated) && options?.warnings) {
@@ -1228,23 +1237,35 @@ export class CustomType<T> extends ValidateableType<T> {
             value = this._guard(value, path, options?.warnings ?? []);
         }
 
-        if (this.type instanceof Function) {
+        if (typeof this.type === "boolean") {
+            const _value = new BooleanType().validate(path, value, options);
+
+            if (_value === this.type) {
+                return _value as any;
+            } else {
+                throw this.createTypeError(
+                    path,
+                    value,
+                    String(this.type),
+                    typeof value === "boolean");
+            }
+        } else if (this.type instanceof Function) {
             if (value instanceof this.type) {
                 return value;
             } else {
-                this.throwTypeError(path, value, this.type.name);
+                throw this.createTypeError(path, value, this.type.name);
             }
         } else if (isObject(this.type)) {
             if (isObject(value)) {
                 return validate(value, this.type as any, path, options) as any;
             } else {
-                this.throwTypeError(path, value, "object");
+                throw this.createTypeError(path, value, "object");
             }
         } else if (Array.isArray(this.type)) {
             if (Array.isArray(value)) {
                 return validate(value as any, this.type, path, options) as any;
             } else {
-                this.throwTypeError(path, value, "array");
+                throw this.createTypeError(path, value, "array");
             }
         } else {
             return validate(value, this.type, path, options) as any;
@@ -1260,7 +1281,7 @@ export class CustomType<T> extends ValidateableType<T> {
                 deprecated: isVoid(this._deprecated) ? void 0 : true,
             };
         } else {
-            return getJSONSchema(this.type, {
+            return toJSONSchema(this.type, {
                 description: this._remarks,
                 default: this._default,
                 deprecated: isVoid(this._deprecated) ? void 0 : true,
@@ -1368,6 +1389,7 @@ export class UnionType<T extends any[]> extends ValidateableType<T[]> {
             throw requireErr;
         }
 
+        const typesOfConsts: string[] = [];
         let types = this.types.map(type => {
             if (Object.is(type, String) || Object.is(type, StringType)) {
                 return "string";
@@ -1389,6 +1411,10 @@ export class UnionType<T extends any[]> extends ValidateableType<T[]> {
                 return "array";
             } else if (typeof type === "function") {
                 return type.name;
+            } else if (isConst(type)) {
+                const _type = typeof type;
+                typesOfConsts.push(_type === "bigint" ? "number" : _type);
+                return _type === "string" ? `'${type}'` : String(type);
             } else if (typeof type.constructor === "function") {
                 return type.constructor.name;
             } else {
@@ -1402,7 +1428,11 @@ export class UnionType<T extends any[]> extends ValidateableType<T[]> {
         } else if (types.includes("array") && Array.isArray(value)) {
             throw lastError;
         } else {
-            this.throwTypeError(path, value, types.length > 1 ? types : types[0]);
+            throw this.createTypeError(
+                path,
+                value,
+                types.length > 1 ? types : types[0],
+                typesOfConsts.includes(typeof value === "bigint" ? "number" : typeof value));
         }
     }
 
@@ -1411,7 +1441,7 @@ export class UnionType<T extends any[]> extends ValidateableType<T[]> {
         const oneOf: JSONSchema[] = [];
 
         for (const type of this.types) {
-            const _schema = getJSONSchema(type);
+            const _schema = toJSONSchema(type);
             types.push(_schema.type);
             oneOf.push(_schema);
         }
@@ -1476,18 +1506,31 @@ export class DictType<K extends IndexableType, V> extends ValidateableType<Recor
         if (value === null || value === void 0) {
             return value;
         } else if (!isObject(value)) {
-            this.throwTypeError(path, value, "object");
+            throw this.createTypeError(path, value, "object");
         } else {
             const records = {} as Record<ExtractInstanceType<K>, ExtractInstanceType<V>>;
+            const keys = this.keyEnum();
 
             for (let [_key, _value] of Object.entries(value)) {
                 try {
-                    _key = validate(_key as any, this.key, path, { ...options, suppress: false });
-                } catch (err) {
-                    if (err instanceof Error && String(err).includes("be one of these values")) {
-                        err.message = err.message.replace("be one of these values",
-                            "contain only these properties");
+                    if (keys?.length) {
+                        if (!keys.includes(_key)) {
+                            const types = keys.map(type => `'${type}'`);
+                            const props = types.length === 1
+                                ? `property ${types[0]}`
+                                : `properties ${join(types, "and")}`;
 
+                            throw new RangeError(
+                                `${path} is expected to contain only ${props}`);
+                        }
+                    } else {
+                        _key = validate(_key as any, this.key, path, {
+                            ...options,
+                            suppress: false,
+                        });
+                    }
+                } catch (err) {
+                    if (err instanceof Error && String(err).includes("expected to contain only")) {
                         if (options?.removeUnknownProps) {
                             if (!options.suppress) {
                                 const _path = path ? `${path}.${_key}` : _key;
@@ -1540,22 +1583,40 @@ export class DictType<K extends IndexableType, V> extends ValidateableType<Recor
             default: this._default,
             deprecated: isVoid(this._deprecated) ? void 0 : true,
         };
+        const keys = this.keyEnum();
 
-        if (this.key instanceof StringEnum) {
-            const valueSchema = getJSONSchema(this.value);
-            const props = this.key.enum() as string[];
+        if (keys?.length) {
+            const valueSchema = toJSONSchema(this.value);
 
-            schema["properties"] = props.reduce((properties, prop) => {
+            schema["properties"] = keys.reduce((properties, prop) => {
                 properties[prop] = valueSchema;
                 return properties;
             }, {});
 
             if (!(this.key instanceof OptionalStringEnum)) {
-                schema["required"] = props;
+                schema["required"] = keys;
             }
         }
 
         return schema;
+    }
+
+    private keyEnum() {
+        let enums: string[];
+
+        if (this.key instanceof StringEnum) {
+            enums = this.key.enum() as string[];
+        } else if (this.key instanceof NumberEnum || this.key instanceof BigIntEnum) {
+            enums = (this.key.enum() as (number | bigint)[]).map(String);
+        } else if (this.key instanceof UnionType) {
+            const _enums = (this.key.types as any[]).filter(type => isConst(type));
+
+            if (_enums.length) {
+                enums = _enums.map(String);
+            }
+        }
+
+        return enums ?? null;
     }
 }
 
@@ -1638,7 +1699,7 @@ export class ArrayType<T> extends CustomType<T[]> {
         }
 
         if (!Array.isArray(value)) {
-            this.throwTypeError(path, value, "array");
+            throw this.createTypeError(path, value, "array");
         } else {
             _value = value as any;
         }
@@ -1693,11 +1754,11 @@ export class ArrayType<T> extends CustomType<T[]> {
         };
 
         if (this.type.length === 0) {
-            schema["items"] = getJSONSchema(Any);
+            schema["items"] = toJSONSchema(Any);
         } else if (this.type.length === 1) {
-            schema["items"] = getJSONSchema(this.type[0]);
+            schema["items"] = toJSONSchema(this.type[0]);
         } else {
-            schema["oneOf"] = this.type.map(type => getJSONSchema(type));
+            schema["oneOf"] = this.type.map(type => toJSONSchema(type));
         }
 
         return schema;
@@ -1753,7 +1814,7 @@ export class TupleType<T extends readonly any[]> extends ValidateableType<T> {
         }
 
         if (!Array.isArray(value)) {
-            this.throwTypeError(path, value, "array");
+            throw this.createTypeError(path, value, "array");
         } else {
             _value = value as any;
         }
@@ -1802,7 +1863,7 @@ export class TupleType<T extends readonly any[]> extends ValidateableType<T> {
             deprecated: isVoid(this._deprecated) ? void 0 : true,
             minItems: this.type.length,
             maxItems: this.type.length,
-            prefixItems: this.type.map(type => getJSONSchema(type))
+            prefixItems: this.type.map(type => toJSONSchema(type))
         };
     }
 }
@@ -2068,6 +2129,16 @@ declare global {
             $id: string;
             title: string;
             type: "function";
+            parameters?: {
+                [name: string]: JSONSchema & {
+                    $schema: string;
+                    $id: string;
+                };
+            };
+            returns?: JSONSchema & {
+                $schema: string;
+                $id: string;
+            };
         };
     }
 }
@@ -2078,6 +2149,10 @@ function isObject(value: any) {
 
 function isEmptyValue(value: any) {
     return value === null || value === void 0 || value === "";
+}
+
+function isConst(type: any) {
+    return ["string", "number", "bigint", "boolean"].includes(typeof type);
 }
 
 function join(strings: string[], op: "and" | "or" = "and") {
@@ -2095,7 +2170,11 @@ function join(strings: string[], op: "and" | "or" = "and") {
 function read(text: string | string[], noArticle = false): string {
     if (Array.isArray(text)) {
         return join([read(text[0]), ...text.slice(1)], "or");
-    } else if (noArticle || ["any", "unknown", "null", "undefined", "void"].includes(text)) {
+    } else if (noArticle
+        || ["true", "false", "any", "unknown", "null", "undefined", "void"].includes(text)
+    ) {
+        return text;
+    } else if (text[0] === "'" || text[0] === '"' || !isNaN(text as any)) {
         return text;
     } else if (["a", "e", "i", "o", "u"].includes(text[0].toLowerCase())) {
         return "an " + text;
@@ -2104,7 +2183,7 @@ function read(text: string | string[], noArticle = false): string {
     }
 }
 
-function readType(value: any) {
+function readType(value: any, asConst = false) {
     let type: string;
 
     if (value === null) {
@@ -2125,6 +2204,8 @@ function readType(value: any) {
         } else {
             return "a " + name;
         }
+    } else if (asConst) {
+        type = read(typeof value === "string" ? `'${value}'` : String(value));
     } else {
         type = read(typeof value);
     }
@@ -2172,6 +2253,10 @@ function ensureType(type: any, path = "$", deep = false) {
             return new NumberType().enum([type]);
         } else if (typeof type === "bigint") {
             return new BigIntType().enum([type]);
+        } else if (typeof type === "boolean") {
+            return new CustomType(type);
+        } else if (type === null || type === void 0) {
+            return new VoidType().default(type);
         } else {
             const name = type.constructor?.name || "unknown";
             throw new TypeError(`${path} (${name}) is not a validateable type`);
@@ -2869,7 +2954,7 @@ export function ensured<T extends Record<string, unknown>, K extends keyof T>(ty
     };
 }
 
-function getJSONSchema(type: any, extra: Partial<JSONSchema> = {}) {
+function toJSONSchema(type: any, extra: Partial<JSONSchema> = {}) {
     if (Array.isArray(type)) {
         if (!type.length) {
             return { ...new ArrayType([Any]).toJSONSchema(), ...extra };
@@ -2883,7 +2968,7 @@ function getJSONSchema(type: any, extra: Partial<JSONSchema> = {}) {
         const schema: JSONSchema = {
             type: "object",
             properties: Object.keys(type).reduce((properties, prop) => {
-                const subSchema = getJSONSchema(type[prop]);
+                const subSchema = toJSONSchema(type[prop]);
 
                 if (subSchema) {
                     properties[prop] = subSchema;
@@ -2923,23 +3008,38 @@ function getJSONSchema(type: any, extra: Partial<JSONSchema> = {}) {
 /**
  * Creates JSON Schema base on the type definition.
  */
-export function createJSONSchema(type: any, options: {
+export function getJSONSchema(type: any): JSONSchema;
+export function getJSONSchema(type: any, options: {
     $id: string;
     title?: string;
     description?: string;
-}) {
-    const schema = getJSONSchema(type);
-    return {
-        $schema: "https://json-schema.org/draft/2020-12/schema",
-        $id: options.$id,
-        title: options.title,
-        ...schema,
-        description: schema.description || options.description,
-    } as {
-        $schema: string;
-        $id: string;
-        title: string;
-    } & JSONSchema;
+}): JSONSchema & {
+    $schema: string;
+    $id: string;
+    title?: string;
+};
+export function getJSONSchema(type: any, options: {
+    $id: string;
+    title?: string;
+    description?: string;
+} = null) {
+    const schema = toJSONSchema(type);
+
+    if (options?.$id) {
+        return {
+            $schema: "https://json-schema.org/draft/2020-12/schema",
+            $id: options.$id,
+            title: options.title,
+            ...schema,
+            description: schema.description || options.description,
+        } as {
+            $schema: string;
+            $id: string;
+            title?: string;
+        } & JSONSchema;
+    } else {
+        return schema;
+    }
 }
 
 Function.prototype.getJSONSchema = function (options) {
@@ -2960,7 +3060,7 @@ Function.prototype.getJSONSchema = function (options) {
         parameters: paramsDef ? paramsDef.reduce((records, item, index) => {
             const name = item.name || "param" + index;
 
-            records[name] = createJSONSchema(item.type, {
+            records[name] = getJSONSchema(item.type, {
                 $id: `${parentId}.parameters.${name}` + (hasSuffix ? ".schema.json" : ""),
                 title: `${title}.parameters.${name}`,
                 description: item.remarks,
@@ -2968,7 +3068,7 @@ Function.prototype.getJSONSchema = function (options) {
 
             return records;
         }, {}) : null,
-        returns: returnDef ? createJSONSchema(returnDef.type, {
+        returns: returnDef ? getJSONSchema(returnDef.type, {
             $id: `${parentId}.${returnDef.name}` + (hasSuffix ? ".schema.json" : ""),
             title: `${title}.${returnDef.name}`,
             description: returnDef.remarks,
