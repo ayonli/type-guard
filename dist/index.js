@@ -1890,6 +1890,11 @@ function omitUndefined(obj) {
         return record;
     }, {});
 }
+function purifyStackTrace(err, ctorOpt) {
+    var _a;
+    err instanceof Error && ((_a = Error.captureStackTrace) === null || _a === void 0 ? void 0 : _a.call(Error, err, ctorOpt));
+    return err;
+}
 function toJSON(value) {
     let json;
     if (value === null) {
@@ -2036,7 +2041,6 @@ exports.as = as;
  * ```
  */
 function validate(value, type, variable = "$", options = null) {
-    var _a;
     const reduce = (type, value, path) => {
         var _a, _b;
         if (Array.isArray(type)) {
@@ -2159,8 +2163,7 @@ function validate(value, type, variable = "$", options = null) {
         return reduce(type, value, variable);
     }
     catch (err) {
-        err instanceof Error && ((_a = Error.captureStackTrace) === null || _a === void 0 ? void 0 : _a.call(Error, err, validate));
-        throw err;
+        throw purifyStackTrace(err, validate);
     }
 }
 exports.validate = validate;
@@ -2206,7 +2209,6 @@ const wrapMethod = (target, prop, desc) => {
     if (!((_a = target[_methods]) === null || _a === void 0 ? void 0 : _a[prop])) {
         const originFn = ((_b = target[_methods]) !== null && _b !== void 0 ? _b : (target[_methods] = {}))[prop] = desc.value;
         const newFn = desc.value = (function (...args) {
-            var _a;
             const method = target[_methods][prop];
             let paramsDef = newFn[_params];
             const returnDef = newFn[_returns];
@@ -2250,18 +2252,16 @@ const wrapMethod = (target, prop, desc) => {
                     _args = validate(_args, params, "parameters", options);
                 }
                 catch (err) {
-                    err instanceof Error && ((_a = Error.captureStackTrace) === null || _a === void 0 ? void 0 : _a.call(Error, err, newFn));
-                    throw err;
+                    throw purifyStackTrace(err, newFn);
                 }
                 args = paramList.map(name => _args[name]);
             }
-            const handleReturns = (returns, returnDef) => {
-                var _a;
+            const handleReturns = (returns, returnDef, promiseResolver = null) => {
                 try {
                     return validate(returns, as(returnDef.type), returnDef.name, Object.assign(Object.assign({}, options), { suppress: true }));
                 }
                 catch (err) {
-                    err instanceof Error && ((_a = Error.captureStackTrace) === null || _a === void 0 ? void 0 : _a.call(Error, err, newFn));
+                    err = purifyStackTrace(err, promiseResolver !== null && promiseResolver !== void 0 ? promiseResolver : newFn);
                     if (throwDef) {
                         throw new ValidationError("validation failed", { cause: err });
                     }
@@ -2270,8 +2270,7 @@ const wrapMethod = (target, prop, desc) => {
                     }
                 }
             };
-            const handleError = (err) => {
-                var _a;
+            const handleError = (err, promiseCatcher = null) => {
                 if (err instanceof ValidationError) {
                     throw err.cause;
                 }
@@ -2280,8 +2279,7 @@ const wrapMethod = (target, prop, desc) => {
                         err = validate(err, as(throwDef.type), throwDef.name, Object.assign(Object.assign({}, options), { suppress: true }));
                     }
                     catch (_err) {
-                        _err instanceof Error && ((_a = Error.captureStackTrace) === null || _a === void 0 ? void 0 : _a.call(Error, _err, newFn));
-                        err = _err;
+                        err = purifyStackTrace(_err, promiseCatcher !== null && promiseCatcher !== void 0 ? promiseCatcher : newFn);
                     }
                     throw err;
                 }
@@ -2294,14 +2292,18 @@ const wrapMethod = (target, prop, desc) => {
                 if (returns && typeof returns === "object" && typeof returns.then === "function") {
                     if (returnDef) {
                         returns = returns
-                            .then(result => handleReturns(result, returnDef));
+                            .then(function resolver(result) {
+                            return handleReturns(result, returnDef, resolver);
+                        });
                     }
                     returns = returns.then(result => {
                         emitWarnings.call(this, warnings, result);
                         return result;
                     });
                     if (throwDef) {
-                        return returns.catch(handleError);
+                        return returns.catch(function catcher(err) {
+                            handleError(err, catcher);
+                        });
                     }
                     else {
                         return returns;

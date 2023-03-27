@@ -23,12 +23,20 @@ describe("decorators", () => {
                 message: "unknown property parameters.param1 has been removed"
             },
             {
+                path: "parameters.param1",
+                message: "unknown property parameters.param1 has been removed"
+            },
+            {
                 path: "test()",
                 message: "test() is expected to have no argument, but a string is given"
             },
             {
                 path: "parameters.param0",
                 message: "unknown property parameters.param0 has been removed"
+            },
+            {
+                path: "returns",
+                message: "a string at returns has been converted to number"
             },
             {
                 path: "returns",
@@ -46,7 +54,7 @@ describe("decorators", () => {
     });
 
     describe("@param()", () => {
-        it("should constrain the method to accept values of specific types", () => {
+        it("should constrain the method to accept values of specific types", async () => {
             class Example {
                 @param(String, "text")
                 // @ts-ignore
@@ -70,6 +78,12 @@ describe("decorators", () => {
                 // @ts-ignore
                 test4(ok: boolean) {
                     return { args: [...arguments] };
+                }
+
+                @param("ok", Boolean)
+                // @ts-ignore
+                async test5(ok: boolean) {
+                    return await Promise.resolve({ args: [...arguments] });
                 }
             }
 
@@ -96,6 +110,17 @@ describe("decorators", () => {
             assert.deepStrictEqual(
                 String(err1),
                 "TypeError: parameters.text is expected to be a string, but a Buffer is given"
+            );
+
+            // @ts-ignore
+            const result5 = await example.test5(true, "extra note");
+            assert.deepStrictEqual(result5, { args: [true] });
+
+            // @ts-ignore
+            const [err2] = await _try(() => example.test5("hello, world"));
+            assert.deepStrictEqual(
+                String(err2),
+                "TypeError: parameters.ok is expected to be a boolean, but a string is given"
             );
         });
 
@@ -142,12 +167,18 @@ describe("decorators", () => {
                 }`);
         });
 
-        it("should trace the correct call stack after using the decorator", () => {
+        it("should trace the correct call stack after using the decorator", async () => {
             class Example {
                 @param(String, "text")
                 // @ts-ignore
                 test1(text: string) {
                     return { args: [...arguments] };
+                }
+
+                @param(String, "text")
+                // @ts-ignore
+                async test2(text: string) {
+                    return await Promise.resolve({ args: [...arguments] });
                 }
             }
 
@@ -158,12 +189,20 @@ describe("decorators", () => {
                 String(err1),
                 "TypeError: parameters.text is expected to be a string, but a Buffer is given"
             );
-            assert.strictEqual(err1.stack?.split("\n")[1], `    at ${__filename}:156:47`);
+            assert.strictEqual(err1.stack?.split("\n")[1], `    at ${__filename}:187:47`);
+
+            // @ts-ignore
+            const [err2] = await _try(() => example.test2(Buffer.from("hello, world!")));
+            assert.strictEqual(
+                String(err2),
+                "TypeError: parameters.text is expected to be a string, but a Buffer is given"
+            );
+            assert.strictEqual(err2.stack?.split("\n")[1], `    at ${__filename}:195:53`);
         });
     });
 
     describe("@returns", () => {
-        it("should constrain the method to return values of specific types", () => {
+        it("should constrain the method to return values of specific types", async () => {
             class Example {
                 @returns(String)
                 // @ts-ignore
@@ -182,6 +221,18 @@ describe("decorators", () => {
                 test3() {
                     return Buffer.from([]);
                 }
+
+                @returns(Number)
+                // @ts-ignore
+                async test4() {
+                    return await Promise.resolve("123");
+                }
+
+                @returns(Boolean)
+                // @ts-ignore
+                async test5() {
+                    return await Promise.resolve(Buffer.from([]));
+                }
             }
 
             const example = new Example();
@@ -195,6 +246,15 @@ describe("decorators", () => {
             const [err1] = _try(() => example.test3());
             assert.strictEqual(
                 String(err1),
+                "TypeError: returns is expected to be a boolean, but a Buffer is given"
+            );
+
+            const result3 = await example.test4();
+            assert.strictEqual(result3, 123);
+
+            const [err2] = await _try(() => example.test5());
+            assert.strictEqual(
+                String(err2),
                 "TypeError: returns is expected to be a boolean, but a Buffer is given"
             );
         });
@@ -250,12 +310,18 @@ describe("decorators", () => {
                 }`);
         });
 
-        it("should trace the correct call stack after using the decorator", () => {
+        it("should trace the correct call stack after using the decorator", async () => {
             class Example {
                 @returns(String)
                 // @ts-ignore
                 test1() {
                     return Buffer.from("hello, world!");
+                }
+
+                @returns(String)
+                // @ts-ignore
+                async test2() {
+                    return await Promise.resolve(Buffer.from("hello, world!"));
                 }
             }
 
@@ -266,12 +332,20 @@ describe("decorators", () => {
                 String(err1),
                 "TypeError: returns is expected to be a string, but a Buffer is given"
             );
-            assert.strictEqual(err1.stack?.split("\n")[1], `    at ${__filename}:264:47`);
+            assert.strictEqual(err1.stack?.split("\n")[1], `    at ${__filename}:330:47`);
+
+            // @ts-ignore
+            const [err2] = await _try(() => example.test2(Buffer.from("hello, world!")));
+            assert.strictEqual(
+                String(err2),
+                "TypeError: returns is expected to be a string, but a Buffer is given"
+            );
+            assert.strictEqual(err2.stack?.split("\n")[1], `    at async Context.<anonymous> (${__filename}:338:28)`);
         });
     });
 
     describe("@throws", () => {
-        it("should constrain the method to throw specific types of error", () => {
+        it("should constrain the method to throw specific types of error", async () => {
             class Example {
                 @throws(ReferenceError)
                 // @ts-ignore
@@ -308,6 +382,20 @@ describe("decorators", () => {
                 test6() {
                     throw new Error("something went wrong");
                 }
+
+                @throws(ReferenceError)
+                // @ts-ignore
+                async test7() {
+                    await Promise.resolve(null);
+                    throw new ReferenceError("shall not use this");
+                }
+
+                @throws(ReferenceError)
+                // @ts-ignore
+                async test8() {
+                    await Promise.resolve(null);
+                    throw new TypeError("type is incorrect");
+                }
             }
 
             const example = new Example();
@@ -338,6 +426,15 @@ describe("decorators", () => {
                 String(err6),
                 "TypeError: throws is expected to be a string, but an Error is given"
             );
+
+            const [err7] = await _try(() => example.test7());
+            assert.strictEqual(String(err7), "ReferenceError: shall not use this");
+
+            const [err8] = await _try(() => example.test8());
+            assert.strictEqual(
+                String(err8),
+                "TypeError: throws is expected to be a ReferenceError, but a TypeError is given"
+            );
         });
 
         it("should keep original function signature after using the decorator", () => {
@@ -364,7 +461,7 @@ describe("decorators", () => {
                 }`);
         });
 
-        it("should trace the correct call stack after using the decorator", () => {
+        it("should trace the correct call stack after using the decorator", async () => {
             class Example {
                 @throws(ReferenceError)
                 // @ts-ignore
@@ -381,24 +478,52 @@ describe("decorators", () => {
                 test3() {
                     throw new ReferenceError("shall not use this");
                 }
+
+                @throws(ReferenceError)
+                // @ts-ignore
+                async test4() {
+                    await Promise.resolve(null);
+                    throw new ReferenceError("shall not use this");
+                }
+
+                @throws(ReferenceError)
+                // @ts-ignore
+                async test5() {
+                    await Promise.resolve(null);
+                    throw new TypeError("type is incorrect");
+                }
             }
 
             const example = new Example();
 
             const [err1] = _try(() => example.test1());
             assert.strictEqual(String(err1), "ReferenceError: shall not use this");
-            assert.strictEqual(err1.stack?.split("\n")[1], `    at Example.test1 (${__filename}:372:27)`);
+            assert.strictEqual(err1.stack?.split("\n")[1], `    at Example.test1 (${__filename}:469:27)`);
 
             const [err2] = _try(() => example.test2());
             assert.strictEqual(
                 String(err2),
                 "TypeError: throws is expected to be a ReferenceError, but a TypeError is given"
             );
-            assert.strictEqual(err2.stack?.split("\n")[1], `    at ${__filename}:392:47`);
+            assert.strictEqual(err2.stack?.split("\n")[1], `    at ${__filename}:503:47`);
 
             const [err3] = _try(() => example.test3());
             assert.strictEqual(String(err3), "ReferenceError: shall not use this");
-            assert.strictEqual(err3.stack?.split("\n")[1], `    at Example.test3 (${__filename}:382:27)`);
+            assert.strictEqual(err3.stack?.split("\n")[1], `    at Example.test3 (${__filename}:479:27)`);
+
+            // @ts-ignore
+            const [err4] = await _try(() => example.test4());
+            assert.strictEqual(String(err4), "ReferenceError: shall not use this");
+            assert.strictEqual(err4.stack?.split("\n")[1], `    at Example.test4 (${__filename}:486:27)`);
+
+            // @ts-ignore
+            const result = await _try(() => example.test5());
+            const [err5] = result;
+            assert.strictEqual(
+                String(err5),
+                "TypeError: throws is expected to be a ReferenceError, but a TypeError is given"
+            );
+            assert.strictEqual(err5.stack?.split("\n")[1], `    at async Context.<anonymous> (${__filename}:520:28)`);
         });
     });
 

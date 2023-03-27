@@ -2275,6 +2275,11 @@ function omitUndefined<T extends object>(obj: T): T {
     }, {} as T);
 }
 
+function purifyStackTrace(err: any, ctorOpt: Function) {
+    err instanceof Error && Error.captureStackTrace?.(err, ctorOpt);
+    return err;
+}
+
 function toJSON(value: any) {
     let json: any;
 
@@ -2587,8 +2592,7 @@ export function validate<T>(value: ExtractInstanceType<T>, type: T, variable = "
     try {
         return reduce(type, value, variable);
     } catch (err) {
-        err instanceof Error && Error.captureStackTrace?.(err, validate);
-        throw err;
+        throw purifyStackTrace(err, validate);
     }
 }
 
@@ -2689,14 +2693,17 @@ const wrapMethod = (target: any, prop: string | symbol, desc: TypedPropertyDescr
                 try {
                     _args = validate(_args, params, "parameters", options);
                 } catch (err) {
-                    err instanceof Error && Error.captureStackTrace?.(err, newFn);
-                    throw err;
+                    throw purifyStackTrace(err, newFn);
                 }
 
                 args = paramList.map(name => _args[name]);
             }
 
-            const handleReturns = (returns: any, returnDef: { type: any, name: string; }) => {
+            const handleReturns = (
+                returns: any,
+                returnDef: { type: any, name: string; },
+                promiseResolver: (...args: any[]) => any = null
+            ) => {
                 try {
                     return validate(
                         returns,
@@ -2705,7 +2712,7 @@ const wrapMethod = (target: any, prop: string | symbol, desc: TypedPropertyDescr
                         { ...options, suppress: true }
                     );
                 } catch (err) {
-                    err instanceof Error && Error.captureStackTrace?.(err, newFn);
+                    err = purifyStackTrace(err, promiseResolver ?? newFn);
 
                     if (throwDef) {
                         throw new ValidationError("validation failed", { cause: err });
@@ -2715,7 +2722,7 @@ const wrapMethod = (target: any, prop: string | symbol, desc: TypedPropertyDescr
                 }
             };
 
-            const handleError = (err: any) => {
+            const handleError = (err: any, promiseCatcher: (...args: any[]) => any = null) => {
                 if (err instanceof ValidationError) {
                     throw err.cause;
                 } else if (throwDef) {
@@ -2725,8 +2732,7 @@ const wrapMethod = (target: any, prop: string | symbol, desc: TypedPropertyDescr
                             suppress: true,
                         });
                     } catch (_err) {
-                        _err instanceof Error && Error.captureStackTrace?.(_err, newFn);
-                        err = _err;
+                        err = purifyStackTrace(_err, promiseCatcher ?? newFn);
                     }
 
                     throw err;
@@ -2741,7 +2747,9 @@ const wrapMethod = (target: any, prop: string | symbol, desc: TypedPropertyDescr
                 if (returns && typeof returns === "object" && typeof returns.then === "function") {
                     if (returnDef) {
                         returns = (returns as Promise<any>)
-                            .then(result => handleReturns(result, returnDef));
+                            .then(function resolver(result) {
+                                return handleReturns(result, returnDef, resolver);
+                            });
                     }
 
                     returns = (returns as Promise<any>).then(result => {
@@ -2750,7 +2758,9 @@ const wrapMethod = (target: any, prop: string | symbol, desc: TypedPropertyDescr
                     });
 
                     if (throwDef) {
-                        return (returns as Promise<any>).catch(handleError);
+                        return (returns as Promise<any>).catch(function catcher(err) {
+                            handleError(err, catcher);
+                        });
                     } else {
                         return returns;
                     }
