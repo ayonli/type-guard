@@ -2590,13 +2590,14 @@ function getJSONSchema(type, options = null) {
 }
 exports.getJSONSchema = getJSONSchema;
 Function.prototype.getJSONSchema = function (options) {
+    var _a;
     const title = (options === null || options === void 0 ? void 0 : options.title) || this[_title];
     const $id = (options === null || options === void 0 ? void 0 : options.$id) || title;
     const hasSuffix = $id.endsWith(".schema.json");
     const parentId = hasSuffix ? $id.slice(0, -12) : $id;
     const paramsDef = this[_params];
     const returnDef = this[_returns];
-    const isVoidParam = paramsDef.length === 1 && paramsDef[0].type instanceof VoidType;
+    const isVoidParam = (paramsDef === null || paramsDef === void 0 ? void 0 : paramsDef.length) === 1 && ((_a = paramsDef === null || paramsDef === void 0 ? void 0 : paramsDef[0]) === null || _a === void 0 ? void 0 : _a.type) instanceof VoidType;
     return this[_title] ? omitUndefined({
         $schema: "https://json-schema.org/draft/2020-12/schema",
         $id: (options === null || options === void 0 ? void 0 : options.$id) || title,

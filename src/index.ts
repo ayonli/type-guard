@@ -3126,7 +3126,7 @@ Function.prototype.getJSONSchema = function (options) {
     const parentId = hasSuffix ? $id.slice(0, -12) : $id;
     const paramsDef = this[_params] as { type: any; name?: string; remarks?: string; }[];
     const returnDef = this[_returns] as { type: any; name: string; remarks?: string; };
-    const isVoidParam = paramsDef.length === 1 && paramsDef[0].type instanceof VoidType;
+    const isVoidParam = paramsDef?.length === 1 && paramsDef?.[0]?.type instanceof VoidType;
 
     return this[_title] ? omitUndefined({
         $schema: "https://json-schema.org/draft/2020-12/schema",
