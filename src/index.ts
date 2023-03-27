@@ -2635,25 +2635,23 @@ class ValidationError extends Error {
         // @ts-ignore
         super(message, options);
         this.cause ??= options.cause;
-        Error.captureStackTrace?.(this, ValidationError);
     }
 }
 
 const wrapMethod = (target: any, prop: string | symbol, desc: TypedPropertyDescriptor<any>) => {
     if (!target[_methods]?.[prop]) {
-        (target[_methods] ??= {})[prop] = desc.value;
-
-        const fn = desc.value = (function (this: any, ...args: any[]) {
+        const originFn: (...arg: any[]) => any = (target[_methods] ??= {})[prop] = desc.value;
+        const newFn = desc.value = (function (this: any, ...args: any[]) {
             const method = target[_methods][prop] as (...arg: any[]) => any;
-            let paramsDef = fn[_params] as { type: any; name?: string; }[];
-            const returnDef = fn[_returns] as { type: any; name: string; };
-            const throwDef = fn[_throws] as { type: any; name: string; };
+            let paramsDef = newFn[_params] as { type: any; name?: string; }[];
+            const returnDef = newFn[_returns] as { type: any; name: string; };
+            const throwDef = newFn[_throws] as { type: any; name: string; };
             const warnings: ValidationWarning[] = [];
             const options = { warnings, removeUnknownItems: true };
 
-            if (!isVoid(fn[_deprecated])) {
-                const message = fn[_deprecated]
-                    ? `${String(prop)}() is deprecated: ${fn[_deprecated]}`
+            if (!isVoid(newFn[_deprecated])) {
+                const message = newFn[_deprecated]
+                    ? `${String(prop)}() is deprecated: ${newFn[_deprecated]}`
                     : `${String(prop)}() is deprecated`;
                 warnings.push({ path: `${String(prop)}()`, message });
             }
@@ -2691,7 +2689,7 @@ const wrapMethod = (target: any, prop: string | symbol, desc: TypedPropertyDescr
                 try {
                     _args = validate(_args, params, "parameters", options);
                 } catch (err) {
-                    err instanceof Error && Error.captureStackTrace?.(err, fn);
+                    err instanceof Error && Error.captureStackTrace?.(err, newFn);
                     throw err;
                 }
 
@@ -2707,6 +2705,8 @@ const wrapMethod = (target: any, prop: string | symbol, desc: TypedPropertyDescr
                         { ...options, suppress: true }
                     );
                 } catch (err) {
+                    err instanceof Error && Error.captureStackTrace?.(err, newFn);
+
                     if (throwDef) {
                         throw new ValidationError("validation failed", { cause: err });
                     } else {
@@ -2719,13 +2719,17 @@ const wrapMethod = (target: any, prop: string | symbol, desc: TypedPropertyDescr
                 if (err instanceof ValidationError) {
                     throw err.cause;
                 } else if (throwDef) {
-                    const _err = validate(err, as(throwDef.type), throwDef.name, {
-                        ...options,
-                        suppress: true,
-                    });
-                    Error.captureStackTrace?.(_err, handleError);
+                    try {
+                        err = validate(err, as(throwDef.type), throwDef.name, {
+                            ...options,
+                            suppress: true,
+                        });
+                    } catch (_err) {
+                        _err instanceof Error && Error.captureStackTrace?.(_err, newFn);
+                        err = _err;
+                    }
 
-                    throw _err;
+                    throw err;
                 } else {
                     throw err;
                 }
@@ -2763,12 +2767,20 @@ const wrapMethod = (target: any, prop: string | symbol, desc: TypedPropertyDescr
             try {
                 return handleResult();
             } catch (err) {
-                err instanceof Error && Error.captureStackTrace?.(err, fn);
                 handleError(err);
             }
         }) as any;
 
-        fn[_title] = (target.constructor as Constructor<any>).name + "." + String(prop);
+        newFn[_title] = (target.constructor as Constructor<any>).name + "." + String(prop);
+
+        Object.defineProperty(newFn, "name", { value: originFn.name, configurable: true });
+        Object.defineProperty(newFn, "length", { value: originFn.length, configurable: true });
+        Object.defineProperty(newFn, "toString", {
+            value: function toString() {
+                return originFn.toString();
+            },
+            configurable: true,
+        });
     }
 };
 
@@ -2873,30 +2885,6 @@ export function throws<T>(type: T): MethodDecorator {
 }
 
 /**
- * A decorator that adds remark message to the method.
- * @param note The remark message.
- * @example
- * ```ts
- * class Example {
- *     \@remarks("Retrieves id and name")
- *     \@param(String, "id")
- *     async get(id: String): Promise<{ id: string; name: string; }> {
- *         // ...
- *     }
- * }
- * ```
- */
-export function remarks(note: string): MethodDecorator {
-    return (target, prop, desc) => {
-        wrapMethod(target, prop, desc);
-
-        // @ts-ignore
-        const fn = desc.value as (...args: any[]) => any;
-        fn[_remarks] = note;
-    };
-}
-
-/**
  * A decorator that deprecates the method and emit warning message when the
  * method is called.
  * @param message The warning message, can be used to provide suggestions.
@@ -2918,6 +2906,30 @@ export function deprecated(message = ""): MethodDecorator {
         // @ts-ignore
         const fn = desc.value as (...args: any[]) => any;
         fn[_deprecated] = message;
+    };
+}
+
+/**
+ * A decorator that adds remark message to the method.
+ * @param note The remark message.
+ * @example
+ * ```ts
+ * class Example {
+ *     \@remarks("Retrieves id and name")
+ *     \@param(String, "id")
+ *     async get(id: String): Promise<{ id: string; name: string; }> {
+ *         // ...
+ *     }
+ * }
+ * ```
+ */
+export function remarks(note: string): MethodDecorator {
+    return (target, prop, desc) => {
+        wrapMethod(target, prop, desc);
+
+        // @ts-ignore
+        const fn = desc.value as (...args: any[]) => any;
+        fn[_remarks] = note;
     };
 }
 
@@ -3122,11 +3134,11 @@ export function getJSONSchema(type: any, options: {
 Function.prototype.getJSONSchema = function (options) {
     const title = options?.title || this[_title] as string;
     const $id = options?.$id || title;
-    const hasSuffix = $id.endsWith(".schema.json");
+    const hasSuffix = $id?.endsWith(".schema.json");
     const parentId = hasSuffix ? $id.slice(0, -12) : $id;
     const paramsDef = this[_params] as { type: any; name?: string; remarks?: string; }[];
     const returnDef = this[_returns] as { type: any; name: string; remarks?: string; };
-    const isVoidParam = paramsDef?.length === 1 && paramsDef?.[0]?.type instanceof VoidType;
+    const isVoidParam = paramsDef?.length === 1 && paramsDef[0].type instanceof VoidType;
 
     return this[_title] ? omitUndefined({
         $schema: "https://json-schema.org/draft/2020-12/schema",

@@ -1,6 +1,6 @@
 import * as assert from "assert";
 import { describe, it } from "mocha";
-import { Any, as, Dict, getJSONSchema, param, remarks, returns, StringType, Void } from "..";
+import { Any, as, deprecated, Dict, getJSONSchema, param, remarks, returns, StringType, Void } from "..";
 
 describe("JSONSchema", () => {
     it("should create schema for strings", () => {
@@ -688,6 +688,10 @@ describe("JSONSchema", () => {
 
     it("should create a super schema for class method", () => {
         class Example {
+            test(text: string) {
+                return text;
+            }
+
             @param("data", { text: String })
             @returns({ text: String })
             // @ts-ignore
@@ -710,13 +714,35 @@ describe("JSONSchema", () => {
             }
 
             @remarks("This function does something")
-            @param("data", { text: String })
-            @returns(String)
             // @ts-ignore
             test4(data: { text: string; }) {
                 return data.text;
             }
+
+            @deprecated()
+            // @ts-ignore
+            test5(data: { text: string; }) {
+                return data.text;
+            }
+
+            @deprecated("will no longer functions")
+            // @ts-ignore
+            test6(data: { text: string; }) {
+                return data.text;
+            }
+
+            @remarks("This function does something")
+            @deprecated("will no longer functions")
+            @param("data", { text: String })
+            @returns(String)
+            // @ts-ignore
+            test7(data: { text: string; }) {
+                return data.text;
+            }
         }
+
+        const schema = Example.prototype.test.getJSONSchema();
+        assert.strictEqual(schema, null);
 
         const $schema = "https://json-schema.org/draft/2020-12/schema";
         const schema1 = Example.prototype.test1.getJSONSchema();
@@ -806,13 +832,56 @@ describe("JSONSchema", () => {
             $schema,
             $id: "https://example.com/example.test4.schema.json",
             title: "example.test4",
-            description: "This function does something",
             type: "function",
+            description: "This function does something",
+            parameters: null,
+            returns: null,
+        });
+
+        const schema5 = new Example().test5.getJSONSchema({
+            $id: "https://example.com/example.test5.schema.json",
+            title: "example.test5"
+        });
+        assert.deepStrictEqual(schema5, {
+            $schema,
+            $id: "https://example.com/example.test5.schema.json",
+            title: "example.test5",
+            type: "function",
+            deprecated: true,
+            parameters: null,
+            returns: null,
+        });
+
+        const schema6 = new Example().test6.getJSONSchema({
+            $id: "https://example.com/example.test6.schema.json",
+            title: "example.test6"
+        });
+        assert.deepStrictEqual(schema6, {
+            $schema,
+            $id: "https://example.com/example.test6.schema.json",
+            title: "example.test6",
+            type: "function",
+            deprecated: true,
+            parameters: null,
+            returns: null,
+        });
+
+        const schema7 = new Example().test7.getJSONSchema({
+            $id: "https://example.com/example.test7.schema.json",
+            title: "example.test7"
+        });
+        assert.deepStrictEqual(schema7, {
+            $schema,
+            $id: "https://example.com/example.test7.schema.json",
+            title: "example.test7",
+            type: "function",
+            description: "This function does something",
+            deprecated: true,
             parameters: {
                 data: {
                     $schema,
-                    $id: "https://example.com/example.test4.parameters.data.schema.json",
-                    title: "example.test4.parameters.data",
+                    $id: "https://example.com/example.test7.parameters.data.schema.json",
+                    title: "example.test7.parameters.data",
                     type: "object",
                     properties: {
                         text: { type: "string" },
@@ -823,8 +892,8 @@ describe("JSONSchema", () => {
             },
             returns: {
                 $schema,
-                $id: "https://example.com/example.test4.returns.schema.json",
-                title: "example.test4.returns",
+                $id: "https://example.com/example.test7.returns.schema.json",
+                title: "example.test7.returns",
                 type: "string",
             },
         });

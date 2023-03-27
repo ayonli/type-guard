@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getJSONSchema = exports.ensured = exports.optional = exports.required = exports.partial = exports.wrap = exports.deprecated = exports.remarks = exports.throws = exports.returns = exports.param = exports.emitWarnings = exports.setWarningHandler = exports.validate = exports.as = exports.Dict = exports.Void = exports.Any = exports.OptionalTupleType = exports.TupleType = exports.OptionalArrayType = exports.ArrayType = exports.OptionalDictType = exports.DictType = exports.OptionalUnionType = exports.UnionType = exports.OptionalCustomType = exports.CustomType = exports.VoidType = exports.OptionalAnyType = exports.AnyType = exports.OptionalObjectType = exports.ObjectType = exports.OptionalDateType = exports.DateType = exports.OptionalBooleanType = exports.BooleanType = exports.OptionalBigIntEnum = exports.BigIntEnum = exports.OptionalBigIntType = exports.BigIntType = exports.OptionalNumberEnum = exports.NumberEnum = exports.OptionalNumberType = exports.NumberType = exports.OptionalStringEnum = exports.StringEnum = exports.OptionalStringType = exports.StringType = exports.ValidateableType = void 0;
+exports.getJSONSchema = exports.ensured = exports.optional = exports.required = exports.partial = exports.wrap = exports.remarks = exports.deprecated = exports.throws = exports.returns = exports.param = exports.emitWarnings = exports.setWarningHandler = exports.validate = exports.as = exports.Dict = exports.Void = exports.Any = exports.OptionalTupleType = exports.TupleType = exports.OptionalArrayType = exports.ArrayType = exports.OptionalDictType = exports.DictType = exports.OptionalUnionType = exports.UnionType = exports.OptionalCustomType = exports.CustomType = exports.VoidType = exports.OptionalAnyType = exports.AnyType = exports.OptionalObjectType = exports.ObjectType = exports.OptionalDateType = exports.DateType = exports.OptionalBooleanType = exports.BooleanType = exports.OptionalBigIntEnum = exports.BigIntEnum = exports.OptionalBigIntType = exports.BigIntType = exports.OptionalNumberEnum = exports.NumberEnum = exports.OptionalNumberType = exports.NumberType = exports.OptionalStringEnum = exports.StringEnum = exports.OptionalStringType = exports.StringType = exports.ValidateableType = void 0;
 require("@hyurl/utils/types");
 const omit_1 = require("@hyurl/utils/omit");
 const pick_1 = require("@hyurl/utils/pick");
@@ -2195,28 +2195,27 @@ const _remarks = Symbol.for("remarks");
 const _deprecated = Symbol.for("deprecated");
 class ValidationError extends Error {
     constructor(message, options) {
-        var _a, _b;
+        var _a;
         // @ts-ignore
         super(message, options);
         (_a = this.cause) !== null && _a !== void 0 ? _a : (this.cause = options.cause);
-        (_b = Error.captureStackTrace) === null || _b === void 0 ? void 0 : _b.call(Error, this, ValidationError);
     }
 }
 const wrapMethod = (target, prop, desc) => {
     var _a, _b;
     if (!((_a = target[_methods]) === null || _a === void 0 ? void 0 : _a[prop])) {
-        ((_b = target[_methods]) !== null && _b !== void 0 ? _b : (target[_methods] = {}))[prop] = desc.value;
-        const fn = desc.value = (function (...args) {
-            var _a, _b;
+        const originFn = ((_b = target[_methods]) !== null && _b !== void 0 ? _b : (target[_methods] = {}))[prop] = desc.value;
+        const newFn = desc.value = (function (...args) {
+            var _a;
             const method = target[_methods][prop];
-            let paramsDef = fn[_params];
-            const returnDef = fn[_returns];
-            const throwDef = fn[_throws];
+            let paramsDef = newFn[_params];
+            const returnDef = newFn[_returns];
+            const throwDef = newFn[_throws];
             const warnings = [];
             const options = { warnings, removeUnknownItems: true };
-            if (!(0, isVoid_1.default)(fn[_deprecated])) {
-                const message = fn[_deprecated]
-                    ? `${String(prop)}() is deprecated: ${fn[_deprecated]}`
+            if (!(0, isVoid_1.default)(newFn[_deprecated])) {
+                const message = newFn[_deprecated]
+                    ? `${String(prop)}() is deprecated: ${newFn[_deprecated]}`
                     : `${String(prop)}() is deprecated`;
                 warnings.push({ path: `${String(prop)}()`, message });
             }
@@ -2251,16 +2250,18 @@ const wrapMethod = (target, prop, desc) => {
                     _args = validate(_args, params, "parameters", options);
                 }
                 catch (err) {
-                    err instanceof Error && ((_a = Error.captureStackTrace) === null || _a === void 0 ? void 0 : _a.call(Error, err, fn));
+                    err instanceof Error && ((_a = Error.captureStackTrace) === null || _a === void 0 ? void 0 : _a.call(Error, err, newFn));
                     throw err;
                 }
                 args = paramList.map(name => _args[name]);
             }
             const handleReturns = (returns, returnDef) => {
+                var _a;
                 try {
                     return validate(returns, as(returnDef.type), returnDef.name, Object.assign(Object.assign({}, options), { suppress: true }));
                 }
                 catch (err) {
+                    err instanceof Error && ((_a = Error.captureStackTrace) === null || _a === void 0 ? void 0 : _a.call(Error, err, newFn));
                     if (throwDef) {
                         throw new ValidationError("validation failed", { cause: err });
                     }
@@ -2275,9 +2276,14 @@ const wrapMethod = (target, prop, desc) => {
                     throw err.cause;
                 }
                 else if (throwDef) {
-                    const _err = validate(err, as(throwDef.type), throwDef.name, Object.assign(Object.assign({}, options), { suppress: true }));
-                    (_a = Error.captureStackTrace) === null || _a === void 0 ? void 0 : _a.call(Error, _err, handleError);
-                    throw _err;
+                    try {
+                        err = validate(err, as(throwDef.type), throwDef.name, Object.assign(Object.assign({}, options), { suppress: true }));
+                    }
+                    catch (_err) {
+                        _err instanceof Error && ((_a = Error.captureStackTrace) === null || _a === void 0 ? void 0 : _a.call(Error, _err, newFn));
+                        err = _err;
+                    }
+                    throw err;
                 }
                 else {
                     throw err;
@@ -2313,11 +2319,18 @@ const wrapMethod = (target, prop, desc) => {
                 return handleResult();
             }
             catch (err) {
-                err instanceof Error && ((_b = Error.captureStackTrace) === null || _b === void 0 ? void 0 : _b.call(Error, err, fn));
                 handleError(err);
             }
         });
-        fn[_title] = target.constructor.name + "." + String(prop);
+        newFn[_title] = target.constructor.name + "." + String(prop);
+        Object.defineProperty(newFn, "name", { value: originFn.name, configurable: true });
+        Object.defineProperty(newFn, "length", { value: originFn.length, configurable: true });
+        Object.defineProperty(newFn, "toString", {
+            value: function toString() {
+                return originFn.toString();
+            },
+            configurable: true,
+        });
     }
 };
 function param(arg0, arg1, remarks = void 0) {
@@ -2394,29 +2407,6 @@ function throws(type) {
 }
 exports.throws = throws;
 /**
- * A decorator that adds remark message to the method.
- * @param note The remark message.
- * @example
- * ```ts
- * class Example {
- *     \@remarks("Retrieves id and name")
- *     \@param(String, "id")
- *     async get(id: String): Promise<{ id: string; name: string; }> {
- *         // ...
- *     }
- * }
- * ```
- */
-function remarks(note) {
-    return (target, prop, desc) => {
-        wrapMethod(target, prop, desc);
-        // @ts-ignore
-        const fn = desc.value;
-        fn[_remarks] = note;
-    };
-}
-exports.remarks = remarks;
-/**
  * A decorator that deprecates the method and emit warning message when the
  * method is called.
  * @param message The warning message, can be used to provide suggestions.
@@ -2440,6 +2430,29 @@ function deprecated(message = "") {
     };
 }
 exports.deprecated = deprecated;
+/**
+ * A decorator that adds remark message to the method.
+ * @param note The remark message.
+ * @example
+ * ```ts
+ * class Example {
+ *     \@remarks("Retrieves id and name")
+ *     \@param(String, "id")
+ *     async get(id: String): Promise<{ id: string; name: string; }> {
+ *         // ...
+ *     }
+ * }
+ * ```
+ */
+function remarks(note) {
+    return (target, prop, desc) => {
+        wrapMethod(target, prop, desc);
+        // @ts-ignore
+        const fn = desc.value;
+        fn[_remarks] = note;
+    };
+}
+exports.remarks = remarks;
 function wrap(parameters, returns) {
     return (fn) => (function (arg) {
         const warnings = [];
@@ -2590,14 +2603,13 @@ function getJSONSchema(type, options = null) {
 }
 exports.getJSONSchema = getJSONSchema;
 Function.prototype.getJSONSchema = function (options) {
-    var _a;
     const title = (options === null || options === void 0 ? void 0 : options.title) || this[_title];
     const $id = (options === null || options === void 0 ? void 0 : options.$id) || title;
-    const hasSuffix = $id.endsWith(".schema.json");
+    const hasSuffix = $id === null || $id === void 0 ? void 0 : $id.endsWith(".schema.json");
     const parentId = hasSuffix ? $id.slice(0, -12) : $id;
     const paramsDef = this[_params];
     const returnDef = this[_returns];
-    const isVoidParam = (paramsDef === null || paramsDef === void 0 ? void 0 : paramsDef.length) === 1 && ((_a = paramsDef === null || paramsDef === void 0 ? void 0 : paramsDef[0]) === null || _a === void 0 ? void 0 : _a.type) instanceof VoidType;
+    const isVoidParam = (paramsDef === null || paramsDef === void 0 ? void 0 : paramsDef.length) === 1 && paramsDef[0].type instanceof VoidType;
     return this[_title] ? omitUndefined({
         $schema: "https://json-schema.org/draft/2020-12/schema",
         $id: (options === null || options === void 0 ? void 0 : options.$id) || title,
