@@ -5,7 +5,8 @@ import isVoid from "@hyurl/utils/isVoid";
 
 export type JSONSchemaType = "string" | "number" | "integer" | "boolean" | "array" | "object" | "null";
 export type JSONSchema = {
-    type: JSONSchemaType | JSONSchemaType[];
+    $ref?: string;
+    type?: JSONSchemaType | JSONSchemaType[];
     description?: string;
     default?: any;
     deprecated?: boolean;
@@ -110,8 +111,8 @@ export abstract class ValidateableType<T> {
         return value;
     }
 
-
-    abstract toJSONSchema(): JSONSchema;
+    /** @internal */
+    abstract toJSONSchema(parent?: any): JSONSchema;
 
     /** @internal */
     protected deriveWith(props: object): this;
@@ -1285,7 +1286,7 @@ export class CustomType<T> extends ValidateableType<T> {
         }
     }
 
-    toJSONSchema(): JSONSchema {
+    toJSONSchema(parent = null): JSONSchema {
         if (typeof this.type === "boolean") {
             return omitUndefined({
                 type: "boolean",
@@ -1306,6 +1307,7 @@ export class CustomType<T> extends ValidateableType<T> {
                 description: this._remarks,
                 default: toJSON(this._default),
                 deprecated: isVoid(this._deprecated) ? void 0 : true,
+                parent,
             });
         }
     }
@@ -1459,12 +1461,12 @@ export class UnionType<T extends any[]> extends ValidateableType<T[]> {
         }
     }
 
-    toJSONSchema(): JSONSchema {
+    toJSONSchema(parent = null): JSONSchema {
         const types: (JSONSchemaType | JSONSchemaType[])[] = [];
         const oneOf: JSONSchema[] = [];
 
         for (const type of this.types) {
-            const _schema = toJSONSchema(type);
+            const _schema = toJSONSchema(type, { parent });
             types.push(_schema.type);
             oneOf.push(_schema);
         }
@@ -1608,7 +1610,7 @@ export class DictType<K extends IndexableType, V> extends ValidateableType<Recor
         }
     }
 
-    toJSONSchema(): JSONSchema {
+    toJSONSchema(parent = null): JSONSchema {
         const schema: JSONSchema = {
             type: "object",
             description: this._remarks,
@@ -1618,7 +1620,7 @@ export class DictType<K extends IndexableType, V> extends ValidateableType<Recor
         const keys = this.keyEnum();
 
         if (keys?.length) {
-            const valueSchema = toJSONSchema(this.value);
+            const valueSchema = toJSONSchema(this.value, { parent });
 
             schema["properties"] = keys.reduce((properties, prop) => {
                 properties[prop] = valueSchema;
@@ -1776,7 +1778,7 @@ export class ArrayType<T> extends CustomType<T[]> {
         return validate(_value as any, this.type ?? [], path, options) as T[];
     }
 
-    toJSONSchema(): JSONSchema {
+    toJSONSchema(parent = null): JSONSchema {
         const schema: JSONSchema = {
             type: "array",
             description: this._remarks,
@@ -1789,9 +1791,9 @@ export class ArrayType<T> extends CustomType<T[]> {
 
         if (this.type?.length > 0) {
             if (this.type.length === 1 && !(this.type[0] instanceof AnyType)) {
-                schema["items"] = toJSONSchema(this.type[0]);
+                schema["items"] = toJSONSchema(this.type[0], { parent });
             } else if (this.type.length > 1) {
-                const oneOf = this.type.map(type => toJSONSchema(type));
+                const oneOf = this.type.map(type => toJSONSchema(type, { parent }));
 
                 if (oneOf.every(item => Object.keys(item).length === 1)) {
                     schema["items"] = { type: oneOf.map(item => item.type) };
@@ -1902,7 +1904,7 @@ export class TupleType<T extends readonly any[]> extends ValidateableType<T> {
         return items as any as T;
     }
 
-    toJSONSchema(): JSONSchema {
+    toJSONSchema(parent = null): JSONSchema {
         const schema: JSONSchema = {
             type: "array",
             description: this._remarks,
@@ -1913,7 +1915,7 @@ export class TupleType<T extends readonly any[]> extends ValidateableType<T> {
                     || !type["_optional"];
             }).length,
             maxItems: this.type.length,
-            prefixItems: this.type.map(type => toJSONSchema(type)),
+            prefixItems: this.type.map(type => toJSONSchema(type, { parent })),
         };
 
         return omitUndefined(schema);
@@ -3057,19 +3059,34 @@ export function ensured<T extends Record<string, unknown>, K extends keyof T>(ty
     };
 }
 
-function toJSONSchema(type: any, extra: Partial<JSONSchema> = {}) {
-    if (Array.isArray(type)) {
+function toJSONSchema(type: any, extra: Partial<JSONSchema> & { parent?: any; } = {}) {
+    const { parent, ...rest } = extra;
+    let _type: any;
+
+    if (type instanceof CustomType) {
+        _type = type.type;
+    } else if (type instanceof ArrayType) {
+        _type = type.type;
+    } else if (type instanceof TupleType) {
+        _type = type.type;
+    } else {
+        _type = type;
+    }
+
+    if (parent && _type === parent) {
+        return { $ref: "#" };
+    } else if (Array.isArray(type)) {
         if (!type.length) {
-            return omitUndefined({ ...new ArrayType([Any]).toJSONSchema(), ...extra });
+            return omitUndefined({ ...new ArrayType([Any]).toJSONSchema(parent), ...rest });
         } else {
-            return omitUndefined({ ...new ArrayType(type).toJSONSchema(), ...extra });
+            return omitUndefined({ ...new ArrayType(type).toJSONSchema(parent), ...rest });
         }
     } else if (isObject(type)) {
         const required: string[] = [];
         const schema: JSONSchema = {
             type: "object",
             properties: Object.keys(type).reduce((properties, prop) => {
-                const subSchema = toJSONSchema(type[prop]);
+                const subSchema = toJSONSchema(type[prop], { parent: _type });
 
                 if (subSchema) {
                     properties[prop] = subSchema;
@@ -3079,6 +3096,8 @@ function toJSONSchema(type: any, extra: Partial<JSONSchema> = {}) {
 
                     if (subType instanceof ValidateableType) {
                         isRequired = !subType["_optional"];
+                    } else if (Array.isArray(subType)) {
+                        isRequired = true;
                     } else {
                         isRequired = false;
                     }
@@ -3095,11 +3114,11 @@ function toJSONSchema(type: any, extra: Partial<JSONSchema> = {}) {
         schema["required"] = required;
         schema["additionalProperties"] = false;
 
-        return omitUndefined({ ...schema, ...extra });
+        return omitUndefined({ ...schema, ...rest });
     } else {
         return omitUndefined({
-            ...ensureType(type, "", true).toJSONSchema(),
-            ...extra,
+            ...ensureType(type, "", true).toJSONSchema(parent),
+            ...rest,
         });
     }
 }

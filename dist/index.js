@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getJSONSchema = exports.ensured = exports.optional = exports.required = exports.partial = exports.wrap = exports.remarks = exports.deprecated = exports.throws = exports.returns = exports.param = exports.emitWarnings = exports.setWarningHandler = exports.validate = exports.as = exports.Dict = exports.Void = exports.Any = exports.OptionalTupleType = exports.TupleType = exports.OptionalArrayType = exports.ArrayType = exports.OptionalDictType = exports.DictType = exports.OptionalUnionType = exports.UnionType = exports.OptionalCustomType = exports.CustomType = exports.VoidType = exports.OptionalAnyType = exports.AnyType = exports.OptionalObjectType = exports.ObjectType = exports.OptionalDateType = exports.DateType = exports.OptionalBooleanType = exports.BooleanType = exports.OptionalBigIntEnum = exports.BigIntEnum = exports.OptionalBigIntType = exports.BigIntType = exports.OptionalNumberEnum = exports.NumberEnum = exports.OptionalNumberType = exports.NumberType = exports.OptionalStringEnum = exports.StringEnum = exports.OptionalStringType = exports.StringType = exports.ValidateableType = void 0;
+const tslib_1 = require("tslib");
 require("@hyurl/utils/types");
 const omit_1 = require("@hyurl/utils/omit");
 const pick_1 = require("@hyurl/utils/pick");
@@ -1119,7 +1120,7 @@ class CustomType extends ValidateableType {
             return validate(value, this.type, path, options);
         }
     }
-    toJSONSchema() {
+    toJSONSchema(parent = null) {
         if (typeof this.type === "boolean") {
             return omitUndefined({
                 type: "boolean",
@@ -1142,6 +1143,7 @@ class CustomType extends ValidateableType {
                 description: this._remarks,
                 default: toJSON(this._default),
                 deprecated: (0, isVoid_1.default)(this._deprecated) ? void 0 : true,
+                parent,
             });
         }
     }
@@ -1286,11 +1288,11 @@ class UnionType extends ValidateableType {
             throw this.createTypeError(path, value, types.length > 1 ? types : types[0], typesOfConsts.includes(typeof value === "bigint" ? "number" : typeof value));
         }
     }
-    toJSONSchema() {
+    toJSONSchema(parent = null) {
         const types = [];
         const oneOf = [];
         for (const type of this.types) {
-            const _schema = toJSONSchema(type);
+            const _schema = toJSONSchema(type, { parent });
             types.push(_schema.type);
             oneOf.push(_schema);
         }
@@ -1416,7 +1418,7 @@ class DictType extends ValidateableType {
             return records;
         }
     }
-    toJSONSchema() {
+    toJSONSchema(parent = null) {
         const schema = {
             type: "object",
             description: this._remarks,
@@ -1425,7 +1427,7 @@ class DictType extends ValidateableType {
         };
         const keys = this.keyEnum();
         if (keys === null || keys === void 0 ? void 0 : keys.length) {
-            const valueSchema = toJSONSchema(this.value);
+            const valueSchema = toJSONSchema(this.value, { parent });
             schema["properties"] = keys.reduce((properties, prop) => {
                 properties[prop] = valueSchema;
                 return properties;
@@ -1561,7 +1563,7 @@ class ArrayType extends CustomType {
         }
         return validate(_value, (_d = this.type) !== null && _d !== void 0 ? _d : [], path, options);
     }
-    toJSONSchema() {
+    toJSONSchema(parent = null) {
         var _a;
         const schema = {
             type: "array",
@@ -1574,10 +1576,10 @@ class ArrayType extends CustomType {
         };
         if (((_a = this.type) === null || _a === void 0 ? void 0 : _a.length) > 0) {
             if (this.type.length === 1 && !(this.type[0] instanceof AnyType)) {
-                schema["items"] = toJSONSchema(this.type[0]);
+                schema["items"] = toJSONSchema(this.type[0], { parent });
             }
             else if (this.type.length > 1) {
-                const oneOf = this.type.map(type => toJSONSchema(type));
+                const oneOf = this.type.map(type => toJSONSchema(type, { parent }));
                 if (oneOf.every(item => Object.keys(item).length === 1)) {
                     schema["items"] = { type: oneOf.map(item => item.type) };
                 }
@@ -1670,7 +1672,7 @@ class TupleType extends ValidateableType {
         }
         return items;
     }
-    toJSONSchema() {
+    toJSONSchema(parent = null) {
         const schema = {
             type: "array",
             description: this._remarks,
@@ -1681,7 +1683,7 @@ class TupleType extends ValidateableType {
                     || !type["_optional"];
             }).length,
             maxItems: this.type.length,
-            prefixItems: this.type.map(type => toJSONSchema(type)),
+            prefixItems: this.type.map(type => toJSONSchema(type, { parent })),
         };
         return omitUndefined(schema);
     }
@@ -2555,12 +2557,29 @@ function ensured(type, props) {
 }
 exports.ensured = ensured;
 function toJSONSchema(type, extra = {}) {
-    if (Array.isArray(type)) {
+    const { parent } = extra, rest = tslib_1.__rest(extra, ["parent"]);
+    let _type;
+    if (type instanceof CustomType) {
+        _type = type.type;
+    }
+    else if (type instanceof ArrayType) {
+        _type = type.type;
+    }
+    else if (type instanceof TupleType) {
+        _type = type.type;
+    }
+    else {
+        _type = type;
+    }
+    if (parent && _type === parent) {
+        return { $ref: "#" };
+    }
+    else if (Array.isArray(type)) {
         if (!type.length) {
-            return omitUndefined(Object.assign(Object.assign({}, new ArrayType([exports.Any]).toJSONSchema()), extra));
+            return omitUndefined(Object.assign(Object.assign({}, new ArrayType([exports.Any]).toJSONSchema(parent)), rest));
         }
         else {
-            return omitUndefined(Object.assign(Object.assign({}, new ArrayType(type).toJSONSchema()), extra));
+            return omitUndefined(Object.assign(Object.assign({}, new ArrayType(type).toJSONSchema(parent)), rest));
         }
     }
     else if (isObject(type)) {
@@ -2568,13 +2587,16 @@ function toJSONSchema(type, extra = {}) {
         const schema = {
             type: "object",
             properties: Object.keys(type).reduce((properties, prop) => {
-                const subSchema = toJSONSchema(type[prop]);
+                const subSchema = toJSONSchema(type[prop], { parent: _type });
                 if (subSchema) {
                     properties[prop] = subSchema;
                     const subType = ensureType(type[prop]);
                     let isRequired;
                     if (subType instanceof ValidateableType) {
                         isRequired = !subType["_optional"];
+                    }
+                    else if (Array.isArray(subType)) {
+                        isRequired = true;
                     }
                     else {
                         isRequired = false;
@@ -2588,10 +2610,10 @@ function toJSONSchema(type, extra = {}) {
         };
         schema["required"] = required;
         schema["additionalProperties"] = false;
-        return omitUndefined(Object.assign(Object.assign({}, schema), extra));
+        return omitUndefined(Object.assign(Object.assign({}, schema), rest));
     }
     else {
-        return omitUndefined(Object.assign(Object.assign({}, ensureType(type, "", true).toJSONSchema()), extra));
+        return omitUndefined(Object.assign(Object.assign({}, ensureType(type, "", true).toJSONSchema(parent)), rest));
     }
 }
 function getJSONSchema(type, options = null) {

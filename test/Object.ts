@@ -329,4 +329,65 @@ describe("Object", () => {
             }
         ] as ValidationWarning[]);
     });
+
+    it("should handle circular structure properly", () => {
+        type FamilyTree = {
+            name: string;
+            children: FamilyTree[];
+        };
+        const FamilyTree = {
+            name: String,
+            children: null as any,
+        };
+        FamilyTree["children"] = [FamilyTree];
+        const _tree: FamilyTree = {
+            name: "Elizabeth",
+            children: [
+                {
+                    name: "Charles",
+                    children: [
+                        {
+                            name: "William",
+                            children: [
+                                { name: "George", children: [] },
+                                { name: "Charlotte", children: [] }
+                            ]
+                        },
+                        {
+                            name: "Harry",
+                            children: [],
+                        }
+                    ]
+                }
+            ]
+        };
+        // @ts-ignore
+        const tree = validate(_tree, FamilyTree, "tree");
+        assert.deepStrictEqual(tree, _tree);
+
+        type LinkedList = {
+            data: string;
+            next?: LinkedList;
+        };
+        const LinkedList = {
+            data: String,
+            next: null as any,
+        };
+        LinkedList["next"] = as(LinkedList).optional;
+        const _list: LinkedList = {
+            data: "A",
+            next: {
+                data: "B",
+                next: {
+                    data: "C",
+                    next: {
+                        data: "D"
+                    }
+                }
+            }
+        };
+        // @ts-ignore
+        const list = validate(_list, LinkedList, "list");
+        assert.deepStrictEqual(list, _list);
+    });
 });

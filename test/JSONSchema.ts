@@ -2,6 +2,8 @@ import * as assert from "assert";
 import { describe, it } from "mocha";
 import { Any, as, deprecated, Dict, getJSONSchema, param, remarks, returns, StringType, Void } from "..";
 
+Error.stackTraceLimit = 10;
+
 describe("JSONSchema", () => {
     it("should create schema for strings", () => {
         const schema1 = getJSONSchema(String);
@@ -266,6 +268,23 @@ describe("JSONSchema", () => {
             properties: {
                 foo: { type: "string" },
                 bar: { type: "number" }
+            },
+            required: ["foo", "bar"],
+            additionalProperties: false
+        });
+
+        const schema8 = getJSONSchema({
+            foo: String,
+            bar: [Number],
+        });
+        assert.deepStrictEqual(schema8, {
+            type: "object",
+            properties: {
+                foo: { type: "string" },
+                bar: {
+                    type: "array",
+                    items: { type: "number" },
+                },
             },
             required: ["foo", "bar"],
             additionalProperties: false
@@ -643,7 +662,7 @@ describe("JSONSchema", () => {
         });
     });
 
-    it("should create schema document", () => {
+    it("should create a root schema document", () => {
         const $id = "https://example.com/example.schema.json";
         const schema1 = getJSONSchema({
             foo: String,
@@ -896,6 +915,53 @@ describe("JSONSchema", () => {
                 title: "example.test7.returns",
                 type: "string",
             },
+        });
+    });
+
+    it("should handle circular structure properly", () => {
+        type FamilyTree = {
+            name: string;
+            children: FamilyTree[];
+        };
+        const FamilyTree = {
+            name: String,
+            children: null as any,
+        };
+        FamilyTree["children"] = [FamilyTree];
+
+        const schema1 = getJSONSchema(FamilyTree);
+        assert.deepStrictEqual(schema1, {
+            type: "object",
+            properties: {
+                name: { type: "string" },
+                children: {
+                    type: "array",
+                    items: { $ref: "#" },
+                },
+            },
+            required: ["name", "children"],
+            additionalProperties: false,
+        });
+
+        type LinkedList = {
+            data: any;
+            next?: LinkedList;
+        };
+        const LinkedList = {
+            data: String,
+            next: null as any,
+        };
+        LinkedList["next"] = as(LinkedList).optional;
+
+        const schema2 = getJSONSchema(LinkedList);
+        assert.deepStrictEqual(schema2, {
+            type: "object",
+            properties: {
+                data: { type: "string" },
+                next: { $ref: "#" },
+            },
+            required: ["data"],
+            additionalProperties: false,
         });
     });
 });
