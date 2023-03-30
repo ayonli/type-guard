@@ -3078,7 +3078,7 @@ function toJSONSchema(type: any, extra: Partial<JSONSchema> = {}) {
                     let isRequired: boolean;
 
                     if (subType instanceof ValidateableType) {
-                        isRequired = !type[prop]["_optional"];
+                        isRequired = !subType["_optional"];
                     } else {
                         isRequired = false;
                     }

@@ -2574,7 +2574,7 @@ function toJSONSchema(type, extra = {}) {
                     const subType = ensureType(type[prop]);
                     let isRequired;
                     if (subType instanceof ValidateableType) {
-                        isRequired = !type[prop]["_optional"];
+                        isRequired = !subType["_optional"];
                     }
                     else {
                         isRequired = false;
