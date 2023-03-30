@@ -330,7 +330,7 @@ describe("Object", () => {
         ] as ValidationWarning[]);
     });
 
-    it("should handle circular structure properly", () => {
+    it("should handle recursive structure properly", () => {
         type FamilyTree = {
             name: string;
             children: FamilyTree[];
