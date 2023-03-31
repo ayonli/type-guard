@@ -2945,37 +2945,60 @@ export function remarks(note: string): MethodDecorator {
     };
 }
 
-export function wrap<A, R>(parameters: A, returns: R) {
-    return (fn: WrappedFunction<A, R>) => (function (this: any, arg) {
+export function def<A, R>(fn: (
+    parameters: ExtractInstanceType<A>
+) => ExtractInstanceType<R>, parameters: A, returns: R): (
+    parameters: ExtractInstanceType<A>
+) => ExtractInstanceType<R>;
+export function def<A, R>(fn: (
+    parameters: ExtractInstanceType<A>
+) => Promise<ExtractInstanceType<R>>, parameters: A, returns: R): (
+    parameters: ExtractInstanceType<A>
+) => Promise<ExtractInstanceType<R>>;
+export function def(fn: (arg: any) => any, parameters: any, returns: any) {
+    return function wrapped(this: any, arg: any) {
         const warnings: ValidationWarning[] = [];
         const options = { warnings, removeUnknownItems: true };
-        arg = validate(arg, parameters, "parameters", options);
+
+        try {
+            arg = validate(arg, parameters, "parameters", options);
+        } catch (err) {
+            throw purifyStackTrace(err, wrapped);
+        }
+
         let result = fn(arg);
 
         if (result && typeof result === "object" && typeof result["then"] === "function") {
-            return (result as Promise<ExtractInstanceType<R>>)
-                .then(res => validate(res, returns, "returns", {
-                    ...options,
-                    suppress: true,
-                })).then(res => {
+            return (result as Promise<any>)
+                .then(function resolver(res) {
+                    try {
+                        // @ts-ignore
+                        return validate(res, returns, "returns", {
+                            ...options,
+                            suppress: true,
+                        });
+                    } catch (err) {
+                        throw purifyStackTrace(err, resolver);
+                    }
+                }).then(res => {
                     emitWarnings.call(this, warnings, res);
                     return res;
                 });
         } else {
-            result = validate(result as ExtractInstanceType<R>, returns, "returns", {
-                ...options,
-                suppress: true,
-            });
+            try {
+                result = validate(result, returns, "returns", {
+                    ...options,
+                    suppress: true,
+                });
 
-            emitWarnings.call(this, warnings, result);
-            return result;
+                emitWarnings.call(this, warnings, result);
+                return result;
+            } catch (err) {
+                throw purifyStackTrace(err, wrapped);
+            }
         }
-    }) as WrappedFunction<A, R>;
+    };
 }
-
-export type WrappedFunction<A, R> = (
-    arg: ExtractInstanceType<A>
-) => ExtractInstanceType<R> | Promise<ExtractInstanceType<R>>;
 
 export function partial<T extends (Record<string, unknown> | DictType<IndexableType, unknown>)>(type: T) {
     if (type instanceof DictType) {

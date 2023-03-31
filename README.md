@@ -664,10 +664,10 @@ validation in a common function, there are two ways (with limited support) to do
 it:
 
 1. Use `validate()` function explicitly in the function. (will not emit warnings by default)
-2. Use `wrap()` function to create a wrapped function with type checking features.
+2. Use `def()` function to create a wrapped function with type checking features.
 
 ```ts
-import { validate, wrap, ValidationWarning, emitWarnings } from "@hyurl/type-guard";
+import { validate, def, ValidationWarning, emitWarnings } from "@hyurl/type-guard";
 
 function sum(num1: number, num2: number, num3?: number): number {
     const warnings: ValidationWarning[] = []; // record warnings manually
@@ -684,12 +684,13 @@ function sum(num1: number, num2: number, num3?: number): number {
     return returns;
 }
 
-const wrappedSum = wrap(
-    { num1: Number, num2: Number, num3: Number.optional }, // params
+const wrappedSum = def(
+    ({ num1, num2, num3 }) => { // the actual function
+        return num1 + num2 + (num3 || 0);
+    },
+    { num1: Number, num2: Number, num3: Number.optional }, // parameters
     Number // returns
-)(({ num1, num2, num3 }) => {
-    return num1 + num2 + (num3 || 0);
-});
+);
 ```
 
 ## Working with JSON Schema

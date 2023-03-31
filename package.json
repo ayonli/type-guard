@@ -13,8 +13,9 @@
     "url": "git+https://github.com/hyurl/type-guard.git"
   },
   "keywords": [
-    "\"type",
-    "checking\""
+    "typing",
+    "type-checking",
+    "schema"
   ],
   "author": "A-yon Lee <i@hyurl.com>",
   "license": "MIT",

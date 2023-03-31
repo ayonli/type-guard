@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getJSONSchema = exports.ensured = exports.optional = exports.required = exports.partial = exports.wrap = exports.remarks = exports.deprecated = exports.throws = exports.returns = exports.param = exports.emitWarnings = exports.setWarningHandler = exports.validate = exports.as = exports.Dict = exports.Void = exports.Any = exports.OptionalTupleType = exports.TupleType = exports.OptionalArrayType = exports.ArrayType = exports.OptionalDictType = exports.DictType = exports.OptionalUnionType = exports.UnionType = exports.OptionalCustomType = exports.CustomType = exports.VoidType = exports.OptionalAnyType = exports.AnyType = exports.OptionalObjectType = exports.ObjectType = exports.OptionalDateType = exports.DateType = exports.OptionalBooleanType = exports.BooleanType = exports.OptionalBigIntEnum = exports.BigIntEnum = exports.OptionalBigIntType = exports.BigIntType = exports.OptionalNumberEnum = exports.NumberEnum = exports.OptionalNumberType = exports.NumberType = exports.OptionalStringEnum = exports.StringEnum = exports.OptionalStringType = exports.StringType = exports.ValidateableType = void 0;
+exports.getJSONSchema = exports.ensured = exports.optional = exports.required = exports.partial = exports.def = exports.remarks = exports.deprecated = exports.throws = exports.returns = exports.param = exports.emitWarnings = exports.setWarningHandler = exports.validate = exports.as = exports.Dict = exports.Void = exports.Any = exports.OptionalTupleType = exports.TupleType = exports.OptionalArrayType = exports.ArrayType = exports.OptionalDictType = exports.DictType = exports.OptionalUnionType = exports.UnionType = exports.OptionalCustomType = exports.CustomType = exports.VoidType = exports.OptionalAnyType = exports.AnyType = exports.OptionalObjectType = exports.ObjectType = exports.OptionalDateType = exports.DateType = exports.OptionalBooleanType = exports.BooleanType = exports.OptionalBigIntEnum = exports.BigIntEnum = exports.OptionalBigIntType = exports.BigIntType = exports.OptionalNumberEnum = exports.NumberEnum = exports.OptionalNumberType = exports.NumberType = exports.OptionalStringEnum = exports.StringEnum = exports.OptionalStringType = exports.StringType = exports.ValidateableType = void 0;
 const tslib_1 = require("tslib");
 require("@hyurl/utils/types");
 const omit_1 = require("@hyurl/utils/omit");
@@ -314,7 +314,6 @@ class StringType extends ValidateableType {
         return omitUndefined(schema);
     }
 }
-exports.StringType = StringType;
 StringType.EmailRegex = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/;
 StringType.PhoneRegex = /^\s*(?:\+?(\d{1,3}))?([-. (]*(\d{3})[-. )]*)?((\d{3})[-. ]*(\d{2,4})(?:[-.x ]*(\d+))?)\s*$/;
 StringType.IpRegex = /^(?:(?:2(?:[0-4][0-9]|5[0-5])|[0-1]?[0-9]?[0-9])\.){3}(?:(?:2([0-4][0-9]|5[0-5])|[0-1]?[0-9]?[0-9]))$/;
@@ -323,6 +322,7 @@ StringType.HostnameRegex = /^localhost$|^(([a-z0-9A-Z]\.)*[a-z0-9-]+\.)?([a-z0-9
 StringType.DateRegex = /^(19[0-9]{2}|2[0-9]{3})-(0[1-9]|1[012])-([123]0|[012][1-9]|31)$/;
 StringType.TimeRegex = /^([01][0-9]|2[0-3]):([0-5][0-9])(:[0-5][0-9])?$/;
 StringType.DatetimeRegex = /^(19[0-9]{2}|2[0-9]{3})-(0[1-9]|1[012])-([123]0|[012][1-9]|31) ([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])$/;
+exports.StringType = StringType;
 class OptionalStringType extends StringType {
     constructor() {
         super(...arguments);
@@ -2457,27 +2457,45 @@ function remarks(note) {
     };
 }
 exports.remarks = remarks;
-function wrap(parameters, returns) {
-    return (fn) => (function (arg) {
+function def(fn, parameters, returns) {
+    return function wrapped(arg) {
         const warnings = [];
         const options = { warnings, removeUnknownItems: true };
-        arg = validate(arg, parameters, "parameters", options);
+        try {
+            arg = validate(arg, parameters, "parameters", options);
+        }
+        catch (err) {
+            throw purifyStackTrace(err, wrapped);
+        }
         let result = fn(arg);
         if (result && typeof result === "object" && typeof result["then"] === "function") {
             return result
-                .then(res => validate(res, returns, "returns", Object.assign(Object.assign({}, options), { suppress: true }))).then(res => {
+                .then(function resolver(res) {
+                try {
+                    // @ts-ignore
+                    return validate(res, returns, "returns", Object.assign(Object.assign({}, options), { suppress: true }));
+                }
+                catch (err) {
+                    throw purifyStackTrace(err, resolver);
+                }
+            }).then(res => {
                 emitWarnings.call(this, warnings, res);
                 return res;
             });
         }
         else {
-            result = validate(result, returns, "returns", Object.assign(Object.assign({}, options), { suppress: true }));
-            emitWarnings.call(this, warnings, result);
-            return result;
+            try {
+                result = validate(result, returns, "returns", Object.assign(Object.assign({}, options), { suppress: true }));
+                emitWarnings.call(this, warnings, result);
+                return result;
+            }
+            catch (err) {
+                throw purifyStackTrace(err, wrapped);
+            }
         }
-    });
+    };
 }
-exports.wrap = wrap;
+exports.def = def;
 function partial(type) {
     if (type instanceof DictType) {
         if (type.key instanceof ValidateableType) {
