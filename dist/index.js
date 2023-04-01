@@ -6,6 +6,7 @@ require("@hyurl/utils/types");
 const omit_1 = require("@hyurl/utils/omit");
 const pick_1 = require("@hyurl/utils/pick");
 const isVoid_1 = require("@hyurl/utils/isVoid");
+const jsonSchemaDraftLink = "https://json-schema.org/draft/2020-12/schema";
 class ValidateableType {
     constructor() {
         this._optional = false;
@@ -1786,6 +1787,28 @@ Object.defineProperties(Array.prototype, {
         },
     },
 });
+function as(...types) {
+    if (types.length === 1) {
+        const [type] = types;
+        if (Array.isArray(type)) {
+            return new TupleType(type);
+        }
+        else if ([String, Number, BigInt, Boolean, Date, Object, Array].includes(type)
+            || (type instanceof ValidateableType)) {
+            return type;
+        }
+        else {
+            return new CustomType(types[0]);
+        }
+    }
+    else if (types.length > 1) {
+        return new UnionType(types);
+    }
+    else {
+        throw new TypeError(`as() requires at least one argument`);
+    }
+}
+exports.as = as;
 function isObject(value) {
     return typeof value === "object" && !!value && value.constructor === Object;
 }
@@ -1970,28 +1993,6 @@ function ensureType(type, path = "$", deep = false) {
     };
     return reduce(type, path);
 }
-function as(...types) {
-    if (types.length === 1) {
-        const [type] = types;
-        if (Array.isArray(type)) {
-            return new TupleType(type);
-        }
-        else if ([String, Number, BigInt, Boolean, Date, Object, Array].includes(type)
-            || (type instanceof ValidateableType)) {
-            return type;
-        }
-        else {
-            return new CustomType(types[0]);
-        }
-    }
-    else if (types.length > 1) {
-        return new UnionType(types);
-    }
-    else {
-        throw new TypeError(`as() requires at least one argument`);
-    }
-}
-exports.as = as;
 /**
  * Manually validate an input value with the given type.
  * @param value The input value that needs to be validated.
@@ -2153,6 +2154,13 @@ function validate(value, type, variable = "$", options = null) {
     }
 }
 exports.validate = validate;
+const _methods = Symbol.for("methods");
+const _params = Symbol.for("params");
+const _returns = Symbol.for("returns");
+const _throws = Symbol.for("throws");
+const _title = Symbol.for("title");
+const _remarks = Symbol.for("remarks");
+const _deprecated = Symbol.for("deprecated");
 let warningHandler = null;
 /**
  * By default, warnings are emitted to the stdout when occurred, use this
@@ -2175,13 +2183,6 @@ function emitWarnings(warnings, returns) {
     }
 }
 exports.emitWarnings = emitWarnings;
-const _methods = Symbol.for("methods");
-const _params = Symbol.for("params");
-const _returns = Symbol.for("returns");
-const _throws = Symbol.for("throws");
-const _title = Symbol.for("title");
-const _remarks = Symbol.for("remarks");
-const _deprecated = Symbol.for("deprecated");
 class ValidationError extends Error {
     constructor(message, options) {
         var _a;
@@ -2616,7 +2617,7 @@ function toJSONSchema(type, extra = {}) {
 function getJSONSchema(type, options = null) {
     const schema = toJSONSchema(type);
     if (options === null || options === void 0 ? void 0 : options.$id) {
-        return omitUndefined(Object.assign(Object.assign({ $schema: "https://json-schema.org/draft/2020-12/schema", $id: options.$id, title: options.title }, schema), { description: schema.description || options.description }));
+        return omitUndefined(Object.assign(Object.assign({ $schema: jsonSchemaDraftLink, $id: options.$id, title: options.title }, schema), { description: schema.description || options.description }));
     }
     else {
         return schema;
@@ -2632,7 +2633,7 @@ Function.prototype.getJSONSchema = function (options) {
     const returnDef = this[_returns];
     const isVoidParam = (paramsDef === null || paramsDef === void 0 ? void 0 : paramsDef.length) === 1 && paramsDef[0].type instanceof VoidType;
     return this[_title] ? omitUndefined({
-        $schema: "https://json-schema.org/draft/2020-12/schema",
+        $schema: jsonSchemaDraftLink,
         $id: (options === null || options === void 0 ? void 0 : options.$id) || title,
         title,
         type: "function",

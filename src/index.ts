@@ -3,6 +3,7 @@ import omit from "@hyurl/utils/omit";
 import pick from "@hyurl/utils/pick";
 import isVoid from "@hyurl/utils/isVoid";
 
+const jsonSchemaDraftLink = "https://json-schema.org/draft/2020-12/schema";
 export type JSONSchemaType = "string" | "number" | "integer" | "boolean" | "array" | "object" | "null";
 export type JSONSchema = {
     $ref?: string;
@@ -1902,7 +1903,7 @@ export type IndexableType = string
     | StringEnum<any>
     | OptionalStringEnum<any>;
 
-export type OptionalTypes = OptionalStringType
+export type OptionalType = OptionalStringType
     | OptionalStringEnum<any>
     | OptionalNumberType
     | OptionalNumberEnum<any>
@@ -1920,45 +1921,15 @@ export type OptionalTypes = OptionalStringType
     | VoidType;
 
 export type RequiredPropertyNames<T> = {
-    [K in keyof T]: T[K] extends OptionalTypes ? never : K;
+    [K in keyof T]: T[K] extends OptionalType ? never : K;
 }[keyof T];
 
 export type OptionalPropertyNames<T> = {
-    [K in keyof T]: T[K] extends OptionalTypes ? K : never;
+    [K in keyof T]: T[K] extends OptionalType ? K : never;
 }[keyof T];
 
-export type ExtractInstanceType<T> = T extends (StringEnum<infer U> | OptionalStringEnum<infer U>) ? (U extends readonly (infer V)[] ? V : U)
-    : T extends (StringConstructor | typeof StringType | StringType | OptionalStringType) ? string
-    : T extends (NumberEnum<infer U> | OptionalNumberEnum<infer U>) ? (U extends readonly (infer V)[] ? V : U)
-    : T extends (NumberConstructor | typeof NumberType | NumberType | OptionalNumberType) ? number
-    : T extends (BigIntEnum<infer U> | OptionalBigIntEnum<infer U>) ? (U extends readonly (infer V)[] ? V : U)
-    : T extends (BigIntConstructor | typeof BigIntType | BigIntType | OptionalBigIntType) ? bigint
-    : T extends (BooleanConstructor | typeof BooleanType | BooleanType | OptionalBooleanType) ? boolean
-    : T extends (DateConstructor | typeof DateType | DateType | OptionalDateType) ? Date
-    : T extends (ObjectConstructor | typeof ObjectType | ObjectType | OptionalObjectType) ? object
-    : T extends (typeof AnyType | AnyType | OptionalAnyType) ? any
-    : T extends (typeof VoidType | VoidType) ? void
-    : T extends abstract new (...args: any[]) => infer U ? U
-    : T extends (infer U)[] ? ExtractInstanceType<U>[]
-    : T extends (ArrayType<infer U> | OptionalArrayType<infer U>) ? ExtractInstanceType<U>[]
-    : T extends readonly [infer A, infer B] ? readonly [ExtractInstanceType<A>, ExtractInstanceType<B>]
-    : T extends readonly [infer A, infer B, infer C] ? readonly [ExtractInstanceType<A>, ExtractInstanceType<B>, ExtractInstanceType<C>]
-    : T extends readonly [infer A, infer B, infer C, infer D] ? readonly [ExtractInstanceType<A>, ExtractInstanceType<B>, ExtractInstanceType<C>, ExtractInstanceType<D>]
-    : T extends readonly [...infer U] ? readonly [...ExtractInstanceType<U>]
-    : T extends (TupleType<infer U> | OptionalTupleType<infer U>) ? ExtractInstanceType<U>
-    : T extends (CustomType<infer U> | OptionalCustomType<infer U>) ? ExtractInstanceType<U>
-    : T extends (UnionType<infer U> | OptionalUnionType<infer U>) ? ExtractInstanceType<U>[0]
-    : T extends (DictType<infer K, infer V> | OptionalDictType<infer K, infer V>) ? Record<ExtractInstanceType<K>, ExtractInstanceType<V>>
-    : T extends Record<string, unknown> ? (
-        {
-            [K in RequiredPropertyNames<T>]: ExtractInstanceType<T[K]>;
-        } & {
-            [K in OptionalPropertyNames<T>]?: ExtractInstanceType<T[K]>;
-        })
-    : T;
-
 export type EnsureOptionalProperties<T extends Record<string, unknown>> = {
-    [K in keyof T]: T[K] extends OptionalTypes ? T[K]
+    [K in keyof T]: T[K] extends OptionalType ? T[K]
     : T[K] extends StringEnum<infer U> ? OptionalStringEnum<U>
     : T[K] extends (StringConstructor | typeof StringType | StringType) ? OptionalStringType
     : T[K] extends NumberEnum<infer U> ? OptionalNumberEnum<U>
@@ -1996,6 +1967,36 @@ export type EnsureRequiredProperties<T extends Record<string, unknown>> = {
     : T[K] extends OptionalTupleType<infer U> ? TupleType<U>
     : T[K]
 };
+
+export type ExtractInstanceType<T> = T extends (StringEnum<infer U> | OptionalStringEnum<infer U>) ? (U extends readonly (infer V)[] ? V : U)
+    : T extends (StringConstructor | typeof StringType | StringType | OptionalStringType) ? string
+    : T extends (NumberEnum<infer U> | OptionalNumberEnum<infer U>) ? (U extends readonly (infer V)[] ? V : U)
+    : T extends (NumberConstructor | typeof NumberType | NumberType | OptionalNumberType) ? number
+    : T extends (BigIntEnum<infer U> | OptionalBigIntEnum<infer U>) ? (U extends readonly (infer V)[] ? V : U)
+    : T extends (BigIntConstructor | typeof BigIntType | BigIntType | OptionalBigIntType) ? bigint
+    : T extends (BooleanConstructor | typeof BooleanType | BooleanType | OptionalBooleanType) ? boolean
+    : T extends (DateConstructor | typeof DateType | DateType | OptionalDateType) ? Date
+    : T extends (ObjectConstructor | typeof ObjectType | ObjectType | OptionalObjectType) ? object
+    : T extends (typeof AnyType | AnyType | OptionalAnyType) ? any
+    : T extends (typeof VoidType | VoidType) ? void
+    : T extends abstract new (...args: any[]) => infer U ? U
+    : T extends (infer U)[] ? ExtractInstanceType<U>[]
+    : T extends (ArrayType<infer U> | OptionalArrayType<infer U>) ? ExtractInstanceType<U>[]
+    : T extends readonly [infer A, infer B] ? readonly [ExtractInstanceType<A>, ExtractInstanceType<B>]
+    : T extends readonly [infer A, infer B, infer C] ? readonly [ExtractInstanceType<A>, ExtractInstanceType<B>, ExtractInstanceType<C>]
+    : T extends readonly [infer A, infer B, infer C, infer D] ? readonly [ExtractInstanceType<A>, ExtractInstanceType<B>, ExtractInstanceType<C>, ExtractInstanceType<D>]
+    : T extends readonly [...infer U] ? readonly [...ExtractInstanceType<U>]
+    : T extends (TupleType<infer U> | OptionalTupleType<infer U>) ? ExtractInstanceType<U>
+    : T extends (CustomType<infer U> | OptionalCustomType<infer U>) ? ExtractInstanceType<U>
+    : T extends (UnionType<infer U> | OptionalUnionType<infer U>) ? ExtractInstanceType<U>[0]
+    : T extends (DictType<infer K, infer V> | OptionalDictType<infer K, infer V>) ? Record<ExtractInstanceType<K>, ExtractInstanceType<V>>
+    : T extends Record<string, unknown> ? (
+        {
+            [K in RequiredPropertyNames<T>]: ExtractInstanceType<T[K]>;
+        } & {
+            [K in OptionalPropertyNames<T>]?: ExtractInstanceType<T[K]>;
+        })
+    : T;
 
 function augmentStaticMethods(ctor: Constructor<any>, type: Constructor<any>) {
     const ins = new type() as ValidateableType<any>;
@@ -2148,6 +2149,62 @@ declare global {
                 $id: string;
             };
         };
+    }
+}
+
+/**
+ * Used to wrap a custom type so that it could be modified with the utility
+ * functions like `optional` and `default`.
+ * @example
+ * ```ts
+ * class Example {
+ *     \@param({ id: String, name: String.optional }, "query")
+ *     \@returns({
+ *          id: String,
+ *          name: String,
+ *          gender: as(Gender),
+ *          avatar: as(Avatar).optional,
+ *          address: as({
+ *              country: String,
+ *              province: String.optional,
+ *              city: String.optional,
+ *              street: String.optional
+ *          }).optional, // a plain object doesn't have an `optional` option, so we wrap it with `as`
+ *     })
+ *     async findOne(query: { id: string; name?: string }) {
+ *         // ...
+ *     }
+ * }
+ * ```
+ */
+export function as(type: StringConstructor): StringConstructor;
+export function as(type: NumberConstructor): NumberConstructor;
+export function as(type: BigIntConstructor): BigIntConstructor;
+export function as(type: BooleanConstructor): BooleanConstructor;
+export function as(type: DateConstructor): DateConstructor;
+export function as(type: ObjectConstructor): ObjectConstructor;
+export function as(type: ArrayConstructor): ArrayConstructor;
+export function as<T extends ValidateableType<unknown>>(type: T): T;
+export function as<T extends readonly any[]>(type: T): TupleType<T>;
+export function as<T>(type: T): CustomType<T>;
+export function as<T extends any[]>(...types: T): UnionType<T>;
+export function as<T>(...types: (T | Constructor<T>)[]) {
+    if (types.length === 1) {
+        const [type] = types;
+
+        if (Array.isArray(type)) {
+            return new TupleType(type);
+        } else if ([String, Number, BigInt, Boolean, Date, Object, Array].includes(type as any)
+            || (type instanceof ValidateableType)
+        ) {
+            return type;
+        } else {
+            return new CustomType(types[0]);
+        }
+    } else if (types.length > 1) {
+        return new UnionType(types);
+    } else {
+        throw new TypeError(`as() requires at least one argument`);
     }
 }
 
@@ -2316,62 +2373,6 @@ function ensureType(type: any, path = "$", deep = false) {
     };
 
     return reduce(type, path) as ValidateableType<any>;
-}
-
-/**
- * Used to wrap a custom type so that it could be modified with the utility
- * functions like `optional` and `default`.
- * @example
- * ```ts
- * class Example {
- *     \@param({ id: String, name: String.optional }, "query")
- *     \@returns({
- *          id: String,
- *          name: String,
- *          gender: as(Gender),
- *          avatar: as(Avatar).optional,
- *          address: as({
- *              country: String,
- *              province: String.optional,
- *              city: String.optional,
- *              street: String.optional
- *          }).optional, // a plain object doesn't have an `optional` option, so we wrap it with `as`
- *     })
- *     async findOne(query: { id: string; name?: string }) {
- *         // ...
- *     }
- * }
- * ```
- */
-export function as(type: StringConstructor): StringConstructor;
-export function as(type: NumberConstructor): NumberConstructor;
-export function as(type: BigIntConstructor): BigIntConstructor;
-export function as(type: BooleanConstructor): BooleanConstructor;
-export function as(type: DateConstructor): DateConstructor;
-export function as(type: ObjectConstructor): ObjectConstructor;
-export function as(type: ArrayConstructor): ArrayConstructor;
-export function as<T extends ValidateableType<unknown>>(type: T): T;
-export function as<T extends readonly any[]>(type: T): TupleType<T>;
-export function as<T>(type: T): CustomType<T>;
-export function as<T extends any[]>(...types: T): UnionType<T>;
-export function as<T>(...types: (T | Constructor<T>)[]) {
-    if (types.length === 1) {
-        const [type] = types;
-
-        if (Array.isArray(type)) {
-            return new TupleType(type);
-        } else if ([String, Number, BigInt, Boolean, Date, Object, Array].includes(type as any)
-            || (type instanceof ValidateableType)
-        ) {
-            return type;
-        } else {
-            return new CustomType(types[0]);
-        }
-    } else if (types.length > 1) {
-        return new UnionType(types);
-    } else {
-        throw new TypeError(`as() requires at least one argument`);
-    }
 }
 
 /**
@@ -2560,6 +2561,14 @@ export function validate<T>(value: any, type: T, variable = "$", options: {
     }
 }
 
+const _methods = Symbol.for("methods");
+const _params = Symbol.for("params");
+const _returns = Symbol.for("returns");
+const _throws = Symbol.for("throws");
+const _title = Symbol.for("title");
+const _remarks = Symbol.for("remarks");
+const _deprecated = Symbol.for("deprecated");
+
 export type ValidationWarning = { path: string; message: string; };
 export type WarningHandler = (
     this: any,
@@ -2587,14 +2596,6 @@ export function emitWarnings(this: any, warnings: ValidationWarning[], returns: 
         }
     }
 }
-
-const _methods = Symbol.for("methods");
-const _params = Symbol.for("params");
-const _returns = Symbol.for("returns");
-const _throws = Symbol.for("throws");
-const _title = Symbol.for("title");
-const _remarks = Symbol.for("remarks");
-const _deprecated = Symbol.for("deprecated");
 
 class ValidationError extends Error {
     readonly cause?: unknown;
@@ -3127,7 +3128,7 @@ export function getJSONSchema(type: any, options: {
 
     if (options?.$id) {
         return omitUndefined({
-            $schema: "https://json-schema.org/draft/2020-12/schema",
+            $schema: jsonSchemaDraftLink,
             $id: options.$id,
             title: options.title,
             ...schema,
@@ -3152,7 +3153,7 @@ Function.prototype.getJSONSchema = function (options) {
     const isVoidParam = paramsDef?.length === 1 && paramsDef[0].type instanceof VoidType;
 
     return this[_title] ? omitUndefined({
-        $schema: "https://json-schema.org/draft/2020-12/schema",
+        $schema: jsonSchemaDraftLink,
         $id: options?.$id || title,
         title,
         type: "function",
