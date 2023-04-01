@@ -437,7 +437,6 @@ NOTE: Both `@param()` and `@returns()` will set `removeUnknownItems` to `true`,
 import { validate, as } from "@hyurl/type-guard";
 
 const str = "Hello, World!";
-// @ts-ignore
 validate(str, String, "str"); // => "Hello, World!";
 validate(str, Number, "str"); // throw type error
 
@@ -446,12 +445,15 @@ validate(num, Number, "num"); // => 123
 validate(num, String, "num"); // => "123"
 validate(num, String, "num", { strict: true}); // throw type error
 
+class MyClass {}
+
 const obj = { str: "Hello, World!", num: [123] };
 validate(obj, {
     str: String,
     num: [Number],
     bool: Boolean.default(false),
     date: Date.optional,
+    // @ts-ignore
     deep: as({
         buf: as(Buffer).default(Buffer.from("")),
         deeper: [{
@@ -464,16 +466,18 @@ validate(obj, {
 
 ### Dealing With TS2589 Error
 
-When coding in TypeScript and calling the `validate()` function, or using the
-`ExtractInstanceType<T>` (real reason) utility type, the compiler may throw an
-error:
+Sometimes when calling the `as()` function, the `validate()` function,
+the `def()` function, or using the `ExtractInstanceType<T>` (the real reason)
+utility type, the TypeScript compiler may throw an error:
 
 ```
 error TS2589: Type instantiation is excessively deep and possibly infinite.
 ```
 
-This error just tells that the TypeScript compiler detects some reference is
-very deep, and to prevent infinite call stack (which is not), it stops the
+This error just says that the compiler detects some recursive type inference is
+very deep (exceeding the limit of 50 recursions, as mentioned
+[here](https://github.com/microsoft/TypeScript/issues/34933#issuecomment-552500444)),
+and to prevent possible infinite call stack (which is not), it stops the
 compilation process, we can simply use `// @ts-ignore` directive to bypass the
 error and continue, just as the above example shows.
 
@@ -686,7 +690,7 @@ function sum(num1: number, num2: number, num3?: number): number {
 
 const wrappedSum = def(
     ({ num1, num2, num3 }) => { // the actual function
-        return num1 + num2 + (num3 || 0);
+        return num1 + num2 + (num3 ?? 0);
     },
     { num1: Number, num2: Number, num3: Number.optional }, // parameters
     Number // returns

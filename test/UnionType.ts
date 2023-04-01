@@ -26,12 +26,10 @@ describe("UnionType", () => {
         const value6 = validate("hello, world!", as(String, { foo: String, bar: String }), "value3");
         assert.deepStrictEqual(value6, "hello, world!");
 
-        // @ts-ignore
         const [err1] = _try(() => validate(null, as(String, Number), "value"));
         assert.strictEqual(String(err1), "Error: value is required, but no value is given");
 
         const buf = Buffer.from("hello, world!");
-        // @ts-ignore
         const [err2] = _try(() => validate(buf, as(String, Number), "value"));
         assert.strictEqual(
             String(err2),
@@ -40,13 +38,11 @@ describe("UnionType", () => {
     });
 
     it("should validate optional value of union type", () => {
-        // @ts-ignore
         const value = validate(null, as(String, Number).optional, "value");
         assert.strictEqual(value, null);
     });
 
     it("should validate value of union type with default value", () => {
-        // @ts-ignore
         const value = validate(null, as(String, Number).default("hello, world!"), "value");
         assert.strictEqual(value, "hello, world!");
     });
@@ -55,7 +51,6 @@ describe("UnionType", () => {
         const nil1 = validate(void 0, as(String, Number, Void), "nill");
         assert.strictEqual(nil1, void 0);
 
-        // @ts-ignore
         const nil2 = validate(null, as(String, Number, Void), "nill");
         assert.strictEqual(nil2, null);
     });
@@ -72,9 +67,7 @@ describe("UnionType", () => {
 
         const date = new Date();
         const arr8 = validate([
-            // @ts-ignore
             { foo: "hello", bar: 123 },
-            // @ts-ignore
             { foo1: true, bar1: date },
         ], [{
             foo: String,
@@ -88,7 +81,6 @@ describe("UnionType", () => {
             { foo1: true, bar1: date },
         ]);
 
-        // @ts-ignore
         const [err3] = _try(() => validate([{}], [String, Number], "arr"));
         assert.strictEqual(
             String(err3),
@@ -96,9 +88,7 @@ describe("UnionType", () => {
         );
 
         const [err5] = _try(() => validate([
-            // @ts-ignore
             { foo: "hello", bar: 123 },
-            // @ts-ignore
             { foo1: true, bar1: "Not a date" },
         ], [{
             foo: String,
@@ -116,7 +106,6 @@ describe("UnionType", () => {
             "hello",
             "world",
             { foo: "hello", bar: 123 },
-            // @ts-ignore
             { foo: "world", bar: "Not a Number" },
         ], [String, {
             foo: String,
@@ -129,10 +118,8 @@ describe("UnionType", () => {
 
         const [err7] = _try(() => validate([
             { foo: "hello", bar: 123 },
-            // @ts-ignore
             { foo: "world", bar: 345 },
             "hello",
-            // @ts-ignore
             Buffer.from("world"),
         ], [String, {
             foo: String,
@@ -145,10 +132,8 @@ describe("UnionType", () => {
 
         const [err8] = _try(() => validate([
             { foo: "hello", bar: 123 },
-            // @ts-ignore
             { foo: "world", bar: "Not a number" },
             "hello",
-            // @ts-ignore
             { foo: "world", bar: 345 },
         ], [String, {
             foo: String,
@@ -161,10 +146,8 @@ describe("UnionType", () => {
 
         const [err9] = _try(() => validate([
             { foo: "hello", bar: 123 },
-            // @ts-ignore
             { foo: "world" },
             "hello",
-            // @ts-ignore
             { foo: "world", bar: 345 },
         ], [String, {
             foo: String,
@@ -176,12 +159,9 @@ describe("UnionType", () => {
         );
 
         const [err10] = _try(() => validate([
-            // @ts-ignore
             null,
-            // @ts-ignore
             { foo: "world" },
             "hello",
-            // @ts-ignore
             { foo: "world", bar: 345 },
         ], [String, {
             foo: String,
@@ -193,12 +173,9 @@ describe("UnionType", () => {
         );
 
         const [err11] = _try(() => validate([
-            // @ts-ignore
             { foo: "world" },
             "hello",
-            // @ts-ignore
             null,
-            // @ts-ignore
             { foo: "world", bar: 345 },
         ], [String, {
             foo: String,
@@ -210,12 +187,9 @@ describe("UnionType", () => {
         );
 
         const [err12] = _try(() => validate([
-            // @ts-ignore
             { foo: "world", bar: 123 },
             "hello",
-            // @ts-ignore
             null,
-            // @ts-ignore
             { foo: "world", bar: 345 },
         ], [String, {
             foo: String,
@@ -227,12 +201,9 @@ describe("UnionType", () => {
         );
 
         const [err13] = _try(() => validate([
-            // @ts-ignore
             { foo: "world", bar: 123 },
             "hello",
-            // @ts-ignore
             Buffer.from("hello, world!"),
-            // @ts-ignore
             { foo: "world" },
         ], [String, {
             foo: String,
@@ -244,10 +215,8 @@ describe("UnionType", () => {
         );
 
         const [err14] = _try(() => validate([
-            // @ts-ignore
             { foo: "world", bar: 123 },
             "hello",
-            // @ts-ignore
             { foo: "world", bar: Buffer.from([1, 2, 3]) },
         ], [String, {
             foo: String,
@@ -260,7 +229,6 @@ describe("UnionType", () => {
 
         const [err15] = _try(() => validate([
             "hello",
-            // @ts-ignore
             { foo: "world", bar: [Buffer.from([1, 2, 3])] },
         ], [String, {
             foo: String,
@@ -276,19 +244,16 @@ describe("UnionType", () => {
         const value1 = validate("hello", as("hello" as const, "world" as const), "value1");
         assert.strictEqual(value1, "hello");
 
-        // @ts-ignore
         const _value1 = validate(void 0,
             as("hello" as const, "world" as const).optional,
             "value1");
         assert.strictEqual(_value1, void 0);
 
-        // @ts-ignore
         const __value1 = validate(void 0,
             as("hello" as const, "world" as const).default("hello"),
             "value1");
         assert.strictEqual(__value1, "hello");
 
-        // @ts-ignore
         const [err1] = _try(() => validate("hi", as("hello" as const, "world" as const), "value1"));
         assert.strictEqual(
             String(err1),
@@ -298,15 +263,12 @@ describe("UnionType", () => {
         const value2 = validate(1, as(1 as const, 2 as const), "value2");
         assert.strictEqual(value2, 1);
 
-        // @ts-ignore
         const _value2 = validate(void 0, as(1 as const, 2 as const).optional, "value2");
         assert.strictEqual(_value2, void 0);
 
-        // @ts-ignore
         const __value2 = validate(void 0, as(1 as const, 2 as const).default(1), "value2");
         assert.strictEqual(__value2, 1);
 
-        // @ts-ignore
         const [err2] = _try(() => validate(3, as(1 as const, 2 as const), "value2"));
         assert.strictEqual(
             String(err2),
@@ -316,15 +278,12 @@ describe("UnionType", () => {
         const value3 = validate(1n, as(1n as const, 2n as const), "value3");
         assert.strictEqual(value3, 1n);
 
-        // @ts-ignore
         const _value3 = validate(void 0, as(1n as const, 2n as const).optional, "value3");
         assert.strictEqual(_value3, void 0);
 
-        // @ts-ignore
         const __value3 = validate(void 0, as(1n as const, 2n as const).default(1n), "value3");
         assert.strictEqual(__value3, 1n);
 
-        // @ts-ignore
         const [err3] = _try(() => validate(3n, as(1n as const, 2n as const), "value3"));
         assert.strictEqual(
             String(err3),
@@ -334,15 +293,12 @@ describe("UnionType", () => {
         const value4 = validate(true, as(true as const, false as const), "value4");
         assert.strictEqual(value4, true);
 
-        // @ts-ignore
         const _value4 = validate(void 0, as(true as const, false as const).optional, "value4");
         assert.strictEqual(_value4, void 0);
 
-        // @ts-ignore
         const __value4 = validate(void 0, as(true as const, false as const).default(true), "value4");
         assert.strictEqual(__value4, true);
 
-        // @ts-ignore
         const [err4] = _try(() => validate("yes", as(true as const, false as const), "value4"));
         assert.strictEqual(
             String(err4),
@@ -353,7 +309,6 @@ describe("UnionType", () => {
     it("should emit various warnings", () => {
         const warnings: ValidationWarning[] = [];
 
-        // @ts-ignore
         const value1 = validate(
             "hello, world!",
             as(String, Number, Void).deprecated("will no longer effect"),
@@ -364,12 +319,10 @@ describe("UnionType", () => {
         );
         assert.deepStrictEqual(value1, "hello, world!");
 
-        // @ts-ignore
         const value2 = validate(123, as(String, Number).deprecated(), "value2", { warnings });
         assert.deepStrictEqual(value2, 123);
 
         const date = new Date();
-        // @ts-ignore
         const value3 = validate(date, as(String, Number), "value3", { warnings });
         assert.strictEqual(value3, date.toISOString());
 
@@ -402,11 +355,8 @@ describe("UnionType", () => {
         assert.deepStrictEqual(value5, [1, "2", 3, "4", "hello"]);
 
         const value6 = validate([
-            // @ts-ignore
             { foo: "hello", bar: "123" },
-            // @ts-ignore
             { foo1: true, bar1: date.valueOf() },
-            // @ts-ignore
             { foo1: true, bar1: date.toISOString() },
         ], [{
             foo: String,

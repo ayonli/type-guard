@@ -21,21 +21,17 @@ describe("Dict", () => {
         const dict2 = validate(obj2, Dict(String, as(String, Number)), "dict2");
         assert.deepStrictEqual(dict2, obj2);
 
-        // @ts-ignore
         const [err1] = _try(() => validate(null, Dict(String, String), "dict1"));
         assert.strictEqual(String(err1), "Error: dict1 is required, but no value is given");
 
-        // @ts-ignore
         const [err2] = _try(() => validate({ foo: {} }, Dict(String, String), "dict2"));
         assert.strictEqual(
             String(err2),
             "TypeError: dict2.foo is expected to be a string, but an object is given"
         );
 
-        // @ts-ignore
         const [err3] = _try(() => validate({
             foo: "hello",
-            // @ts-ignore
             bar: {},
         }, Dict(String, as(String, Number)), "dict3"));
         assert.strictEqual(
@@ -52,7 +48,6 @@ describe("Dict", () => {
 
         const [err1] = _try(() => validate({
             foo: "hello",
-            // @ts-ignore
             bar1: "world"
         }, Dict(String.enum(["foo", "bar"] as const), String), "dict1"));
         assert.strictEqual(
@@ -67,7 +62,6 @@ describe("Dict", () => {
         assert.deepStrictEqual(dict4, obj1);
 
         const [err1] = _try(() => validate({
-            // @ts-ignore
             foo: "hi",
             bar: "world"
         }, Dict(String, String.enum(["hello", "world"] as const)), "dict1"));
@@ -81,8 +75,9 @@ describe("Dict", () => {
         const warnings: ValidationWarning[] = [];
 
         const dict1 = validate({
-            // @ts-ignore
-            foo: "hello", bar: "world", foo1: "hi"
+            foo: "hello",
+            bar: "world",
+            foo1: "hi",
         }, Dict(String.enum(["foo", "bar"] as const), String), "dict1", {
             warnings,
             removeUnknownItems: true,
@@ -101,8 +96,9 @@ describe("Dict", () => {
         const warnings: ValidationWarning[] = [];
 
         const dict1 = validate({
-            // @ts-ignore
-            foo: "hello", bar: "world", foo1: "hi"
+            foo: "hello",
+            bar: "world",
+            foo1: "hi",
         }, Dict(String.enum(["foo", "bar"] as const), String), "dict1", {
             warnings,
             removeUnknownItems: true,
@@ -117,8 +113,9 @@ describe("Dict", () => {
         const warnings: ValidationWarning[] = [];
 
         const dict1 = validate({
-            // @ts-ignore
-            foo: "hello", bar: "world", foo1: "hi"
+            foo: "hello",
+            bar: "world",
+            foo1: "hi",
         }, Dict(String.enum(["foo", "bar"] as const), String), "dict1", {
             warnings,
             suppress: true,
@@ -136,7 +133,6 @@ describe("Dict", () => {
     it("should emit deprecation warning", () => {
         const warnings: ValidationWarning[] = [];
 
-        // @ts-ignore
         const dict = validate({
             str: "hello, world!",
             num: 123,

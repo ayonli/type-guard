@@ -57,31 +57,26 @@ describe("decorators", () => {
         it("should constrain the method to accept values of specific types", async () => {
             class Example {
                 @param(String, "text")
-                // @ts-ignore
                 test1(text: string) {
                     return { args: [...arguments] };
                 }
 
                 @param(Number, "num")
-                // @ts-ignore
                 test2(num: Number) {
                     return { args: [...arguments] };
                 }
 
                 @param("date", Date)
-                // @ts-ignore
                 test3(date: string) {
                     return { args: [...arguments] };
                 }
 
                 @param("ok", Boolean)
-                // @ts-ignore
                 test4(ok: boolean) {
                     return { args: [...arguments] };
                 }
 
                 @param("ok", Boolean)
-                // @ts-ignore
                 async test5(ok: boolean) {
                     return await Promise.resolve({ args: [...arguments] });
                 }
@@ -127,7 +122,6 @@ describe("decorators", () => {
         it("should constrain the method to accept no arguments", () => {
             class Example {
                 @param(Void)
-                // @ts-ignore
                 test() {
                     return { args: [...arguments] };
                 }
@@ -146,7 +140,6 @@ describe("decorators", () => {
         it("should keep original function signature after using the decorator", () => {
             class Example {
                 @param(String, "text")
-                // @ts-ignore
                 test1(text: string) {
                     return { args: [...arguments] };
                 }
@@ -170,13 +163,11 @@ describe("decorators", () => {
         it("should trace the correct call stack after using the decorator", async () => {
             class Example {
                 @param(String, "text")
-                // @ts-ignore
                 test1(text: string) {
                     return { args: [...arguments] };
                 }
 
                 @param(String, "text")
-                // @ts-ignore
                 async test2(text: string) {
                     return await Promise.resolve({ args: [...arguments] });
                 }
@@ -189,7 +180,7 @@ describe("decorators", () => {
                 String(err1),
                 "TypeError: parameters.text is expected to be a string, but a Buffer is given"
             );
-            assert.strictEqual(err1.stack?.split("\n")[1], `    at ${__filename}:187:47`);
+            assert.strictEqual(err1.stack?.split("\n")[1], `    at ${__filename}:178:47`);
 
             // @ts-ignore
             const [err2] = await _try(() => example.test2(Buffer.from("hello, world!")));
@@ -197,7 +188,7 @@ describe("decorators", () => {
                 String(err2),
                 "TypeError: parameters.text is expected to be a string, but a Buffer is given"
             );
-            assert.strictEqual(err2.stack?.split("\n")[1], `    at ${__filename}:195:53`);
+            assert.strictEqual(err2.stack?.split("\n")[1], `    at ${__filename}:186:53`);
         });
     });
 
@@ -205,31 +196,26 @@ describe("decorators", () => {
         it("should constrain the method to return values of specific types", async () => {
             class Example {
                 @returns(String)
-                // @ts-ignore
                 test1() {
                     return "hello, world!";
                 }
 
                 @returns(Number)
-                // @ts-ignore
                 test2() {
                     return "123";
                 }
 
                 @returns(Boolean)
-                // @ts-ignore
                 test3() {
                     return Buffer.from([]);
                 }
 
                 @returns(Number)
-                // @ts-ignore
                 async test4() {
                     return await Promise.resolve("123");
                 }
 
                 @returns(Boolean)
-                // @ts-ignore
                 async test5() {
                     return await Promise.resolve(Buffer.from([]));
                 }
@@ -262,13 +248,11 @@ describe("decorators", () => {
         it("should constrain the method to have no return value", () => {
             class Example {
                 @returns(Void)
-                // @ts-ignore
                 test1() {
                     return;
                 }
 
                 @returns(Void)
-                // @ts-ignore
                 test2() {
                     return "hello, world!";
                 }
@@ -289,7 +273,6 @@ describe("decorators", () => {
         it("should keep original function signature after using the decorator", () => {
             class Example {
                 @returns(String)
-                // @ts-ignore
                 test1() {
                     return "hello, world!";
                 }
@@ -313,13 +296,11 @@ describe("decorators", () => {
         it("should trace the correct call stack after using the decorator", async () => {
             class Example {
                 @returns(String)
-                // @ts-ignore
                 test1() {
                     return Buffer.from("hello, world!");
                 }
 
                 @returns(String)
-                // @ts-ignore
                 async test2() {
                     return await Promise.resolve(Buffer.from("hello, world!"));
                 }
@@ -332,7 +313,7 @@ describe("decorators", () => {
                 String(err1),
                 "TypeError: returns is expected to be a string, but a Buffer is given"
             );
-            assert.strictEqual(err1.stack?.split("\n")[1], `    at ${__filename}:330:47`);
+            assert.strictEqual(err1.stack?.split("\n")[1], `    at ${__filename}:311:47`);
 
             // @ts-ignore
             const [err2] = await _try(() => example.test2(Buffer.from("hello, world!")));
@@ -340,7 +321,7 @@ describe("decorators", () => {
                 String(err2),
                 "TypeError: returns is expected to be a string, but a Buffer is given"
             );
-            assert.strictEqual(err2.stack?.split("\n")[1], `    at async Context.<anonymous> (${__filename}:338:28)`);
+            assert.strictEqual(err2.stack?.split("\n")[1], `    at async Context.<anonymous> (${__filename}:319:28)`);
         });
     });
 
@@ -348,50 +329,42 @@ describe("decorators", () => {
         it("should constrain the method to throw specific types of error", async () => {
             class Example {
                 @throws(ReferenceError)
-                // @ts-ignore
                 test1() {
                     throw new ReferenceError("shall not use this");
                 }
 
                 @throws(ReferenceError)
-                // @ts-ignore
                 test2() {
                     throw new TypeError("type is incorrect");
                 }
 
                 @throws(as(ReferenceError, TypeError))
-                // @ts-ignore
                 test3() {
                     throw new TypeError("type is incorrect");
                 }
 
                 @throws(as(ReferenceError, TypeError))
-                // @ts-ignore
                 test4() {
                     throw new RangeError("out of range");
                 }
 
                 @throws(String)
-                // @ts-ignore
                 test5() {
                     throw "something went wrong";
                 }
 
                 @throws(String)
-                // @ts-ignore
                 test6() {
                     throw new Error("something went wrong");
                 }
 
                 @throws(ReferenceError)
-                // @ts-ignore
                 async test7() {
                     await Promise.resolve(null);
                     throw new ReferenceError("shall not use this");
                 }
 
                 @throws(ReferenceError)
-                // @ts-ignore
                 async test8() {
                     await Promise.resolve(null);
                     throw new TypeError("type is incorrect");
@@ -440,7 +413,6 @@ describe("decorators", () => {
         it("should keep original function signature after using the decorator", () => {
             class Example {
                 @throws(ReferenceError)
-                // @ts-ignore
                 test1() {
                     throw new ReferenceError("shall not use this");
                 }
@@ -464,13 +436,11 @@ describe("decorators", () => {
         it("should trace the correct call stack after using the decorator", async () => {
             class Example {
                 @throws(ReferenceError)
-                // @ts-ignore
                 test1() {
                     throw new ReferenceError("shall not use this");
                 }
 
                 @throws(ReferenceError)
-                // @ts-ignore
                 test2() {
                     throw new TypeError("type is incorrect");
                 }
@@ -480,14 +450,12 @@ describe("decorators", () => {
                 }
 
                 @throws(ReferenceError)
-                // @ts-ignore
                 async test4() {
                     await Promise.resolve(null);
                     throw new ReferenceError("shall not use this");
                 }
 
                 @throws(ReferenceError)
-                // @ts-ignore
                 async test5() {
                     await Promise.resolve(null);
                     throw new TypeError("type is incorrect");
@@ -498,23 +466,23 @@ describe("decorators", () => {
 
             const [err1] = _try(() => example.test1());
             assert.strictEqual(String(err1), "ReferenceError: shall not use this");
-            assert.strictEqual(err1.stack?.split("\n")[1], `    at Example.test1 (${__filename}:469:27)`);
+            assert.strictEqual(err1.stack?.split("\n")[1], `    at Example.test1 (${__filename}:440:27)`);
 
             const [err2] = _try(() => example.test2());
             assert.strictEqual(
                 String(err2),
                 "TypeError: throws is expected to be a ReferenceError, but a TypeError is given"
             );
-            assert.strictEqual(err2.stack?.split("\n")[1], `    at ${__filename}:503:47`);
+            assert.strictEqual(err2.stack?.split("\n")[1], `    at ${__filename}:471:47`);
 
             const [err3] = _try(() => example.test3());
             assert.strictEqual(String(err3), "ReferenceError: shall not use this");
-            assert.strictEqual(err3.stack?.split("\n")[1], `    at Example.test3 (${__filename}:479:27)`);
+            assert.strictEqual(err3.stack?.split("\n")[1], `    at Example.test3 (${__filename}:449:27)`);
 
             // @ts-ignore
             const [err4] = await _try(() => example.test4());
             assert.strictEqual(String(err4), "ReferenceError: shall not use this");
-            assert.strictEqual(err4.stack?.split("\n")[1], `    at Example.test4 (${__filename}:486:27)`);
+            assert.strictEqual(err4.stack?.split("\n")[1], `    at Example.test4 (${__filename}:455:27)`);
 
             // @ts-ignore
             const result = await _try(() => example.test5());
@@ -523,7 +491,7 @@ describe("decorators", () => {
                 String(err5),
                 "TypeError: throws is expected to be a ReferenceError, but a TypeError is given"
             );
-            assert.strictEqual(err5.stack?.split("\n")[1], `    at async Context.<anonymous> (${__filename}:520:28)`);
+            assert.strictEqual(err5.stack?.split("\n")[1], `    at async Context.<anonymous> (${__filename}:488:28)`);
         });
     });
 
@@ -531,13 +499,11 @@ describe("decorators", () => {
         it("should deprecated the method with a message", () => {
             class Example {
                 @deprecated("use test3() instead")
-                // @ts-ignore
                 test1() {
                     return this.test3();
                 }
 
                 @deprecated()
-                // @ts-ignore
                 test2() {
                     return this.test3();
                 }
@@ -559,7 +525,6 @@ describe("decorators", () => {
         it("should keep original function signature after using the decorator", () => {
             class Example {
                 @deprecated("use test3() instead")
-                // @ts-ignore
                 test1() {
                     return "hello, world!";
                 }
@@ -585,7 +550,6 @@ describe("decorators", () => {
         it("should keep original function signature after using the decorator", () => {
             class Example {
                 @remarks("this function does something")
-                // @ts-ignore
                 test1() {
                     return "hello, world!";
                 }

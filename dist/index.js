@@ -157,7 +157,6 @@ class StringType extends ValidateableType {
     match(pattern) {
         return this.deriveWith({ _match: pattern });
     }
-    /** @internal */
     validate(path, value, options = null) {
         var _a, _b, _c, _d;
         value = super.validate(path, value, options);
@@ -357,7 +356,6 @@ class StringEnum extends StringType {
     default(value) {
         return this.deriveWith({ _optional: true, _default: value }, new OptionalStringEnum());
     }
-    // @ts-ignore
     enum(values = void 0) {
         if (values !== void 0) {
             return super.enum(values);
@@ -423,7 +421,6 @@ class NumberType extends ValidateableType {
     enum(values) {
         return this.deriveWith({ _enum: values }, new NumberEnum());
     }
-    /** @internal */
     validate(path, value, options = null) {
         var _a, _b, _c;
         value = super.validate(path, value, options);
@@ -546,7 +543,6 @@ class NumberEnum extends NumberType {
     default(value) {
         return this.deriveWith({ _optional: true, _default: value }, new OptionalNumberEnum());
     }
-    // @ts-ignore
     enum(values = void 0) {
         if (values !== void 0) {
             return super.enum(values);
@@ -602,7 +598,6 @@ class BigIntType extends ValidateableType {
     enum(values) {
         return this.deriveWith({ _enum: values }, new BigIntEnum());
     }
-    /** @internal */
     validate(path, value, options = null) {
         var _a, _b, _c;
         value = super.validate(path, value, options);
@@ -711,7 +706,6 @@ class BigIntEnum extends BigIntType {
     default(value) {
         return this.deriveWith({ _optional: true, _default: value }, new OptionalBigIntEnum());
     }
-    // @ts-ignore
     enum(values = void 0) {
         if (values !== void 0) {
             return super.enum(values);
@@ -749,7 +743,6 @@ class BooleanType extends ValidateableType {
     default(value) {
         return this.deriveWith({ _optional: true, _default: value }, new OptionalBooleanType());
     }
-    /** @internal */
     validate(path, value, options = null) {
         var _a;
         value = super.validate(path, value, options);
@@ -840,7 +833,6 @@ class DateType extends ValidateableType {
     default(value) {
         return this.deriveWith({ _optional: true, _default: value }, new OptionalDateType());
     }
-    /** @internal */
     validate(path, value, options = null) {
         var _a;
         value = super.validate(path, value, options);
@@ -916,7 +908,6 @@ class ObjectType extends ValidateableType {
         }
         return this.deriveWith({ _optional: true, _default: value }, new OptionalObjectType());
     }
-    /** @internal */
     validate(path, value, options = null) {
         value = super.validate(path, value, options);
         if (value === null || value === void 0) {
@@ -960,7 +951,6 @@ class AnyType extends ValidateableType {
     get optional() {
         return this.deriveWith({ _optional: true }, new OptionalAnyType());
     }
-    // @ts-ignore
     default(value) {
         return this.deriveWith({ _optional: true, _default: value }, new OptionalAnyType());
     }
@@ -999,15 +989,12 @@ class VoidType extends ValidateableType {
         console.warn("VoidType is always optional, calling `optional` makes no difference");
         return this;
     }
-    // @ts-ignore
     get required() {
         throw new ReferenceError("VoidType is always optional, calling `required` makes no sense");
     }
-    // @ts-ignore
     default(value) {
         return this.deriveWith({ _optional: true, _default: value });
     }
-    /** @internal */
     validate(path, value, options = null) {
         if (value !== null && value !== void 0) {
             throw this.createTypeError(path, value, "void");
@@ -1047,7 +1034,6 @@ class CustomType extends ValidateableType {
     get optional() {
         return this.deriveWith({ _optional: true }, new OptionalCustomType(this.type));
     }
-    // @ts-ignore
     default(value) {
         return this.deriveWith({ _optional: true, _default: value }, new OptionalCustomType(this.type));
     }
@@ -1073,7 +1059,6 @@ class CustomType extends ValidateableType {
         this._guard = transform;
         return this;
     }
-    /** @internal */
     validate(path, value, options = null) {
         var _a;
         value = super.validate(path, value, options);
@@ -1173,11 +1158,9 @@ class UnionType extends ValidateableType {
     get optional() {
         return this.deriveWith({ _optional: true }, new OptionalUnionType(this.types));
     }
-    // @ts-ignore
     default(value) {
         return this.deriveWith({ _optional: true, _default: value }, new OptionalUnionType(this.types));
     }
-    /** @internal */
     validate(path, value, options = null) {
         try {
             value = super.validate(path, value, options);
@@ -1341,14 +1324,12 @@ class DictType extends ValidateableType {
     get optional() {
         return this.deriveWith({ _optional: true }, new OptionalDictType(this.key, this.value));
     }
-    // @ts-ignore
     default(value) {
         return this.deriveWith({
             _optional: true,
             _default: value,
         }, new OptionalDictType(this.key, this.value));
     }
-    /** @internal */
     validate(path, value, options = null) {
         var _a, _b, _c;
         value = super.validate(path, value, options);
@@ -1508,7 +1489,6 @@ class ArrayType extends CustomType {
     get uniqueItems() {
         return this.deriveWith({ _uniqueItems: true });
     }
-    /** @internal */
     validate(path, value, options = null) {
         var _a, _b, _c, _d;
         value = ValidateableType.prototype.validate.call(this, path, value, options);
@@ -1610,19 +1590,15 @@ class TupleType extends ValidateableType {
         this.type = type;
     }
     /** @internal Used for TypeScript to distinguish the type from similar types. */
-    // @ts-ignore
     get [Symbol.toStringTag]() {
         return "TupleType";
     }
-    // @ts-ignore
     get optional() {
         return this.deriveWith({ _optional: true }, new OptionalTupleType(this.type));
     }
-    // @ts-ignore
     default(value) {
         return this.deriveWith({ _optional: true, _default: value }, new OptionalTupleType(this.type));
     }
-    /** @internal */
     validate(path, value, options = null) {
         var _a, _b;
         value = ValidateableType.prototype.validate.call(this, path, value, options);
@@ -1959,7 +1935,6 @@ function ensureType(type, path = "$", deep = false) {
             }, {});
         }
         else if (typeof type === "function") {
-            // @ts-ignore
             return as(type);
         }
         else if (typeof type === "string") {
@@ -2152,12 +2127,10 @@ function validate(value, type, variable = "$", options = null) {
                 return records;
             }
             else {
-                // @ts-ignore
                 return as(type).validate(path, value, options);
             }
         }
         else {
-            // @ts-ignore
             return ensureType(type, path, true).validate(path, value, options);
         }
     };
@@ -2343,7 +2316,6 @@ function param(arg0, arg1, remarks = void 0) {
     return (target, prop, desc) => {
         var _a;
         wrapMethod(target, prop, desc);
-        // @ts-ignore
         const fn = desc.value;
         const params = ((_a = fn[_params]) !== null && _a !== void 0 ? _a : (fn[_params] = []));
         params.unshift({ type, name, remarks });
@@ -2377,7 +2349,6 @@ exports.param = param;
 function returns(type, remarks = void 0) {
     return (target, prop, desc) => {
         wrapMethod(target, prop, desc);
-        // @ts-ignore
         const fn = desc.value;
         fn[_returns] = { type, name: "returns", remarks };
     };
@@ -2404,7 +2375,6 @@ exports.returns = returns;
 function throws(type) {
     return (target, prop, desc) => {
         wrapMethod(target, prop, desc);
-        // @ts-ignore
         const fn = desc.value;
         fn[_throws] = { type, name: "throws" };
     };
@@ -2428,7 +2398,6 @@ exports.throws = throws;
 function deprecated(message = "") {
     return (target, prop, desc) => {
         wrapMethod(target, prop, desc);
-        // @ts-ignore
         const fn = desc.value;
         fn[_deprecated] = message;
     };
@@ -2451,7 +2420,6 @@ exports.deprecated = deprecated;
 function remarks(note) {
     return (target, prop, desc) => {
         wrapMethod(target, prop, desc);
-        // @ts-ignore
         const fn = desc.value;
         fn[_remarks] = note;
     };
@@ -2472,7 +2440,6 @@ function def(fn, parameters, returns) {
             return result
                 .then(function resolver(res) {
                 try {
-                    // @ts-ignore
                     return validate(res, returns, "returns", Object.assign(Object.assign({}, options), { suppress: true }));
                 }
                 catch (err) {

@@ -22,17 +22,16 @@
     },
     "include": [
         "./src/*.ts",
-        "./src/*/*.ts"
     ],
     "ts-node": {
         "compilerOptions": {
             "target": "es2020",
             "rootDir": "test/",
-            "noEmit": true
+            "noEmit": true,
+            "noUnusedParameters": false,
         },
         "include": [
-            "./test/*.ts",
-            "./test/*/*.ts"
+            "./test/*.ts"
         ],
     }
 }

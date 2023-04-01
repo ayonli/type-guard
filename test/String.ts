@@ -5,7 +5,6 @@ import { validate, ValidationWarning } from "..";
 
 describe("String", () => {
     it("should validate a string", () => {
-        // @ts-ignore
         const str = validate("hello, world!", String, "str");
         assert.strictEqual(str, "hello, world!");
     });
@@ -15,7 +14,6 @@ describe("String", () => {
         const [err1] = _try(() => validate(null, String, "str"));
         assert.strictEqual(String(err1), "Error: str is required, but no value is given");
 
-        // @ts-ignore
         const [err2] = _try(() => validate(void 0, String, "str"));
         assert.strictEqual(String(err2), "Error: str is required, but no value is given");
 
@@ -30,25 +28,20 @@ describe("String", () => {
     });
 
     it("should validate optional strings", () => {
-        // @ts-ignore
         const str1 = validate(null, String.optional, "str1");
         assert.strictEqual(str1, null);
 
-        // @ts-ignore
         const str2 = validate(void 0, String.optional, "str2");
         assert.strictEqual(str2, void 0);
 
-        // @ts-ignore
         const str3 = validate("", String.optional, "str3");
         assert.strictEqual(str3, "");
     });
 
     it("should validate optional strings with default value", () => {
-        // @ts-ignore
         const str1 = validate(null, String.default(""), "str1");
         assert.strictEqual(str1, "");
 
-        // @ts-ignore
         const str2 = validate(void 0, String.default("hello, world!"), "str2");
         assert.strictEqual(str2, "hello, world!");
     });
@@ -56,20 +49,16 @@ describe("String", () => {
     it("should convert compatible values to strings and emit warnings", () => {
         const warnings: ValidationWarning[] = [];
 
-        // @ts-ignore
         const str1 = validate(123, String, "str1", { warnings });
         assert.strictEqual(str1, "123");
 
-        // @ts-ignore
         const str2 = validate(123n, String, "str2", { warnings });
         assert.strictEqual(str2, "123");
 
-        // @ts-ignore
         const str3 = validate(true, String, "str3", { warnings });
         assert.strictEqual(str3, "true");
 
         const date = new Date();
-        // @ts-ignore
         const str4 = validate(date, String, "str4", { warnings });
         assert.strictEqual(str4, date.toISOString());
 
@@ -94,28 +83,24 @@ describe("String", () => {
     });
 
     it("should throw error when the value is not compatible", () => {
-        // @ts-ignore
         const [err1] = _try(() => validate({ hello: "world" }, String, "str"));
         assert.strictEqual(
             String(err1),
             "TypeError: str is expected to be a string, but an object is given"
         );
 
-        // @ts-ignore
         const [err2] = _try(() => validate(["hello", "world"], String, "str"));
         assert.strictEqual(
             String(err2),
             "TypeError: str is expected to be a string, but an array is given"
         );
 
-        // @ts-ignore
         const [err3] = _try(() => validate(Buffer.from("hello, world!"), String, "str"));
         assert.strictEqual(
             String(err3),
             "TypeError: str is expected to be a string, but a Buffer is given"
         );
 
-        // @ts-ignore
         const [err4] = _try(() => validate(() => "hello, world!", String, "str"));
         assert.strictEqual(
             String(err4),
@@ -124,28 +109,24 @@ describe("String", () => {
     });
 
     it("should not convert type when in strict mode", () => {
-        // @ts-ignore
         const [err1] = _try(() => validate(123, String, "str", { strict: true }));
         assert.strictEqual(
             String(err1),
             "TypeError: str is expected to be a string, but a number is given"
         );
 
-        // @ts-ignore
         const [err2] = _try(() => validate(123n, String, "str", { strict: true }));
         assert.strictEqual(
             String(err2),
             "TypeError: str is expected to be a string, but a bigint is given"
         );
 
-        // @ts-ignore
         const [err3] = _try(() => validate(true, String, "str", { strict: true }));
         assert.strictEqual(
             String(err3),
             "TypeError: str is expected to be a string, but a boolean is given"
         );
 
-        // @ts-ignore
         const [err4] = _try(() => validate(new Date(), String, "str", { strict: true }));
         assert.strictEqual(
             String(err4),
@@ -212,7 +193,6 @@ describe("String", () => {
         const str1 = validate("hello", String.enum(["hello", "world"] as const), "str1");
         assert.strictEqual(str1, "hello");
 
-        // @ts-ignore
         const [err1] = _try(() => validate("hi", String.enum(["hello", "world"] as const), "str"));
         assert.strictEqual(
             String(err1),
@@ -224,7 +204,6 @@ describe("String", () => {
         const str1 = validate("hello", "hello" as const, "str1");
         assert.strictEqual(str1, "hello");
 
-        // @ts-ignore
         const [err1] = _try(() => validate("hi", "hello" as const, "str"));
         assert.strictEqual(
             String(err1),
@@ -364,14 +343,12 @@ describe("String", () => {
         });
         assert.strictEqual(str3, "hello, world!");
 
-        // @ts-ignore
         const str4 = validate("hi", String.enum(["hello", "world"] as const), "str4", {
             warnings,
             suppress: true,
         });
         assert.strictEqual(str4, "hi");
 
-        // @ts-ignore
         const str5 = validate("hi", "hello" as const, "str5", { warnings, suppress: true });
         assert.strictEqual(str5, "hi");
 

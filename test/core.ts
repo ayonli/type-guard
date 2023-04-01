@@ -137,8 +137,7 @@ describe("Core Features", () => {
         assert.strictEqual(typeof Array.optional, "object");
         assert.strictEqual(String(Array.required), "[object ArrayType]");
         assert.strictEqual(Array.required, Array.required);
-        // @ts-ignore
-        assert(Array.optional.required !== Array.required);
+        assert.notEqual(Array.optional.required, Array.required);
 
         assert.strictEqual(typeof Array.remarks, "function");
         assert.strictEqual(typeof Array.deprecated, "function");

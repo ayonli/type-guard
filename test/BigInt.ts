@@ -5,7 +5,6 @@ import { validate, ValidationWarning } from "..";
 
 describe("BigInt", () => {
     it("should validate a bigint", () => {
-        // @ts-ignore
         const num = validate(123n, BigInt, "num");
         assert.strictEqual(num, 123n);
 
@@ -21,35 +20,28 @@ describe("BigInt", () => {
         const [err1] = _try(() => validate(null, BigInt, "num"));
         assert.strictEqual(String(err1), "Error: num is required, but no value is given");
 
-        // @ts-ignore
         const [err2] = _try(() => validate(void 0, BigInt, "num"));
         assert.strictEqual(String(err2), "Error: num is required, but no value is given");
 
-        // @ts-ignore
         const [err3] = _try(() => validate(NaN, BigInt, "num"));
         assert.strictEqual(String(err3), "Error: num is required, but no value is given");
     });
 
     it("should validate an optional bigint", () => {
-        // @ts-ignore
         const num1 = validate(null, BigInt.optional, "num1");
         assert.strictEqual(num1, null);
 
-        // @ts-ignore
         const num2 = validate(void 0, BigInt.optional, "num2");
         assert.strictEqual(num2, void 0);
 
-        // @ts-ignore
         const num3 = validate(NaN, BigInt.optional, "num3");
         assert.strictEqual(num3, null);
     });
 
     it("should validate optional bigints with default value", () => {
-        // @ts-ignore
         const num1 = validate(null, BigInt.default(0n), "num1");
         assert.strictEqual(num1, 0n);
 
-        // @ts-ignore
         const num2 = validate(void 0, BigInt.default(123n), "num2");
         assert.strictEqual(num2, 123n);
     });
@@ -57,19 +49,15 @@ describe("BigInt", () => {
     it("should convert compatible values to bigints and record warnings", () => {
         const warnings: ValidationWarning[] = [];
 
-        // @ts-ignore
         const num1 = validate("123", BigInt, "num1", { warnings });
         assert.strictEqual(num1, 123n);
 
-        // @ts-ignore
         const num2 = validate(123, BigInt, "num2", { warnings });
         assert.strictEqual(num2, 123n);
 
-        // @ts-ignore
         const num3 = validate(true, BigInt, "num3", { warnings });
         assert.strictEqual(num3, 1n);
 
-        // @ts-ignore
         const num4 = validate(false, BigInt, "num4", { warnings });
         assert.strictEqual(num4, 0n);
 
@@ -94,28 +82,24 @@ describe("BigInt", () => {
     });
 
     it("should throw error when the value is not compatible", () => {
-        // @ts-ignore
         const [err1] = _try(() => validate({ hello: "world" }, BigInt, "num"));
         assert.strictEqual(
             String(err1),
             "TypeError: num is expected to be a bigint, but an object is given"
         );
 
-        // @ts-ignore
         const [err2] = _try(() => validate([1, 2, 3], BigInt, "num"));
         assert.strictEqual(
             String(err2),
             "TypeError: num is expected to be a bigint, but an array is given"
         );
 
-        // @ts-ignore
         const [err3] = _try(() => validate(Buffer.from([1, 2, 3]), BigInt, "num"));
         assert.strictEqual(
             String(err3),
             "TypeError: num is expected to be a bigint, but a Buffer is given"
         );
 
-        // @ts-ignore
         const [err4] = _try(() => validate(() => 123, BigInt, "num"));
         assert.strictEqual(
             String(err4),
@@ -124,28 +108,24 @@ describe("BigInt", () => {
     });
 
     it("should not convert type when in strict mode", () => {
-        // @ts-ignore
         const [err1] = _try(() => validate("123", BigInt, "num", { strict: true }));
         assert.strictEqual(
             String(err1),
             "TypeError: num is expected to be a bigint, but a string is given"
         );
 
-        // @ts-ignore
         const [err2] = _try(() => validate(123, BigInt, "num", { strict: true }));
         assert.strictEqual(
             String(err2),
             "TypeError: num is expected to be a bigint, but a number is given"
         );
 
-        // @ts-ignore
         const [err3] = _try(() => validate(true, BigInt, "num", { strict: true }));
         assert.strictEqual(
             String(err3),
             "TypeError: num is expected to be a bigint, but a boolean is given"
         );
 
-        // @ts-ignore
         const [err4] = _try(() => validate(false, BigInt, "num", { strict: true }));
         assert.strictEqual(
             String(err4),
@@ -175,7 +155,6 @@ describe("BigInt", () => {
         const num1 = validate(1n, enums, "num1");
         assert.strictEqual(num1, 1n);
 
-        // @ts-ignore
         const [err1] = _try(() => validate(2n, enums, "num"));
         assert.strictEqual(
             String(err1),
@@ -209,7 +188,6 @@ describe("BigInt", () => {
         });
         assert.strictEqual(num3, 20n);
 
-        // @ts-ignore
         const num4 = validate(2n, BigInt.enum([
             -1n,
             0n,

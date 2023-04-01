@@ -12,7 +12,6 @@ describe("Any", () => {
     });
 
     it("should validate Any against values of various types", () => {
-        // @ts-ignore
         const value1 = validate("hello, world", Any, "value1");
         assert.strictEqual(value1, "hello, world");
 
@@ -36,11 +35,12 @@ describe("Any", () => {
     });
 
     it("should report error when the value is not provided", () => {
-        const [err1] = _try(() => validate(void 0, Any, "value11"));
-        assert.strictEqual(String(err1), "Error: value11 is required, but no value is given");
+        // @ts-ignore
+        const [err1] = _try(() => validate(void 0, Any, "value1"));
+        assert.strictEqual(String(err1), "Error: value1 is required, but no value is given");
 
-        const [err2] = _try(() => validate(null, Any, "value7"));
-        assert.strictEqual(String(err2), "Error: value7 is required, but no value is given");
+        const [err2] = _try(() => validate(null, Any, "value2"));
+        assert.strictEqual(String(err2), "Error: value2 is required, but no value is given");
     });
 
     it("should validate an optional value", () => {
@@ -60,7 +60,6 @@ describe("Any", () => {
     it("should emit deprecation warning", () => {
         const warnings: ValidationWarning[] = [];
 
-        // @ts-ignore
         const value = validate("hello, world!", Any.deprecated("will no longer effect"), "value", {
             warnings,
         });

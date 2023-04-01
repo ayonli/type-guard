@@ -244,7 +244,6 @@ describe("JSONSchema", () => {
             additionalProperties: false
         });
 
-        // @ts-ignore
         const schema6 = getJSONSchema(as({ foo: String, bar: Number }).deprecated());
         assert.deepStrictEqual(schema6, {
             type: "object",
@@ -257,7 +256,6 @@ describe("JSONSchema", () => {
             additionalProperties: false
         });
 
-        // @ts-ignore
         const schema7 = getJSONSchema(as({
             foo: String,
             bar: Number,
@@ -713,39 +711,33 @@ describe("JSONSchema", () => {
 
             @param("data", { text: String })
             @returns({ text: String })
-            // @ts-ignore
             test1(data: { text: string; }) {
                 return data;
             }
 
             @param(Void)
             @returns({ text: String })
-            // @ts-ignore
             test2() {
                 return { text: "hello, world!" };
             }
 
             @param("data", { text: String })
             @returns(Void)
-            // @ts-ignore
             test3(data: { text: string; }) {
                 return;
             }
 
             @remarks("This function does something")
-            // @ts-ignore
             test4(data: { text: string; }) {
                 return data.text;
             }
 
             @deprecated()
-            // @ts-ignore
             test5(data: { text: string; }) {
                 return data.text;
             }
 
             @deprecated("will no longer functions")
-            // @ts-ignore
             test6(data: { text: string; }) {
                 return data.text;
             }
@@ -754,7 +746,6 @@ describe("JSONSchema", () => {
             @deprecated("will no longer functions")
             @param("data", { text: String })
             @returns(String)
-            // @ts-ignore
             test7(data: { text: string; }) {
                 return data.text;
             }

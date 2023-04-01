@@ -15,7 +15,6 @@ describe("Void", () => {
     });
 
     it("should validate Void against null and undefined", () => {
-        // @ts-ignore
         const nil1 = validate(null, Void, "nil1");
         assert.strictEqual(nil1, null);
 
@@ -31,7 +30,6 @@ describe("Void", () => {
     it("should emit deprecation warning", () => {
         const warnings: ValidationWarning[] = [];
 
-        // @ts-ignore
         const nil = validate(null, Void.deprecated("will no longer effect"), "nil", {
             warnings,
         });

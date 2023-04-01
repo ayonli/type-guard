@@ -6,7 +6,6 @@ import { as, validate, ValidationWarning } from "..";
 describe("CustomType", () => {
     it("should validate values of custom types without as() function", () => {
         const buf = Buffer.from("hello, world");
-        // @ts-ignore
         const buf1 = validate(buf, Buffer, "buf1");
         assert.strictEqual(buf1, buf);
 
@@ -14,7 +13,6 @@ describe("CustomType", () => {
         const [err1] = _try(() => validate(null, Buffer, "buf"));
         assert.strictEqual(String(err1), "Error: buf is required, but no value is given");
 
-        // @ts-ignore
         const [err2] = _try(() => validate("hello, world!", Buffer, "buf"));
         assert.strictEqual(
             String(err2),
@@ -27,11 +25,9 @@ describe("CustomType", () => {
         const buf1 = validate(buf, as(Buffer), "buf1");
         assert.strictEqual(buf1, buf);
 
-        // @ts-ignore
         const [err1] = _try(() => validate(null, as(Buffer), "buf4"));
         assert.strictEqual(String(err1), "Error: buf4 is required, but no value is given");
 
-        // @ts-ignore
         const [err2] = _try(() => validate("hello, world!", as(Buffer), "buf5"));
         assert.strictEqual(
             String(err2),
@@ -40,7 +36,6 @@ describe("CustomType", () => {
     });
 
     it("should validate optional value custom type", () => {
-        // @ts-ignore
         const buf1 = validate(null, as(Buffer).optional, "buf1");
         assert.strictEqual(buf1, null);
     });
@@ -48,7 +43,6 @@ describe("CustomType", () => {
     it("should validate value of custom type with default value", () => {
         const buf = Buffer.from("hello, world");
 
-        // @ts-ignore
         const buf1 = validate(null, as(Buffer).default(buf), "buf1");
         assert.strictEqual(buf1, buf);
     });
@@ -57,15 +51,12 @@ describe("CustomType", () => {
         const value1 = validate("hello", as("hello" as const), "value1");
         assert.strictEqual(value1, "hello");
 
-        // @ts-ignore
         const _value1 = validate(void 0, as("hello" as const).optional, "value1");
         assert.strictEqual(_value1, void 0);
 
-        // @ts-ignore
         const __value1 = validate(void 0, as("hello" as const).default("hello"), "value1");
         assert.strictEqual(__value1, "hello");
 
-        // @ts-ignore
         const [err1] = _try(() => validate("hi", as("hello" as const), "value1"));
         assert.strictEqual(
             String(err1),
@@ -75,15 +66,12 @@ describe("CustomType", () => {
         const value2 = validate(1, as(1 as const), "value2");
         assert.strictEqual(value2, 1);
 
-        // @ts-ignore
         const _value2 = validate(void 0, as(1 as const).optional, "value2");
         assert.strictEqual(_value2, void 0);
 
-        // @ts-ignore
         const __value2 = validate(void 0, as(1 as const).default(1), "value2");
         assert.strictEqual(__value2, 1);
 
-        // @ts-ignore
         const [err2] = _try(() => validate(3, as(1 as const), "value2"));
         assert.strictEqual(
             String(err2),
@@ -93,15 +81,12 @@ describe("CustomType", () => {
         const value3 = validate(1n, as(1n as const), "value3");
         assert.strictEqual(value3, 1n);
 
-        // @ts-ignore
         const _value3 = validate(void 0, as(1n as const).optional, "value3");
         assert.strictEqual(_value3, void 0);
 
-        // @ts-ignore
         const __value3 = validate(void 0, as(1n as const).default(1n), "value3");
         assert.strictEqual(__value3, 1n);
 
-        // @ts-ignore
         const [err3] = _try(() => validate(3n, as(1n as const), "value3"));
         assert.strictEqual(
             String(err3),
@@ -111,15 +96,12 @@ describe("CustomType", () => {
         const value4 = validate(true, as(true as const), "value4");
         assert.strictEqual(value4, true);
 
-        // @ts-ignore
         const _value4 = validate(void 0, as(true as const).optional, "value4");
         assert.strictEqual(_value4, void 0);
 
-        // @ts-ignore
         const __value4 = validate(void 0, as(true as const).default(true), "value4");
         assert.strictEqual(__value4, true);
 
-        // @ts-ignore
         const [err4] = _try(() => validate(false, as(true as const), "value4"));
         assert.strictEqual(
             String(err4),
@@ -130,7 +112,6 @@ describe("CustomType", () => {
     it("should validate custom types with a custom guard function", () => {
         const warnings: ValidationWarning[] = [];
 
-        // @ts-ignore
         const buf1 = validate("hello, world", as(Buffer).guard((data, path, warnings) => {
             const buf = Buffer.isBuffer(data) ? data : Buffer.from(data);
 
@@ -157,7 +138,6 @@ describe("CustomType", () => {
     it("should emit deprecation warning", () => {
         const warnings: ValidationWarning[] = [];
 
-        // @ts-ignore
         const obj = validate({
             str: "hello, world!",
             num: 123,

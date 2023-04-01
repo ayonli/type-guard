@@ -26,7 +26,6 @@ describe("as()", () => {
             const type7 = as(Array);
             assert.strictEqual(type7, Array);
 
-            // @ts-ignore
             const type8 = as(Any);
             assert.strictEqual(type8, Any);
 

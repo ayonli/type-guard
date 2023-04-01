@@ -5,7 +5,6 @@ import { validate, ValidationWarning } from "..";
 
 describe("Number", () => {
     it("should validate a number", () => {
-        // @ts-ignore
         const num = validate(123, Number, "num");
         assert.strictEqual(num, 123);
 
@@ -24,7 +23,6 @@ describe("Number", () => {
         const [err1] = _try(() => validate(null, Number, "num"));
         assert.strictEqual(String(err1), "Error: num is required, but no value is given");
 
-        // @ts-ignore
         const [err2] = _try(() => validate(void 0, Number, "num"));
         assert.strictEqual(String(err2), "Error: num is required, but no value is given");
 
@@ -36,25 +34,20 @@ describe("Number", () => {
     });
 
     it("should validate an optional number", () => {
-        // @ts-ignore
         const num1 = validate(null, Number.optional, "num1");
         assert.strictEqual(num1, null);
 
-        // @ts-ignore
         const num2 = validate(void 0, Number.optional, "num2");
         assert.strictEqual(num2, void 0);
 
-        // @ts-ignore
         const num3 = validate(NaN, Number.optional, "num3");
         assert.strictEqual(num3, null);
     });
 
     it("should validate optional numbers with default value", () => {
-        // @ts-ignore
         const num1 = validate(null, Number.default(0), "num1");
         assert.strictEqual(num1, 0);
 
-        // @ts-ignore
         const num2 = validate(void 0, Number.default(123), "num2");
         assert.strictEqual(num2, 123);
     });
@@ -62,24 +55,19 @@ describe("Number", () => {
     it("should convert compatible values to numbers and emit warnings", () => {
         const warnings: ValidationWarning[] = [];
 
-        // @ts-ignore
         const num1 = validate("123", Number, "num1", { warnings });
         assert.strictEqual(num1, 123);
 
-        // @ts-ignore
         const num2 = validate(123n, Number, "num2", { warnings });
         assert.strictEqual(num2, 123);
 
-        // @ts-ignore
         const num3 = validate(true, Number, "num3", { warnings });
         assert.strictEqual(num3, 1);
 
-        // @ts-ignore
         const num4 = validate(false, Number, "num4", { warnings });
         assert.strictEqual(num4, 0);
 
         const date = new Date();
-        // @ts-ignore
         const num5 = validate(date, Number, "num5", { warnings });
         assert.strictEqual(num5, date.valueOf());
 
@@ -108,42 +96,36 @@ describe("Number", () => {
     });
 
     it("should throw error when the value is not compatible", () => {
-        // @ts-ignore
         const [err1] = _try(() => validate("1000000000000000000", Number, "num1"));
         assert.strictEqual(
             String(err1),
             "TypeError: num1 is expected to be a number, but a string is given",
         );
 
-        // @ts-ignore
         const [err2] = _try(() => validate(1000000000000000000n, Number, "num2"));
         assert.strictEqual(
             String(err2),
             "TypeError: num2 is expected to be a number, but a bigint is given",
         );
 
-        // @ts-ignore
         const [err3] = _try(() => validate({ hello: "world" }, Number, "num3"));
         assert.strictEqual(
             String(err3),
             "TypeError: num3 is expected to be a number, but an object is given"
         );
 
-        // @ts-ignore
         const [err4] = _try(() => validate([1, 2, 3], Number, "num4"));
         assert.strictEqual(
             String(err4),
             "TypeError: num4 is expected to be a number, but an array is given"
         );
 
-        // @ts-ignore
         const [err5] = _try(() => validate(Buffer.from([1, 2, 3]), Number, "num5"));
         assert.strictEqual(
             String(err5),
             "TypeError: num5 is expected to be a number, but a Buffer is given"
         );
 
-        // @ts-ignore
         const [err6] = _try(() => validate(() => 123, Number, "num"));
         assert.strictEqual(
             String(err6),
@@ -152,35 +134,30 @@ describe("Number", () => {
     });
 
     it("should not convert type when in strict mode", () => {
-        // @ts-ignore
         const [err1] = _try(() => validate("123", Number, "num", { strict: true }));
         assert.strictEqual(
             String(err1),
             "TypeError: num is expected to be a number, but a string is given"
         );
 
-        // @ts-ignore
         const [err2] = _try(() => validate(123n, Number, "num", { strict: true }));
         assert.strictEqual(
             String(err2),
             "TypeError: num is expected to be a number, but a bigint is given"
         );
 
-        // @ts-ignore
         const [err3] = _try(() => validate(true, Number, "num", { strict: true }));
         assert.strictEqual(
             String(err3),
             "TypeError: num is expected to be a number, but a boolean is given"
         );
 
-        // @ts-ignore
         const [err4] = _try(() => validate(false, Number, "num", { strict: true }));
         assert.strictEqual(
             String(err4),
             "TypeError: num is expected to be a number, but a boolean is given"
         );
 
-        // @ts-ignore
         const [err5] = _try(() => validate(new Date(), Number, "num", { strict: true }));
         assert.strictEqual(
             String(err5),
@@ -217,7 +194,6 @@ describe("Number", () => {
         const num1 = validate(1, Number.enum([-1, 0, 1] as const), "num1");
         assert.strictEqual(num1, 1);
 
-        // @ts-ignore
         const [err1] = _try(() => validate(2, Number.enum([-1, 0, 1] as const), "num"));
         assert.strictEqual(
             String(err1),
@@ -229,7 +205,6 @@ describe("Number", () => {
         const num1 = validate(1, 1 as const, "num1");
         assert.strictEqual(num1, 1);
 
-        // @ts-ignore
         const [err1] = _try(() => validate(0, 1 as const, "num"));
         assert.strictEqual(String(err1), "TypeError: num is expected to be 1, but 0 is given");
     });
@@ -249,7 +224,6 @@ describe("Number", () => {
     it("should suppress non-critical errors as warnings", () => {
         const warnings: ValidationWarning[] = [];
 
-        // @ts-ignore
         const num1 = validate(1.5, Number.integer, "num1", { warnings, suppress: true });
         assert.strictEqual(num1, 1.5);
 
@@ -259,14 +233,12 @@ describe("Number", () => {
         const num3 = validate(20, Number.max(10), "num3", { warnings, suppress: true });
         assert.strictEqual(num3, 20);
 
-        // @ts-ignore
         const num4 = validate(2, Number.enum([-1, 0, 1] as const), "num4", {
             warnings,
             suppress: true,
         });
         assert.strictEqual(num4, 2);
 
-        // @ts-ignore
         const num5 = validate(0, 1 as const, "num5", { warnings, suppress: true });
         assert.strictEqual(num5, 0);
 

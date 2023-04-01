@@ -5,7 +5,6 @@ import { validate, ValidationWarning } from "..";
 
 describe("Boolean", () => {
     it("should validate boolean values", () => {
-        // @ts-ignore
         const bool1 = validate(true, Boolean, "bool1");
         assert.strictEqual(bool1, true);
 
@@ -18,27 +17,22 @@ describe("Boolean", () => {
         const [err1] = _try(() => validate(null, Boolean, "bool"));
         assert.strictEqual(String(err1), "Error: bool is required, but no value is given");
 
-        // @ts-ignore
         const [err2] = _try(() => validate(void 0, Boolean, "bool"));
         assert.strictEqual(String(err2), "Error: bool is required, but no value is given");
     });
 
     it("should validate an optional boolean", () => {
-        // @ts-ignore
         const bool1 = validate(null, Boolean.optional, "bool1");
         assert.strictEqual(bool1, null);
 
-        // @ts-ignore
         const bool2 = validate(void 0, Boolean.optional, "bool2");
         assert.strictEqual(bool2, void 0);
     });
 
     it("should validate optional booleans with default value", () => {
-        // @ts-ignore
         const bool1 = validate(null, Boolean.default(false), "bool1");
         assert.strictEqual(bool1, false);
 
-        // @ts-ignore
         const bool2 = validate(void 0, Boolean.default(true), "bool2");
         assert.strictEqual(bool2, true);
     });
@@ -46,19 +40,15 @@ describe("Boolean", () => {
     it("should convert compatible values to booleans and emit warnings", () => {
         const warnings: ValidationWarning[] = [];
 
-        // @ts-ignore
         const bool1 = validate("true", Boolean, "bool1", { warnings });
         assert.strictEqual(bool1, true);
 
-        // @ts-ignore
         const bool2 = validate("false", Boolean, "bool2", { warnings });
         assert.strictEqual(bool2, false);
 
-        // @ts-ignore
         const bool3 = validate(1, Boolean, "bool3", { warnings });
         assert.strictEqual(bool3, true);
 
-        // @ts-ignore
         const bool4 = validate(0, Boolean, "bool4", { warnings });
         assert.strictEqual(bool4, false);
 
@@ -83,14 +73,12 @@ describe("Boolean", () => {
     });
 
     it("should throw error when the value is not compatible", () => {
-        // @ts-ignore
         const [err1] = _try(() => validate("Yes", Boolean, "bool"));
         assert.strictEqual(
             String(err1),
             "TypeError: bool is expected to be a boolean, but a string is given"
         );
 
-        // @ts-ignore
         const [err2] = _try(() => validate(10, Boolean, "bool"));
         assert.strictEqual(
             String(err2),
@@ -99,14 +87,12 @@ describe("Boolean", () => {
     });
 
     it("should not convert type when in strict mode", () => {
-        // @ts-ignore
         const [err1] = _try(() => validate("true", Boolean, "bool", { strict: true }));
         assert.strictEqual(
             String(err1),
             "TypeError: bool is expected to be a boolean, but a string is given"
         );
 
-        // @ts-ignore
         const [err2] = _try(() => validate(1, Boolean, "bool", { strict: true }));
         assert.strictEqual(
             String(err2),

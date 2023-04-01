@@ -6,7 +6,6 @@ import { as, validate, ValidationWarning } from "..";
 describe("Object", () => {
     it("should validate objects", () => {
         const obj = { foo: "hello", bar: "world" };
-        // @ts-ignore
         const obj1 = validate(obj, Object, "obj1");
         assert.strictEqual(obj1, obj);
 
@@ -24,33 +23,27 @@ describe("Object", () => {
         const [err1] = _try(() => validate(null, Object, "obj"));
         assert.strictEqual(String(err1), "Error: obj is required, but no value is given");
 
-        // @ts-ignore
         const [err2] = _try(() => validate(void 0, Object, "obj"));
         assert.strictEqual(String(err2), "Error: obj is required, but no value is given");
     });
 
     it("should validate optional objects", () => {
-        // @ts-ignore
         const obj1 = validate(null, Object.optional, "obj1");
         assert.strictEqual(obj1, null);
 
-        // @ts-ignore
         const obj2 = validate(void 0, Object.optional, "obj2");
         assert.deepStrictEqual(obj2, void 0);
     });
 
     it("should validate objects with default values", () => {
         const obj = {};
-        // @ts-ignore
         const obj1 = validate(null, Object.default(obj), "obj1");
         assert.strictEqual(obj1, obj);
 
         const date = new Date();
-        // @ts-ignore
         const obj2 = validate(void 0, Object.default(date), "obj2");
         assert.strictEqual(obj2, date);
 
-        // @ts-ignore
         const obj3 = validate(null, Object.default(null), "obj3");
         assert.strictEqual(obj3, null);
     });
@@ -64,11 +57,9 @@ describe("Object", () => {
         }, "obj");
         assert.deepStrictEqual(obj, { str: "hello, world!" });
 
-        // @ts-ignore
         const obj1 = validate(null, as({ str: String, str1: String.optional }).optional, "obj1");
         assert.strictEqual(obj1, null);
 
-        // @ts-ignore
         const obj2 = validate(null, as({
             str: String,
             str1: String.optional,
@@ -86,21 +77,18 @@ describe("Object", () => {
     });
 
     it("should report errors occurred in the object literal structures", () => {
-        // @ts-ignore
         const [err1] = _try(() => validate(null, { str: String, str1: String.optional }, "obj"));
         assert.strictEqual(
             String(err1),
             "Error: obj is required, but no value is given"
         );
 
-        // @ts-ignore
         const [err2] = _try(() => validate({}, { str: String, str1: String.optional }, "obj"));
         assert.strictEqual(
             String(err2),
             "Error: obj.str is required, but no value is given"
         );
 
-        // @ts-ignore
         const [err3] = _try(() => validate({ foo: {} }, {
             foo: {
                 foo1: String,
@@ -113,14 +101,12 @@ describe("Object", () => {
             "Error: obj.foo.foo1 is required, but no value is given"
         );
 
-        // @ts-ignore
         const [err4] = _try(() => validate("hello, world!", { foo: String, bar: Number }, "obj"));
         assert.strictEqual(
             String(err4),
             "TypeError: obj is expected to be an object, but a string is given"
         );
 
-        // @ts-ignore
         const [err5] = _try(() => validate({ foo: {} }, { foo: String }, "obj"));
         assert.strictEqual(
             String(err5),
@@ -129,16 +115,14 @@ describe("Object", () => {
     });
 
     it("should remove unknown properties of the object literal", () => {
-        // @ts-ignore
         const obj1 = validate({ foo: "123", bar: "456" }, { foo: String }, "obj6", {
             removeUnknownItems: true,
         });
         assert.deepStrictEqual(obj1, { foo: "123" });
 
-        // @ts-ignore
         const obj2 = validate({
-            // @ts-ignore
-            foo: { foo: "123", bar: "456" }, bar: "123"
+            foo: { foo: "123", bar: "456" },
+            bar: "123",
         }, { foo: { bar: String } }, "obj6", {
             removeUnknownItems: true,
         });
@@ -169,14 +153,12 @@ describe("Object", () => {
         }, "obj4", { warnings });
         assert.deepStrictEqual(obj4, { foo: "hello, world!", bar: "hi, world!" });
 
-        // @ts-ignore
         const obj5 = validate({ foo: 123, bar: "123" }, {
             foo: String,
             bar: Number,
         }, "obj5", { warnings });
         assert.deepStrictEqual(obj5, { foo: "123", bar: 123 });
 
-        // @ts-ignore
         const obj6 = validate({ foo: "123", bar: "456" }, { foo: String }, "obj6", {
             warnings,
             removeUnknownItems: true,
@@ -222,7 +204,6 @@ describe("Object", () => {
     it("should silence property removing when suppressed", () => {
         const warnings: ValidationWarning[] = [];
 
-        // @ts-ignore
         const obj1 = validate({ foo: "123", bar: "456" }, { foo: String }, "obj1", {
             warnings,
             removeUnknownItems: true,
@@ -230,10 +211,9 @@ describe("Object", () => {
         });
         assert.deepStrictEqual(obj1, { foo: "123" });
 
-        // @ts-ignore
         const obj2 = validate({
-            // @ts-ignore
-            foo: { foo: "123", bar: "456" }, bar: "123"
+            foo: { foo: "123", bar: "456" },
+            bar: "123",
         }, { foo: { bar: String } }, "obj6", {
             warnings,
             removeUnknownItems: true,
@@ -257,7 +237,6 @@ describe("Object", () => {
         }, "obj1");
         assert.deepStrictEqual(obj2, { bar: "hello, world!" });
 
-        // @ts-ignore
         const [err1] = _try(() => validate({}, {
             foo: String.optional.alternatives("bar"),
             bar: String.optional,
@@ -304,19 +283,18 @@ describe("Object", () => {
     it("should suppress non-critical errors as warnings", () => {
         const warnings: ValidationWarning[] = [];
 
-        // @ts-ignore
         const obj1 = validate({}, {
             foo: String.optional.alternatives("bar"),
             bar: String.optional,
         }, "obj1", { warnings, suppress: true });
         assert.deepStrictEqual(obj1, {});
 
-        // @ts-ignore
         const obj2 = validate({ foo: "hello", bar: "world" }, {
             foo: String.optional.associates("foo1"),
             bar: String.optional,
             foo1: String.optional,
         }, "obj2", { warnings, suppress: true });
+        assert.deepStrictEqual(obj2, { foo: "hello", bar: "world" });
 
         assert.deepStrictEqual(warnings, [
             {
@@ -361,7 +339,6 @@ describe("Object", () => {
                 }
             ]
         };
-        // @ts-ignore
         const tree = validate(_tree, FamilyTree, "tree");
         assert.deepStrictEqual(tree, _tree);
 
@@ -386,7 +363,6 @@ describe("Object", () => {
                 }
             }
         };
-        // @ts-ignore
         const list = validate(_list, LinkedList, "list");
         assert.deepStrictEqual(list, _list);
     });

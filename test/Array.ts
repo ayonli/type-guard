@@ -22,32 +22,26 @@ describe("Array", () => {
     });
 
     it("should report error when the value is not provided", () => {
-        // @ts-ignore
         const [err1] = _try(() => validate(null, Array, "arr"));
         assert.strictEqual(String(err1), "Error: arr is required, but no value is given");
 
-        // @ts-ignore
         const [err2] = _try(() => validate(void 0, [], "arr"));
         assert.strictEqual(String(err2), "Error: arr is required, but no value is given");
     });
 
     it("should validate optional arrays", () => {
-        // @ts-ignore
         const arr1 = validate(null, Array.optional, "arr1");
         assert.strictEqual(arr1, null);
 
-        // @ts-ignore
         const aar2 = validate(void 0, [].optional, "arr2");
         assert.deepStrictEqual(aar2, void 0);
     });
 
     it("should validate arrays with default values", () => {
         const arr = [];
-        // @ts-ignore
         const arr1 = validate(null, Array.default(arr), "arr1");
         assert.strictEqual(arr1, arr);
 
-        // @ts-ignore
         const aar2 = validate(void 0, [].default(arr), "arr2");
         assert.deepStrictEqual(aar2, arr);
     });
@@ -105,21 +99,18 @@ describe("Array", () => {
     });
 
     it("should report errors occurred in arrays", () => {
-        // @ts-ignore
         const [err1] = _try(() => validate("hello, world", [String], "arr"));
         assert.strictEqual(
             String(err1),
             "TypeError: arr is expected to be an array, but a string is given"
         );
 
-        // @ts-ignore
         const [err2] = _try(() => validate([{}], [String], "arr"));
         assert.strictEqual(
             String(err2),
             "TypeError: arr[0] is expected to be a string, but an object is given"
         );
 
-        // @ts-ignore
         const [err4] = _try(() => validate([{ foo: "hello" }], Array({
             foo: String,
             bar: Number,
@@ -129,7 +120,6 @@ describe("Array", () => {
             "Error: arr[0].bar is required, but no value is given"
         );
 
-        // @ts-ignore
         const [err5] = _try(() => validate([{ foo: "hello" }], [{
             foo: String,
             bar: Number,
@@ -179,7 +169,6 @@ describe("Array", () => {
         const arr2 = validate([], Array.deprecated(), "arr2", { warnings });
         assert.deepStrictEqual(arr2, []);
 
-        // @ts-ignore
         const arr3 = validate(["123"], [Number], "arr3", { warnings });
         assert.deepStrictEqual(arr3, [123]);
 
@@ -242,7 +231,6 @@ describe("Array", () => {
     it("should suppress non-critical errors as warnings", () => {
         const warnings: ValidationWarning[] = [];
 
-        // @ts-ignore
         const arr1 = validate([1, 2, 3, 4, 5, 6], [Number].maxItems(5), "arr1", {
             warnings,
             suppress: true,
@@ -260,7 +248,6 @@ describe("Array", () => {
     it("should validate arrays with a custom guard function", () => {
         const warnings: ValidationWarning[] = [];
 
-        // @ts-ignore
         const arr1 = validate("hello,world", [String].guard((data, path, warnings) => {
             const arr = Array.isArray(data) ? data : String(data).split(",");
 

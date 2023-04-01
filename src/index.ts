@@ -114,7 +114,6 @@ export abstract class ValidateableType<T> {
     /** @internal */
     abstract toJSONSchema(parent?: any): JSONSchema;
 
-    /** @internal */
     protected deriveWith(props: object): this;
     protected deriveWith<T>(props: object, ins: T): T;
     protected deriveWith(props: object, ins: any = null) {
@@ -248,7 +247,6 @@ export class StringType extends ValidateableType<string> {
         return this.deriveWith({ _match: pattern });
     }
 
-    /** @internal */
     validate(path: string, value: any, options: {
         strict?: boolean;
         suppress?: boolean;
@@ -431,9 +429,7 @@ export class StringEnum<T> extends StringType {
 
     // @ts-ignore
     enum(): T;
-    // @ts-ignore
     enum<T>(values: T): StringEnum<T>;
-    // @ts-ignore
     enum(values: string[] = void 0) {
         if (values !== void 0) {
             return super.enum(values);
@@ -455,7 +451,6 @@ export class OptionalStringEnum<T> extends StringEnum<T> {
         return this.deriveWith({ _optional: false }, new StringEnum<T>());
     }
 
-    /** Sets the enum options of which the text can be. */
     // @ts-ignore
     enum(): T;
     // @ts-ignore
@@ -512,7 +507,6 @@ export class NumberType extends ValidateableType<number> {
         return this.deriveWith({ _enum: values }, new NumberEnum<T>());
     }
 
-    /** @internal */
     validate(path: string, value: any, options: {
         strict?: boolean;
         suppress?: boolean;
@@ -641,9 +635,7 @@ export class NumberEnum<T> extends NumberType {
 
     // @ts-ignore
     enum(): T;
-    // @ts-ignore
     enum<T>(values: T): NumberEnum<T>;
-    // @ts-ignore
     enum(values: number[] = void 0) {
         if (values !== void 0) {
             return super.enum(values);
@@ -665,7 +657,6 @@ export class OptionalNumberEnum<T> extends NumberEnum<T> {
         return this.deriveWith({ _optional: false }, new NumberEnum<T>());
     }
 
-    /** Sets the enum options of which the text can be. */
     // @ts-ignore
     enum(): T;
     // @ts-ignore
@@ -709,7 +700,6 @@ export class BigIntType extends ValidateableType<bigint> {
         return this.deriveWith({ _enum: values }, new BigIntEnum<T>());
     }
 
-    /** @internal */
     validate(path: string, value: any, options: {
         strict?: boolean;
         suppress?: boolean;
@@ -826,9 +816,7 @@ export class BigIntEnum<T> extends BigIntType {
 
     // @ts-ignore
     enum(): T;
-    // @ts-ignore
     enum<T>(values: T): BigIntEnum<T>;
-    // @ts-ignore
     enum(values: bigint[] = void 0) {
         if (values !== void 0) {
             return super.enum(values);
@@ -850,7 +838,6 @@ export class OptionalBigIntEnum<T> extends BigIntEnum<T> {
         return this.deriveWith({ _optional: false }, new BigIntEnum());
     }
 
-    /** Sets the enum options of which the text can be. */
     // @ts-ignore
     enum(): T;
     // @ts-ignore
@@ -875,7 +862,6 @@ export class BooleanType extends ValidateableType<boolean> {
         return this.deriveWith({ _optional: true, _default: value }, new OptionalBooleanType());
     }
 
-    /** @internal */
     validate(path: string, value: any, options: {
         strict?: boolean;
         suppress?: boolean;
@@ -965,7 +951,6 @@ export class DateType extends ValidateableType<Date> {
         return this.deriveWith({ _optional: true, _default: value }, new OptionalDateType());
     }
 
-    /** @internal */
     validate(path: string, value: any, options: {
         strict?: boolean;
         suppress?: boolean;
@@ -1048,7 +1033,6 @@ export class ObjectType extends ValidateableType<object> {
         return this.deriveWith({ _optional: true, _default: value }, new OptionalObjectType());
     }
 
-    /** @internal */
     validate(path: string, value: any, options: {
         strict?: boolean;
         suppress?: boolean;
@@ -1099,7 +1083,6 @@ export class AnyType extends ValidateableType<any> {
         return this.deriveWith({ _optional: true }, new OptionalAnyType());
     }
 
-    // @ts-ignore
     default(value: any) {
         return this.deriveWith({ _optional: true, _default: value }, new OptionalAnyType());
     }
@@ -1140,17 +1123,14 @@ export class VoidType extends ValidateableType<void> {
         return this;
     }
 
-    // @ts-ignore
     get required(): never {
         throw new ReferenceError("VoidType is always optional, calling `required` makes no sense");
     }
 
-    // @ts-ignore
     default(value: null) {
         return this.deriveWith({ _optional: true, _default: value });
     }
 
-    /** @internal */
     validate(path: string, value: any, options: {
         warnings?: ValidationWarning[];
     } = null): void {
@@ -1182,12 +1162,7 @@ export class VoidType extends ValidateableType<void> {
 }
 
 export class CustomType<T> extends ValidateableType<T> {
-    protected _guard: (data: any, path: string, warnings: ValidationWarning[]) => (
-        T extends ValidateableType<infer U>
-        ? ExtractInstanceType<U>
-        : T extends ValidateableType<infer U>[] ? ExtractInstanceType<U>[]
-        : T extends readonly ValidateableType<infer U>[] ? readonly ExtractInstanceType<U>[]
-        : T);
+    protected _guard: (data: any, path: string, warnings: ValidationWarning[]) => any;
 
     constructor(readonly type: T | Constructor<T>) {
         super();
@@ -1202,7 +1177,6 @@ export class CustomType<T> extends ValidateableType<T> {
         return this.deriveWith({ _optional: true }, new OptionalCustomType<T>(this.type));
     }
 
-    // @ts-ignore
     default(value: ExtractInstanceType<T>) {
         return this.deriveWith({ _optional: true, _default: value }, new OptionalCustomType<T>(this.type));
     }
@@ -1225,18 +1199,11 @@ export class CustomType<T> extends ValidateableType<T> {
      * }
      * ```
      */
-    guard(transform: (data: any, path: string, warnings: ValidationWarning[]) => (
-        T extends ValidateableType<infer U>
-        ? ExtractInstanceType<U>
-        : T extends ValidateableType<infer U>[] ? ExtractInstanceType<U>[]
-        : T extends readonly ValidateableType<infer U>[] ? readonly ExtractInstanceType<U>[]
-        : T)
-    ) {
+    guard(transform: (data: any, path: string, warnings: ValidationWarning[]) => any) {
         this._guard = transform;
         return this;
     }
 
-    /** @internal */
     validate(path: string, value: any, options: {
         strict?: boolean;
         suppress?: boolean;
@@ -1271,7 +1238,7 @@ export class CustomType<T> extends ValidateableType<T> {
             }
         } else if (isObject(this.type)) {
             if (isObject(value)) {
-                return validate(value, this.type as any, path, options) as any;
+                return validate(value, this.type, path, options) as any;
             } else {
                 throw this.createTypeError(path, value, "object");
             }
@@ -1342,12 +1309,10 @@ export class UnionType<T extends any[]> extends ValidateableType<T[]> {
         return this.deriveWith({ _optional: true }, new OptionalUnionType(this.types));
     }
 
-    // @ts-ignore
     default(value: ExtractInstanceType<T>[0]) {
         return this.deriveWith({ _optional: true, _default: value }, new OptionalUnionType(this.types));
     }
 
-    /** @internal */
     validate(path: string, value: any, options: {
         strict?: boolean;
         suppress?: boolean;
@@ -1520,7 +1485,6 @@ export class DictType<K extends IndexableType, V> extends ValidateableType<Recor
         return this.deriveWith({ _optional: true }, new OptionalDictType(this.key, this.value));
     }
 
-    // @ts-ignore
     default(value: Record<ExtractInstanceType<K>, ExtractInstanceType<V>>) {
         return this.deriveWith({
             _optional: true,
@@ -1528,7 +1492,6 @@ export class DictType<K extends IndexableType, V> extends ValidateableType<Recor
         }, new OptionalDictType(this.key, this.value));
     }
 
-    /** @internal */
     validate(path: string, value: any, options: {
         strict?: boolean;
         suppress?: boolean;
@@ -1717,7 +1680,6 @@ export class ArrayType<T> extends CustomType<T[]> {
         return this.deriveWith({ _uniqueItems: true });
     }
 
-    /** @internal */
     validate(path: string, value: any, options: {
         strict?: boolean;
         suppress?: boolean;
@@ -1826,22 +1788,18 @@ export class TupleType<T extends readonly any[]> extends ValidateableType<T> {
     }
 
     /** @internal Used for TypeScript to distinguish the type from similar types. */
-    // @ts-ignore
     get [Symbol.toStringTag](): "TupleType" {
         return "TupleType";
     }
 
-    // @ts-ignore
     get optional() {
         return this.deriveWith({ _optional: true }, new OptionalTupleType(this.type));
     }
 
-    // @ts-ignore
     default(value: ExtractInstanceType<T>) {
         return this.deriveWith({ _optional: true, _default: value }, new OptionalTupleType(this.type));
     }
 
-    /** @internal */
     validate(path: string, value: any, options: {
         strict?: boolean;
         suppress?: boolean;
@@ -1935,7 +1893,8 @@ export class OptionalTupleType<T extends readonly any[]> extends TupleType<T> {
     }
 }
 
-export type IndexableType = StringConstructor
+export type IndexableType = string
+    | StringConstructor
     | typeof StringType
     | StringType
     | OptionalStringType
@@ -1967,40 +1926,34 @@ export type OptionalPropertyNames<T> = {
     [K in keyof T]: T[K] extends OptionalTypes ? K : never;
 }[keyof T];
 
-export type ExtractInstanceType<T> = T extends OptionalStringEnum<infer U> ? (U extends readonly (infer V)[] ? V : U)
-    : T extends StringEnum<infer U> ? (U extends readonly (infer V)[] ? V : U)
+export type ExtractInstanceType<T> = T extends (StringEnum<infer U> | OptionalStringEnum<infer U>) ? (U extends readonly (infer V)[] ? V : U)
     : T extends (StringConstructor | typeof StringType | StringType | OptionalStringType) ? string
-    : T extends OptionalNumberEnum<infer U> ? (U extends readonly (infer V)[] ? V : U)
-    : T extends NumberEnum<infer U> ? (U extends readonly (infer V)[] ? V : U)
+    : T extends (NumberEnum<infer U> | OptionalNumberEnum<infer U>) ? (U extends readonly (infer V)[] ? V : U)
     : T extends (NumberConstructor | typeof NumberType | NumberType | OptionalNumberType) ? number
-    : T extends OptionalBigIntEnum<infer U> ? (U extends readonly (infer V)[] ? V : U)
-    : T extends BigIntEnum<infer U> ? (U extends readonly (infer V)[] ? V : U)
+    : T extends (BigIntEnum<infer U> | OptionalBigIntEnum<infer U>) ? (U extends readonly (infer V)[] ? V : U)
     : T extends (BigIntConstructor | typeof BigIntType | BigIntType | OptionalBigIntType) ? bigint
     : T extends (BooleanConstructor | typeof BooleanType | BooleanType | OptionalBooleanType) ? boolean
     : T extends (DateConstructor | typeof DateType | DateType | OptionalDateType) ? Date
     : T extends (ObjectConstructor | typeof ObjectType | ObjectType | OptionalObjectType) ? object
-    : T extends (ArrayConstructor | typeof ArrayType) ? any[]
     : T extends (typeof AnyType | AnyType | OptionalAnyType) ? any
     : T extends (typeof VoidType | VoidType) ? void
+    : T extends abstract new (...args: any[]) => infer U ? U
     : T extends (infer U)[] ? ExtractInstanceType<U>[]
+    : T extends (ArrayType<infer U> | OptionalArrayType<infer U>) ? ExtractInstanceType<U>[]
     : T extends readonly [infer A, infer B] ? readonly [ExtractInstanceType<A>, ExtractInstanceType<B>]
     : T extends readonly [infer A, infer B, infer C] ? readonly [ExtractInstanceType<A>, ExtractInstanceType<B>, ExtractInstanceType<C>]
     : T extends readonly [infer A, infer B, infer C, infer D] ? readonly [ExtractInstanceType<A>, ExtractInstanceType<B>, ExtractInstanceType<C>, ExtractInstanceType<D>]
     : T extends readonly [...infer U] ? readonly [...ExtractInstanceType<U>]
-    : T extends (UnionType<infer U> | OptionalUnionType<infer U>) ? ExtractInstanceType<U>[0]
-    : T extends (ArrayType<infer U> | OptionalArrayType<infer U>) ? ExtractInstanceType<U>[]
     : T extends (TupleType<infer U> | OptionalTupleType<infer U>) ? ExtractInstanceType<U>
     : T extends (CustomType<infer U> | OptionalCustomType<infer U>) ? ExtractInstanceType<U>
+    : T extends (UnionType<infer U> | OptionalUnionType<infer U>) ? ExtractInstanceType<U>[0]
     : T extends (DictType<infer K, infer V> | OptionalDictType<infer K, infer V>) ? Record<ExtractInstanceType<K>, ExtractInstanceType<V>>
     : T extends Record<string, unknown> ? (
         {
-            // @ts-ignore
             [K in RequiredPropertyNames<T>]: ExtractInstanceType<T[K]>;
         } & {
-            // @ts-ignore
             [K in OptionalPropertyNames<T>]?: ExtractInstanceType<T[K]>;
         })
-    : T extends new (...args: any[]) => any ? InstanceType<T>
     : T;
 
 export type EnsureOptionalProperties<T extends Record<string, unknown>> = {
@@ -2019,7 +1972,7 @@ export type EnsureOptionalProperties<T extends Record<string, unknown>> = {
     : T[K] extends ArrayType<infer U> ? OptionalArrayType<U>
     : T[K] extends UnionType<infer U> ? OptionalUnionType<U>
     : T[K] extends DictType<infer K, infer V> ? OptionalDictType<K, V>
-    : T[K] extends TupleType<infer U> ? TupleType<U>
+    : T[K] extends TupleType<infer U> ? OptionalTupleType<U>
     : T[K] extends VoidType ? T[K]
     : OptionalCustomType<T[K]>;
 };
@@ -2333,7 +2286,6 @@ function ensureType(type: any, path = "$", deep = false) {
                 return _type;
             }, {});
         } else if (typeof type === "function") {
-            // @ts-ignore
             return as(type);
         } else if (typeof type === "string") {
             return new StringType().enum([type]);
@@ -2386,7 +2338,7 @@ export function as(type: BooleanConstructor): BooleanConstructor;
 export function as(type: DateConstructor): DateConstructor;
 export function as(type: ObjectConstructor): ObjectConstructor;
 export function as(type: ArrayConstructor): ArrayConstructor;
-export function as<T extends ValidateableType<any>>(type: T): T;
+export function as<T extends ValidateableType<unknown>>(type: T): T;
 export function as<T extends readonly any[]>(type: T): TupleType<T>;
 export function as<T>(type: T): CustomType<T>;
 export function as<T extends any[]>(...types: T): UnionType<T>;
@@ -2446,7 +2398,7 @@ export function as<T>(...types: (T | Constructor<T>)[]) {
  * }, "obj"); // => { str: "Hello, World!", num: [123], bool: false }
  * ```
  */
-export function validate<T>(value: ExtractInstanceType<T>, type: T, variable = "$", options: {
+export function validate<T>(value: any, type: T, variable = "$", options: {
     /** Use strict mode, will disable any implicit type conversion. */
     strict?: boolean;
     /**
@@ -2582,11 +2534,9 @@ export function validate<T>(value: ExtractInstanceType<T>, type: T, variable = "
 
                 return records;
             } else {
-                // @ts-ignore
                 return as(type).validate(path, value, options);
             }
         } else {
-            // @ts-ignore
             return ensureType(type, path, true).validate(path, value, options);
         }
     };
@@ -2827,7 +2777,6 @@ export function param<T>(arg0: T | string, arg1?: string | T, remarks: string = 
     return (target, prop, desc) => {
         wrapMethod(target, prop, desc);
 
-        // @ts-ignore
         const fn = desc.value as (...args: any[]) => any;
         const params = (fn[_params] ??= []) as { type: any; name?: string; remarks?: string; }[];
         params.unshift({ type, name, remarks });
@@ -2862,7 +2811,6 @@ export function returns<T>(type: T, remarks: string = void 0): MethodDecorator {
     return (target, prop, desc) => {
         wrapMethod(target, prop, desc);
 
-        // @ts-ignore
         const fn = desc.value as (...args: any[]) => any;
         fn[_returns] = { type, name: "returns", remarks };
     };
@@ -2890,7 +2838,6 @@ export function throws<T>(type: T): MethodDecorator {
     return (target, prop, desc) => {
         wrapMethod(target, prop, desc);
 
-        // @ts-ignore
         const fn = desc.value as (...args: any[]) => any;
         fn[_throws] = { type, name: "throws" };
     };
@@ -2915,7 +2862,6 @@ export function deprecated(message = ""): MethodDecorator {
     return (target, prop, desc) => {
         wrapMethod(target, prop, desc);
 
-        // @ts-ignore
         const fn = desc.value as (...args: any[]) => any;
         fn[_deprecated] = message;
     };
@@ -2939,7 +2885,6 @@ export function remarks(note: string): MethodDecorator {
     return (target, prop, desc) => {
         wrapMethod(target, prop, desc);
 
-        // @ts-ignore
         const fn = desc.value as (...args: any[]) => any;
         fn[_remarks] = note;
     };
@@ -2972,7 +2917,6 @@ export function def(fn: (arg: any) => any, parameters: any, returns: any) {
             return (result as Promise<any>)
                 .then(function resolver(res) {
                     try {
-                        // @ts-ignore
                         return validate(res, returns, "returns", {
                             ...options,
                             suppress: true,
