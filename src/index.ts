@@ -2944,6 +2944,8 @@ export function def(fn: (arg: any) => any, parameters: any, returns: any) {
     };
 }
 
+export function partial<T extends DictType<StringEnum<K>, V>, K, V>(type: T): DictType<OptionalStringEnum<K>, V>;
+export function partial<T extends Record<string, unknown>>(type: T): Partial<T>;
 export function partial<T extends (Record<string, unknown> | DictType<IndexableType, unknown>)>(type: T) {
     if (type instanceof DictType) {
         if (type.key instanceof ValidateableType) {
@@ -2975,23 +2977,13 @@ export function partial<T extends (Record<string, unknown> | DictType<IndexableT
         }
 
         return records;
-    }, {} as EnsureOptionalProperties<T extends DictType<IndexableType, unknown> ? ExtractInstanceType<T> : T>);
+    },
+        // @ts-ignore
+        {} as EnsureOptionalProperties<T extends DictType<IndexableType, unknown> ? ExtractInstanceType<T> : T>
+    );
 }
 
-export function required<T extends (Record<string, unknown> | DictType<IndexableType, unknown>)>(type: T) {
-    if (type instanceof DictType) {
-        if (type.key instanceof ValidateableType) {
-            if (!type.key["_optional"]) {
-                return type;
-            } else {
-                return new DictType(type.key.required, type.value);
-            }
-        } else {
-            // @ts-ignore
-            return new DictType(ensureType(type.key).required, type.value);
-        }
-    }
-
+export function required<T extends Record<string, unknown>>(type: T) {
     return Object.keys(type).reduce((records, prop) => {
         const _type = type[prop];
 
@@ -3009,7 +3001,7 @@ export function required<T extends (Record<string, unknown> | DictType<Indexable
         }
 
         return records;
-    }, {} as EnsureOptionalProperties<T extends DictType<IndexableType, unknown> ? ExtractInstanceType<T> : T>);
+    }, {} as EnsureOptionalProperties<T>);
 }
 
 export function optional<T extends Record<string, unknown>, K extends keyof T>(type: T, props: K[]) {

@@ -2495,24 +2495,12 @@ function partial(type) {
             records[prop] = ensureType(_type, prop).optional;
         }
         return records;
-    }, {});
+    }, 
+    // @ts-ignore
+    {});
 }
 exports.partial = partial;
 function required(type) {
-    if (type instanceof DictType) {
-        if (type.key instanceof ValidateableType) {
-            if (!type.key["_optional"]) {
-                return type;
-            }
-            else {
-                return new DictType(type.key.required, type.value);
-            }
-        }
-        else {
-            // @ts-ignore
-            return new DictType(ensureType(type.key).required, type.value);
-        }
-    }
     return Object.keys(type).reduce((records, prop) => {
         const _type = type[prop];
         if (_type instanceof ValidateableType) {
