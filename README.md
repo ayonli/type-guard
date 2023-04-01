@@ -10,7 +10,7 @@ Runtime type checking for JavaScript variables and function parameters.
 - [But Why?](#but-why)
     - [Vulnerable Code](#vulnerable-code)
     - [Optimized Code](#optimized-code)
-- [Concent](#concept)
+- [Concept](#concept)
 - [Extends JavaScript Basic Type Constructors](#extends-javascript-basic-type-constructors)
     - [Core Types](#core-types)
     - [Additional Types](#additional-types)
@@ -29,7 +29,7 @@ Runtime type checking for JavaScript variables and function parameters.
 - [Set Warning Handler](#set-warning-handler)
 - [Advanced Usage](#advanced-usage)
     - [Extending Types or Intersection Types](#extending-types-or-intersection-types)
-    - [Generic Type](#generic-types)
+    - [Generic Types](#generic-types)
 - [Utility Functions](#utility-functions)
     - [Utility Types](#utility-types)
 - [Working with Common Functions](#working-with-common-functions)
@@ -132,9 +132,9 @@ definitions are plain objects, which can be reused any where, and even
 These types can be imported from this package:
 
 - `Dict(Key, Value)` the value is of `Record<K, V>`
-- `Any` the value can be anything
-- `Void` void constraints are mainly for functions that takes no argument or
-    returns nothing. For example:
+- `Any` the value can be anything (except `null` and `undefined`)
+- `Void` the value is `null` or `undefined`. This type are mainly for functions
+    that takes no argument or returns nothing. For example:
     - `@param(Void)` will constrain the method to take no argument.
     - `@returns(Void)` will constrain the method to return nothing.
 
@@ -157,7 +157,7 @@ And these abstract types can be created via the wrapper function `as()`:
     This could be useful when generating JSON Schema.
 - `deprecated(message?: string)` Marks the current variable/property/parameter
     as deprecated and provide a message.
-- `alternatives(...props: string[])` Sets the current property and the other
+- `alternatives(...props: string[])` Sets the current property and other
     properties to be alternatives, and only one of them are required. This
     function must be used along with `optional` keyword and only have to be
     set on one of the alternative properties.
@@ -166,7 +166,7 @@ And these abstract types can be created via the wrapper function `as()`:
     as well.
 
 *All these keywords are chainable, we can use several of them to form a*
-*specific constrains.*
+*specific constraint.*
 
 ```ts
 import { as, Any, Dict, Void } from "@hyurl/type-guard";
@@ -182,7 +182,7 @@ const Structure = {
     num3: BigInt.optional.associates("bool1"), // 'num3' must be paired with 'bool1'
     bool1: Boolean,
     bool2: Boolean.default(false), // optional boolean type with default value: false
-    date1: Date, // dates are supported, of course
+    date1: Date,
     date2: Date.optional,
     obj1: { // deep structures are supported and unlimited
         // ...
@@ -194,6 +194,7 @@ const Structure = {
     arr2: [String, Number, BigInt], // array of many types: (string | number | bigint)[]
     arr3: [], // array of any types: any[]
     arr4: Array(String), // is the same as [String]
+    arr5: Array, // is the same as []
     union1: as(String, Number), // as() can be used to form Union Types: string | number
     tuple1: as([String, Number] as const), // as() can be used to form tuples: [string, number]
     my1: MyClass, // custom types are supported
@@ -209,10 +210,8 @@ const Structure = {
 ```
 
 *Each referencing of the keywords will create a new constraint, so they can*
-*reused without worrying about context pollution.*
-
-In the above example, `Str2.required` will create a new string constraint and
-leave the `Str2` untouched.
+*reused without worrying about context pollution. In the above example,*
+*`Str2.required` will create a new string constraint and leave the `Str2` untouched.*
 
 ## String Specials
 
@@ -255,7 +254,7 @@ const Str5 = String.enum(["A", "B", "C"] as const); // enum values/union types: 
 Apart from the core features, the `Number` constructor includes the following
 additional properties and methods.
 
-- `integer` restrains the value must be an integer.
+- `integer` Restrains the number to be an integer.
 - `min(value: number)` Sets the minimal value of the number.
 - `max(value: number)` Sets the maximal value of the number.
 - `enum(values: number[])` Sets the enum options of which the number can be.
@@ -287,7 +286,7 @@ const Int2 = BigInt.enum([-1n, 0n, 1n] as const); // enum values/union types: -1
 Apart from the core features, the array includes the following additional
 properties and methods.
 
-- `guard(transform: (data: any, path: string, warnings: ValidationWarning[]) => any[])`
+- `guard(transform: (data: any, path: string, warnings: ValidationWarning[]) => any)`
     Defines a function that transforms the input data to the desired type.
 - `minItems(count: number)` Sets the minimum items of the array.
 - `maxItems(count: number)` Sets the maximum items of the array.
@@ -299,10 +298,10 @@ const Arr1 = [String].minItems(1).maxItems(10).uniqueItems;
 
 ## CustomType Specials
 
-Apart from the core features, CustomType include the following additional
+Apart from the core features, the CustomType include the following additional
 properties and methods.
 
-- `guard(transform: (data: any, path: string, warnings: ValidationWarning[]) => any[])`
+- `guard(transform: (data: any, path: string, warnings: ValidationWarning[]) => any)`
     Defines a function that transforms the input data to the desired type.
 
 ## `as()`
@@ -311,8 +310,8 @@ By default, any class (aka, type constructors) and object literals can be
 directly used for type checking, but they lacks the ability to be optional,
 setting default values, or use any other features that general types support.
 
-By wrap them in the `as()` function, which returns a `CustomType`, we can bring
-the additional features to any type constructors we want.
+By wrapping them in the `as()` function, which returns a `CustomType`, we can
+bring the additional features to any type constructors we want.
 
 ### Example of CustomType
 
@@ -353,13 +352,15 @@ const Type = {
 There are two decorators for most use cases, as long as you're coding in
 TypeScript or with Babel.
 
-- `@param(type: any, name?: string, remarks?: string)` A decorator that
+- `@param(type: any, name?: string, remarks?: string)`
+- `@param(name: string, type: any, remarks?: string)` A decorator that
     restrains the input arguments of the method.
     - `type` The type of the argument, can be a class, a type constructor
         (including `as()`), an object or array literal that specifies deep
         structure.
     - `name` The argument name, used to address where the error is reported.
-    - `remarks` The remark message of the parameter.
+    - `remarks` The remark message of the parameter. Useful when generating JSON
+        Schema.
 
     NOTE: the order of using `@param()` must consist with order of which the
     parameter is present.
@@ -370,7 +371,8 @@ TypeScript or with Babel.
     - `type` The type of the return value, can be a class, a type constructor
         (including `as()`), an object or array literal that specifies deep
         structure.
-    - `remark` the remark message of the return value.
+    - `remark` the remark message of the return value.  Useful when generating
+        JSON Schema.
 
     NOTE: if the method returns a Promise, this function restrains the resolved
     value instead.
@@ -383,16 +385,16 @@ There are also other non-frequently used decorators:
     method. 
     - `type` The type of the thrown error, usually a class or a string.
 - `@remarks(note: string)` A decorator that adds remark message to the method.
-    This could be useful when generating JSON Schema.
+    Useful when generating JSON Schema.
 - `@deprecated(message?: string)` A decorator that deprecates the method and
-    emit warning message when the method is called.
+    emit a warning message when the method is called.
     - `message` The warning message, can be used to provide suggestions.
 
 ```ts
 import { param, returns, deprecated } from "@hyurl/type-guard";
 
 export default class ExampleApi {
-    @param({ num1: Number, num2: Number }, "data")
+    @param("data", { num1: Number, num2: Number })
     @returns({ result: Number })
     async sum(data: { num1: number; num2: number; }) {
         return { result: data.num1 + data.num2 };
@@ -424,13 +426,13 @@ check the value we want.
         - `strict?: boolean` Use strict mode, will disable any implicit type
             conversion.
         - `suppress?: boolean` Suppress non-critical errors as warnings, or
-            suppress unknown property/element removing warnings (when enabled).
+            suppress unknown property/item removing warnings (when enabled).
         - `warnings?: ValidationWarning[]` A list used to
             store all the warnings occurred during the validation process.
         - `removeUnknownItems?: boolean` Remove unknown properties in the object
             or the items that exceed the length limit of the array.
 
-NOTE: Both `@param()` and `@returns()` will set `removeUnknownItems` to `true`,
+NOTE: Both `@param()` and `@returns()` will set `removeUnknownItems` to `true`.
 `@returns()` sets `suppress` as well.
 
 ```ts 
@@ -484,7 +486,7 @@ error and continue, just as the above example shows.
 ## Set Warning Handler
 
 All decorators emit warnings during validation process, by default, warnings are
-logged to the stdout/console, but if the function is call as an HTTP API, we
+logged to the stdout/console, but if the function is called as an HTTP API, we
 may want to attach the warnings to the response so the client can adjust its
 calls.
 
@@ -597,11 +599,11 @@ class ExampleApi extends ApiController {
 
 ## Utility Functions
 
-This package also comes with several utility functions that we can use to
+This package also comes with several utility functions which we can use to
 achieve similar functionalities of their TypeScript equivalents.
 
 - `partial(type: T extends (Record<string, unknown> | DictType<IndexableType, unknown>))`
-- `required(type: T extends (Record<string, unknown> | DictType<IndexableType, unknown>))`
+- `required(type: T extends Record<string, unknown>)`
 - `optional<T extends Record<string, unknown>, K extends keyof T>(type: T, props: K[])`
 - `ensured<T extends Record<string, unknown>, K extends keyof T>(type: T, props: K[])`
 
@@ -629,7 +631,7 @@ const Type4 = ensured(Type1, ["bar"]);
 
 const Type5 = pick(Type, ["foo"]); // => { foo: String }
 
-const Type6 = omit(Type, ["foo"]); // => { bar: String }
+const Type6 = omit(Type, ["foo"]); // => { bar: Number }
 ```
 
 ### Utility Types
@@ -663,7 +665,7 @@ type Struct = ExtractInstanceType<typeof Struct>;
 
 ## Working with Common Functions
 
-Well, generators only works on class methods, so if we want to use type
+Well, decorators only works on class methods, so if we want to use type
 validation in a common function, there are two ways (with limited support) to do
 it:
 
