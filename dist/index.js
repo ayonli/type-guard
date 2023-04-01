@@ -397,6 +397,7 @@ class NumberType extends ValidateableType {
     get optional() {
         return this.deriveWith({ _optional: true }, new OptionalNumberType());
     }
+    /** Restrains the number to be an integer. */
     get integer() {
         return this.deriveWith({ _integer: true });
     }
@@ -1868,6 +1869,16 @@ function omitUndefined(obj) {
         return record;
     }, {});
 }
+function copyFunctionProperties(source, target) {
+    Object.defineProperty(target, "name", { value: source.name, configurable: true });
+    Object.defineProperty(target, "length", { value: source.length, configurable: true });
+    Object.defineProperty(target, "toString", {
+        value: function toString() {
+            return source.toString();
+        },
+        configurable: true,
+    });
+}
 function purifyStackTrace(err, ctorOpt) {
     var _a;
     err instanceof Error && ((_a = Error.captureStackTrace) === null || _a === void 0 ? void 0 : _a.call(Error, err, ctorOpt));
@@ -2300,14 +2311,7 @@ const wrapMethod = (target, prop, desc) => {
             }
         });
         newFn[_title] = target.constructor.name + "." + String(prop);
-        Object.defineProperty(newFn, "name", { value: originFn.name, configurable: true });
-        Object.defineProperty(newFn, "length", { value: originFn.length, configurable: true });
-        Object.defineProperty(newFn, "toString", {
-            value: function toString() {
-                return originFn.toString();
-            },
-            configurable: true,
-        });
+        copyFunctionProperties(originFn, newFn);
     }
 };
 function param(arg0, arg1, remarks = void 0) {
@@ -2381,7 +2385,7 @@ function throws(type) {
 }
 exports.throws = throws;
 /**
- * A decorator that deprecates the method and emit warning message when the
+ * A decorator that deprecates the method and emit a warning message when the
  * method is called.
  * @param message The warning message, can be used to provide suggestions.
  * @example
@@ -2425,17 +2429,17 @@ function remarks(note) {
     };
 }
 exports.remarks = remarks;
-function def(fn, parameters, returns) {
-    return function wrapped(arg) {
+function def(fn, param0, returns) {
+    function wrapper(arg) {
         const warnings = [];
         const options = { warnings, removeUnknownItems: true };
         try {
-            arg = validate(arg, parameters, "parameters", options);
+            arg = validate(arg, param0, "parameters", options);
         }
         catch (err) {
-            throw purifyStackTrace(err, wrapped);
+            throw purifyStackTrace(err, wrapper);
         }
-        let result = fn(arg);
+        let result = fn.call(this, arg);
         if (result && typeof result === "object" && typeof result["then"] === "function") {
             return result
                 .then(function resolver(res) {
@@ -2457,10 +2461,16 @@ function def(fn, parameters, returns) {
                 return result;
             }
             catch (err) {
-                throw purifyStackTrace(err, wrapped);
+                throw purifyStackTrace(err, wrapper);
             }
         }
-    };
+    }
+    ;
+    wrapper[_title] = fn.name || "anonymous";
+    wrapper[_params] = [{ type: param0, name: "param0" }];
+    wrapper[_returns] = { type: returns, name: "returns" };
+    copyFunctionProperties(fn, wrapper);
+    return wrapper;
 }
 exports.def = def;
 function partial(type) {

@@ -38,9 +38,14 @@ describe("def()", () => {
 
     it("should define a function with typed parameters and returns", () => {
         // @ts-ignore
-        const sum = def(({ a, b, c }) => {
+        const sum = def(function sum({ a, b, c }) {
             return String(a + b + (c || 0));
         }, { a: Number, b: Number, c: Number.optional }, Number);
+        assert.strictEqual(sum.name, "sum");
+        assert.strictEqual(sum.length, 1);
+        assert.strictEqual(sum.toString(), `function sum({ a, b, c }) {
+            return String(a + b + (c || 0));
+        }`);
 
         // @ts-ignore
         const result = sum({ a: 1, b: "2" });
@@ -52,7 +57,7 @@ describe("def()", () => {
             String(err1),
             "TypeError: parameters.a is expected to be a number, but a Buffer is given"
         );
-        assert.strictEqual(err1.stack?.split("\n")[1], `    at ${__filename}:50:35`);
+        assert.strictEqual(err1.stack?.split("\n")[1], `    at ${__filename}:55:35`);
 
         // @ts-ignore
         const sum2 = def(({ a, b, c }) => {
@@ -63,7 +68,7 @@ describe("def()", () => {
             String(err2),
             "TypeError: returns is expected to be a number, but a Buffer is given"
         );
-        assert.strictEqual(err2.stack?.split("\n")[1], `    at ${__filename}:61:35`);
+        assert.strictEqual(err2.stack?.split("\n")[1], `    at ${__filename}:66:35`);
     });
 
     it("should define an async function with typed parameters and returns", async () => {
@@ -74,6 +79,11 @@ describe("def()", () => {
             a: number,
             b: number;
         }) => Promise<number>;
+        assert.strictEqual(sum.name, "");
+        assert.strictEqual(sum.length, 1);
+        assert.strictEqual(sum.toString(), `async ({ a, b, c }) => {
+            return await Promise.resolve(String(a + b + (c || 0)));
+        }`);
 
         // @ts-ignore
         const result = await sum({ a: 1, b: "2" });
@@ -85,7 +95,7 @@ describe("def()", () => {
             String(err1),
             "TypeError: parameters.a is expected to be a number, but a Buffer is given"
         );
-        assert.strictEqual(err1.stack?.split("\n")[1], `    at ${__filename}:83:41`);
+        assert.strictEqual(err1.stack?.split("\n")[1], `    at ${__filename}:93:41`);
 
         // @ts-ignore
         const sum2 = def(async ({ a, b, c }) => {
@@ -102,7 +112,7 @@ describe("def()", () => {
         );
         assert.strictEqual(
             err2.stack?.split("\n")[1],
-            `    at async Context.<anonymous> (${__filename}:98:24)`
+            `    at async Context.<anonymous> (${__filename}:108:24)`
         );
     });
 });

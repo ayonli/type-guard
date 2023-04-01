@@ -57,8 +57,8 @@ export abstract class ValidateableType<T> {
 
     alternatives(): string[];
     /**
-     * Sets the current property and the other properties to be alternatives,
-     * and only one of them are required. This function must be used along with
+     * Sets the current property and other properties to be alternatives, and
+     * only one of them are required. This function must be used along with
      * `optional` keyword and only have to be set on one of the alternative
      * properties.
      */
@@ -476,6 +476,7 @@ export class NumberType extends ValidateableType<number> {
         return this.deriveWith({ _optional: true }, new OptionalNumberType());
     }
 
+    /** Restrains the number to be an integer. */
     get integer() {
         return this.deriveWith({ _integer: true });
     }
@@ -2230,6 +2231,17 @@ function omitUndefined<T extends object>(obj: T): T {
     }, {} as T);
 }
 
+function copyFunctionProperties(source: Function, target: Function) {
+    Object.defineProperty(target, "name", { value: source.name, configurable: true });
+    Object.defineProperty(target, "length", { value: source.length, configurable: true });
+    Object.defineProperty(target, "toString", {
+        value: function toString() {
+            return source.toString();
+        },
+        configurable: true,
+    });
+}
+
 function purifyStackTrace(err: any, ctorOpt: Function) {
     err instanceof Error && Error.captureStackTrace?.(err, ctorOpt);
     return err;
@@ -2403,7 +2415,7 @@ export function validate<T>(value: any, type: T, variable = "$", options: {
     strict?: boolean;
     /**
      * Suppress non-critical errors as warnings, or suppress unknown
-     * property/element removing warnings (when enabled).
+     * property/item removing warnings (when enabled).
      */
     suppress?: boolean;
     /**
@@ -2734,15 +2746,7 @@ const wrapMethod = (target: any, prop: string | symbol, desc: TypedPropertyDescr
         }) as any;
 
         newFn[_title] = (target.constructor as Constructor<any>).name + "." + String(prop);
-
-        Object.defineProperty(newFn, "name", { value: originFn.name, configurable: true });
-        Object.defineProperty(newFn, "length", { value: originFn.length, configurable: true });
-        Object.defineProperty(newFn, "toString", {
-            value: function toString() {
-                return originFn.toString();
-            },
-            configurable: true,
-        });
+        copyFunctionProperties(originFn, newFn);
     }
 };
 
@@ -2844,7 +2848,7 @@ export function throws<T>(type: T): MethodDecorator {
 }
 
 /**
- * A decorator that deprecates the method and emit warning message when the
+ * A decorator that deprecates the method and emit a warning message when the
  * method is called.
  * @param message The warning message, can be used to provide suggestions.
  * @example
@@ -2891,27 +2895,27 @@ export function remarks(note: string): MethodDecorator {
 }
 
 export function def<A, R>(fn: (
-    parameters: ExtractInstanceType<A>
-) => ExtractInstanceType<R>, parameters: A, returns: R): (
-    parameters: ExtractInstanceType<A>
+    param0: ExtractInstanceType<A>
+) => ExtractInstanceType<R>, param0: A, returns: R): (
+    param0: ExtractInstanceType<A>
 ) => ExtractInstanceType<R>;
 export function def<A, R>(fn: (
-    parameters: ExtractInstanceType<A>
-) => Promise<ExtractInstanceType<R>>, parameters: A, returns: R): (
-    parameters: ExtractInstanceType<A>
+    param0: ExtractInstanceType<A>
+) => Promise<ExtractInstanceType<R>>, param0: A, returns: R): (
+    param0: ExtractInstanceType<A>
 ) => Promise<ExtractInstanceType<R>>;
-export function def(fn: (arg: any) => any, parameters: any, returns: any) {
-    return function wrapped(this: any, arg: any) {
+export function def(fn: (param0: any) => any, param0: any, returns: any) {
+    function wrapper(this: any, arg: any) {
         const warnings: ValidationWarning[] = [];
         const options = { warnings, removeUnknownItems: true };
 
         try {
-            arg = validate(arg, parameters, "parameters", options);
+            arg = validate(arg, param0, "parameters", options);
         } catch (err) {
-            throw purifyStackTrace(err, wrapped);
+            throw purifyStackTrace(err, wrapper);
         }
 
-        let result = fn(arg);
+        let result = fn.call(this, arg);
 
         if (result && typeof result === "object" && typeof result["then"] === "function") {
             return (result as Promise<any>)
@@ -2938,10 +2942,17 @@ export function def(fn: (arg: any) => any, parameters: any, returns: any) {
                 emitWarnings.call(this, warnings, result);
                 return result;
             } catch (err) {
-                throw purifyStackTrace(err, wrapped);
+                throw purifyStackTrace(err, wrapper);
             }
         }
     };
+
+    wrapper[_title] = fn.name || "anonymous";
+    wrapper[_params] = [{ type: param0, name: "param0" }];
+    wrapper[_returns] = { type: returns, name: "returns" };
+    copyFunctionProperties(fn, wrapper);
+
+    return wrapper;
 }
 
 export function partial<T extends DictType<StringEnum<K>, V>, K, V>(type: T): DictType<OptionalStringEnum<K>, V>;
