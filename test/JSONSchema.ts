@@ -912,7 +912,7 @@ describe("JSONSchema", () => {
     it("it should create a super schema for wrapped function", () => {
         const sum = def(({ num1, num2, num3 }) => {
             return num1 + num2 + (num3 ?? 0);
-        }, { num1: Number, num2: Number, num3: Number.optional }, Number);
+        }, [{ num1: Number, num2: Number, num3: Number.optional }] as const, Number);
         const $schema = "https://json-schema.org/draft/2020-12/schema";
         const schema1 = sum.getJSONSchema();
         assert.deepStrictEqual(schema1, {

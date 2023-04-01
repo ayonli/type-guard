@@ -2429,17 +2429,31 @@ function remarks(note) {
     };
 }
 exports.remarks = remarks;
-function def(fn, param0, returns) {
-    function wrapper(arg) {
+function def(fn, params, returns) {
+    function wrapper(...args) {
         const warnings = [];
         const options = { warnings, removeUnknownItems: true };
         try {
-            arg = validate(arg, param0, "parameters", options);
+            let _args = {};
+            const paramList = [];
+            const _params = params.map((type, index) => {
+                return { type, name: "param" + index };
+            }).reduce((record, item, index) => {
+                record[item.name] = item.type;
+                _args[item.name] = args[index];
+                paramList.push(item.name);
+                return record;
+            }, {});
+            for (let i = paramList.length; i < args.length; i++) {
+                _args[`param${i}`] = args[i];
+            }
+            _args = validate(_args, _params, "parameters", options);
+            args = paramList.map(name => _args[name]);
         }
         catch (err) {
             throw purifyStackTrace(err, wrapper);
         }
-        let result = fn.call(this, arg);
+        let result = fn.call(this, ...args);
         if (result && typeof result === "object" && typeof result["then"] === "function") {
             return result
                 .then(function resolver(res) {
@@ -2467,7 +2481,7 @@ function def(fn, param0, returns) {
     }
     ;
     wrapper[_title] = fn.name || "anonymous";
-    wrapper[_params] = [{ type: param0, name: "param0" }];
+    wrapper[_params] = params.map((type, i) => ({ type, name: "param" + i }));
     wrapper[_returns] = { type: returns, name: "returns" };
     copyFunctionProperties(fn, wrapper);
     return wrapper;

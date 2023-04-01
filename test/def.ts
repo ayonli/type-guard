@@ -16,16 +16,16 @@ describe("def()", () => {
     after(() => {
         assert.deepStrictEqual(warnings, [
             {
-                path: "parameters.b",
-                message: "a string at parameters.b has been converted to number"
+                path: "parameters.param0.b",
+                message: "a string at parameters.param0.b has been converted to number"
             },
             {
                 path: "returns",
                 message: "a string at returns has been converted to number"
             },
             {
-                path: "parameters.b",
-                message: "a string at parameters.b has been converted to number"
+                path: "parameters.param0.b",
+                message: "a string at parameters.param0.b has been converted to number"
             },
             {
                 path: "returns",
@@ -40,7 +40,7 @@ describe("def()", () => {
         // @ts-ignore
         const sum = def(function sum({ a, b, c }) {
             return String(a + b + (c || 0));
-        }, { a: Number, b: Number, c: Number.optional }, Number);
+        }, [{ a: Number, b: Number, c: Number.optional }] as const, Number);
         assert.strictEqual(sum.name, "sum");
         assert.strictEqual(sum.length, 1);
         assert.strictEqual(sum.toString(), `function sum({ a, b, c }) {
@@ -55,14 +55,14 @@ describe("def()", () => {
         const [err1] = _try(() => sum({ a: Buffer.from([1]), b: Buffer.from([2]) }));
         assert.strictEqual(
             String(err1),
-            "TypeError: parameters.a is expected to be a number, but a Buffer is given"
+            "TypeError: parameters.param0.a is expected to be a number, but a Buffer is given"
         );
         assert.strictEqual(err1.stack?.split("\n")[1], `    at ${__filename}:55:35`);
 
         // @ts-ignore
         const sum2 = def(({ a, b, c }) => {
             return Buffer.from([a, b, c || 0]);
-        }, { a: Number, b: Number, c: Number.optional }, Number);
+        }, [{ a: Number, b: Number, c: Number.optional }] as const, Number);
         const [err2] = _try(() => sum2({ a: 1, b: 2 }));
         assert.strictEqual(
             String(err2),
@@ -75,7 +75,7 @@ describe("def()", () => {
         // @ts-ignore
         const sum = def(async ({ a, b, c }) => {
             return await Promise.resolve(String(a + b + (c || 0)));
-        }, { a: Number, b: Number, c: Number.optional }, Number) as (parameters: {
+        }, [{ a: Number, b: Number, c: Number.optional }] as const, Number) as (param0: {
             a: number,
             b: number;
         }) => Promise<number>;
@@ -93,7 +93,7 @@ describe("def()", () => {
         const [err1] = await _try(() => sum({ a: Buffer.from([1]), b: Buffer.from([2]) }));
         assert.strictEqual(
             String(err1),
-            "TypeError: parameters.a is expected to be a number, but a Buffer is given"
+            "TypeError: parameters.param0.a is expected to be a number, but a Buffer is given"
         );
         assert.strictEqual(err1.stack?.split("\n")[1], `    at ${__filename}:93:41`);
 
@@ -101,7 +101,7 @@ describe("def()", () => {
         const sum2 = def(async ({ a, b, c }) => {
             await Promise.resolve(null);
             return Buffer.from([a, b, c || 0]);
-        }, { a: Number, b: Number, c: Number.optional }, Number) as (parameters: {
+        }, [{ a: Number, b: Number, c: Number.optional }] as const, Number) as (param0: {
             a: number,
             b: number;
         }) => Promise<number>;

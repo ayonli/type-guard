@@ -2894,28 +2894,40 @@ export function remarks(note: string): MethodDecorator {
     };
 }
 
-export function def<A, R>(fn: (
-    param0: ExtractInstanceType<A>
-) => ExtractInstanceType<R>, param0: A, returns: R): (
-    param0: ExtractInstanceType<A>
-) => ExtractInstanceType<R>;
-export function def<A, R>(fn: (
-    param0: ExtractInstanceType<A>
-) => Promise<ExtractInstanceType<R>>, param0: A, returns: R): (
-    param0: ExtractInstanceType<A>
-) => Promise<ExtractInstanceType<R>>;
-export function def(fn: (param0: any) => any, param0: any, returns: any) {
-    function wrapper(this: any, arg: any) {
+export function def<A extends readonly any[], R, Fn extends (
+    ...params: ExtractInstanceType<A>
+) => ExtractInstanceType<R>>(fn: Fn, params: A, returns: R): Fn;
+export function def<A extends readonly any[], R, Fn extends (
+    ...params: ExtractInstanceType<A>
+) => Promise<ExtractInstanceType<R>>>(fn: Fn, params: A, returns: R): Fn;
+export function def(fn: (...params: any[]) => any, params: any[], returns: any) {
+    function wrapper(this: any, ...args: any[]) {
         const warnings: ValidationWarning[] = [];
         const options = { warnings, removeUnknownItems: true };
 
         try {
-            arg = validate(arg, param0, "parameters", options);
+            let _args = {};
+            const paramList = [];
+            const _params = params.map((type, index) => {
+                return { type, name: "param" + index };
+            }).reduce((record, item, index) => {
+                record[item.name] = item.type;
+                _args[item.name] = args[index];
+                paramList.push(item.name);
+                return record;
+            }, {} as { [param: string]: any; });
+
+            for (let i = paramList.length; i < args.length; i++) {
+                _args[`param${i}`] = args[i];
+            }
+
+            _args = validate(_args, _params, "parameters", options);
+            args = paramList.map(name => _args[name]);
         } catch (err) {
             throw purifyStackTrace(err, wrapper);
         }
 
-        let result = fn.call(this, arg);
+        let result = fn.call(this, ...args);
 
         if (result && typeof result === "object" && typeof result["then"] === "function") {
             return (result as Promise<any>)
@@ -2948,7 +2960,7 @@ export function def(fn: (param0: any) => any, param0: any, returns: any) {
     };
 
     wrapper[_title] = fn.name || "anonymous";
-    wrapper[_params] = [{ type: param0, name: "param0" }];
+    wrapper[_params] = params.map((type, i) => ({ type, name: "param" + i }));
     wrapper[_returns] = { type: returns, name: "returns" };
     copyFunctionProperties(fn, wrapper);
 

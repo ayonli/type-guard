@@ -694,7 +694,7 @@ const wrappedSum = def(
     ({ num1, num2, num3 }) => { // the actual function
         return num1 + num2 + (num3 ?? 0);
     },
-    { num1: Number, num2: Number, num3: Number.optional }, // parameters
+    [{ num1: Number, num2: Number, num3: Number.optional }] as const, // parameters
     Number // returns
 );
 ```
