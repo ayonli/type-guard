@@ -1,7 +1,7 @@
 {
   "name": "@hyurl/type-guard",
   "version": "1.0.0",
-  "description": "Runtime type checking for JavaScript variables and function parameters.",
+  "description": "Runtime type checking for JavaScript variables and functions.",
   "main": "dist/index.js",
   "types": "src/index.ts",
   "scripts": {

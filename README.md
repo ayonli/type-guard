@@ -1,6 +1,6 @@
 # Type Guard
 
-Runtime type checking for JavaScript variables and function parameters.
+Runtime type checking for JavaScript variables and functions.
 
 *Inspired by TypeScript, JSDoc and JSON Schema.*
 
@@ -38,16 +38,8 @@ Runtime type checking for JavaScript variables and function parameters.
 
 ## Install
 
-This package has not yet been fully tested, and is not published to NPM. If you
-want to use it in your program, add the following configuration in your
-`package.json`.
-
-```json
-{
-  "dependencies": {
-    "@hyurl/type-guard": "git+https://github.com/hyurl/type-guard.git"
-  }
-}
+```sh
+npm i @hyurl/type-guard
 ```
 
 
@@ -69,7 +61,7 @@ export default class ExampleApi {
 }
 ```
 
-Looks perfect. However, what if an HTTP client trying to call the function
+Looks perfect. However, what if an HTTP client is trying to call the function
 with malformed input:
 
 ```http
@@ -80,9 +72,8 @@ Content-Type: application/json
 {"num1":"100","num2":"200"}
 ```
 
-Things could turn out ugly. We cannot guarantee what kind of data a client
-might provide, especially when they're in different languages, some people just
-don't understand the differences between `100` and `'100'`.
+Things could turn out ugly. We cannot guarantee what kind of data the client
+may provide, especially when it's in a different programming language.
 
 So how do we solve this? This is where Type-Guard comes in.
 
@@ -111,9 +102,8 @@ compatible.
 ## Extends JavaScript Basic Type Constructors
 
 Type-Guard adds a set of keywords to the general type constructors like
-`String`, `Number`, `Boolean`, etc. for type constraints, and all schema-like
-definitions are plain objects, which can be reused any where, and even
-*inherited* (with spread syntax).
+`String`, `Number`, `Boolean`, etc. for type constraints. We can group them to
+form schema-like type definitions, and reuse them anywhere we want.
 
 ### Core Types
 
@@ -122,9 +112,9 @@ definitions are plain objects, which can be reused any where, and even
 - `Boolean`
 - `Date`
 - `Object` for objects (exclude array)
-- `Array` for an array of any type of elements
+- `Array` for an array of any type of items
 - `{}` and `[]` literals are used to define deep structures
-  - Specifically, `[]` with no elements serves as the same as `Array`
+  - Specifically, an empty `[]` literal serves as the same as `Array`
 
 
 ### Additional Types
@@ -209,7 +199,7 @@ const Structure = {
 };
 ```
 
-*Each referencing of the keywords will create a new constraint, so they can*
+*Each reference of the keywords will create a new constraint, so they can be*
 *reused without worrying about context pollution. In the above example,*
 *`Str2.required` will create a new string constraint and leave the `Str2` untouched.*
 
@@ -412,8 +402,8 @@ export default class ExampleApi {
 
 ## Validation
 
-Of course, decorators are worked without any configuration (except enabling it
-in `tsconfig.json`). In other scenarios, we can use the `validate()` function to
+Of course, decorators will work without any configuration (except enabling it in
+`tsconfig.json`). In other scenarios, we can use the `validate()` function to
 check the value we want.
 
 - `validate(value: any, type: any, variable?: string, options?)`
