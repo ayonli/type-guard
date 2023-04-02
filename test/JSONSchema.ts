@@ -921,10 +921,10 @@ describe("JSONSchema", () => {
             title: "anonymous",
             type: "function",
             parameters: {
-                param0: {
+                arg0: {
                     $schema,
-                    $id: "anonymous.parameters.param0",
-                    title: "anonymous.parameters.param0",
+                    $id: "anonymous.parameters.arg0",
+                    title: "anonymous.parameters.arg0",
                     type: "object",
                     properties: {
                         num1: { type: "number" },
@@ -953,10 +953,10 @@ describe("JSONSchema", () => {
             title: "sum",
             type: "function",
             parameters: {
-                param0: {
+                arg0: {
                     $schema,
-                    $id: "https://example.com/sum.parameters.param0.schema.json",
-                    title: "sum.parameters.param0",
+                    $id: "https://example.com/sum.parameters.arg0.schema.json",
+                    title: "sum.parameters.arg0",
                     type: "object",
                     properties: {
                         num1: { type: "number" },

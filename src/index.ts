@@ -2643,7 +2643,7 @@ const wrapMethod = (target: any, prop: string | symbol, desc: TypedPropertyDescr
                 let _args = {};
                 const paramList = [];
                 const params = paramsDef.map((item, index) => {
-                    return { ...item, name: item.name || "param" + index };
+                    return { ...item, name: item.name || "arg" + index };
                 }).reduce((record, item, index) => {
                     record[item.name] = item.type;
                     _args[item.name] = args[index];
@@ -2910,7 +2910,7 @@ export function def(fn: (...params: any[]) => any, params: any[], returns: any) 
             let _args = {};
             const paramList = [];
             const _params = params.map((type, index) => {
-                return { type, name: "param" + index };
+                return { type, name: "arg" + index };
             }).reduce((record, item, index) => {
                 record[item.name] = item.type;
                 _args[item.name] = args[index];
@@ -2961,7 +2961,7 @@ export function def(fn: (...params: any[]) => any, params: any[], returns: any) 
     };
 
     wrapper[_title] = fn.name || "anonymous";
-    wrapper[_params] = params.map((type, i) => ({ type, name: "param" + i }));
+    wrapper[_params] = params.map((type, index) => ({ type, name: "arg" + index }));
     wrapper[_returns] = { type: returns, name: "returns" };
     copyFunctionProperties(fn, wrapper);
 
@@ -3160,7 +3160,7 @@ Function.prototype.getJSONSchema = function (options) {
         description: options?.description || this[_remarks],
         deprecated: isVoid(this[_deprecated]) ? void 0 : true,
         parameters: paramsDef && !isVoidParam ? paramsDef.reduce((records, item, index) => {
-            const name = item.name || "param" + index;
+            const name = item.name || "arg" + index;
 
             records[name] = getJSONSchema(item.type, {
                 $id: `${parentId}.parameters.${name}` + (hasSuffix ? ".schema.json" : ""),
