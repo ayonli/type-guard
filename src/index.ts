@@ -3204,29 +3204,45 @@ Function.prototype.getJSONSchema = function (options) {
     const paramsDef = this[_params] as { type: any; name?: string; remarks?: string; }[];
     const returnDef = this[_returns] as { type: any; name: string; remarks?: string; };
     const isVoidParam = paramsDef?.length === 1 && paramsDef[0].type instanceof VoidType;
+    const required: string[] = [];
 
-    return this[_title] ? omitUndefined({
+    if (!this[_title])
+        return null;
+
+    const schema = omitUndefined({
         $schema: jsonSchemaDraftLink,
         $id: options?.$id || title,
         title,
-        type: "function",
+        type: "function" as const,
         description: options?.description || this[_remarks],
         deprecated: isVoid(this[_deprecated]) ? void 0 : true,
-        parameters: paramsDef && !isVoidParam ? paramsDef.reduce((records, item, index) => {
-            const name = item.name || "arg" + index;
+    });
 
-            records[name] = getJSONSchema(item.type, {
-                $id: `${parentId}.parameters.${name}` + (hasSuffix ? ".schema.json" : ""),
-                title: `${title}.parameters.${name}`,
-                description: item.remarks,
-            });
+    schema["parameters"] = paramsDef && !isVoidParam ? paramsDef.reduce((records, item, index) => {
+        const name = item.name || "arg" + index;
 
-            return records;
-        }, {}) : null,
-        returns: returnDef && !(returnDef.type instanceof VoidType) ? getJSONSchema(returnDef.type, {
-            $id: `${parentId}.${returnDef.name}` + (hasSuffix ? ".schema.json" : ""),
-            title: `${title}.${returnDef.name}`,
-            description: returnDef.remarks,
-        }) : null,
+        records[name] = getJSONSchema(item.type, {
+            $id: `${parentId}.parameters.${name}` + (hasSuffix ? ".schema.json" : ""),
+            title: `${title}.parameters.${name}`,
+            description: item.remarks,
+        });
+
+        if (!(item.type instanceof ValidateableType) || !item.type["_optional"]) {
+            required.push(name);
+        }
+
+        return records;
+    }, {}) : null;
+
+    if (required.length) {
+        schema["required"] = required;
+    }
+
+    schema["returns"] = returnDef && !(returnDef.type instanceof VoidType) ? getJSONSchema(returnDef.type, {
+        $id: `${parentId}.${returnDef.name}` + (hasSuffix ? ".schema.json" : ""),
+        title: `${title}.${returnDef.name}`,
+        description: returnDef.remarks,
     }) : null;
+
+    return schema;
 };

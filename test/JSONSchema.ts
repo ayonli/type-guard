@@ -1,6 +1,6 @@
 import * as assert from "assert";
 import { describe, it } from "mocha";
-import { Any, as, def, deprecated, Dict, getJSONSchema, param, remarks, returns, StringType, Void } from "..";
+import { Any, as, decorate, def, deprecated, Dict, getJSONSchema, param, remarks, returns, StringType, Void } from "..";
 
 Error.stackTraceLimit = 10;
 
@@ -774,6 +774,7 @@ describe("JSONSchema", () => {
                     additionalProperties: false,
                 },
             },
+            required: ["data"],
             returns: {
                 $schema,
                 $id: "Example.test1.returns",
@@ -831,6 +832,7 @@ describe("JSONSchema", () => {
                     additionalProperties: false,
                 },
             },
+            required: ["data"],
             returns: null,
         });
 
@@ -900,6 +902,7 @@ describe("JSONSchema", () => {
                     additionalProperties: false,
                 },
             },
+            required: ["data"],
             returns: {
                 $schema,
                 $id: "https://example.com/example.test7.returns.schema.json",
@@ -909,10 +912,96 @@ describe("JSONSchema", () => {
         });
     });
 
+    it("should create a supper schema for common function", () => {
+        const sum = decorate(
+            param("num1", Number),
+            param("num2", Number),
+            param("num3", Number.optional),
+            returns(Number)
+        )(function sum(num1: number, num2: number, num3?: number) {
+            return num1 + num2 + (num3 || 0);
+        });
+
+        const $schema = "https://json-schema.org/draft/2020-12/schema";
+        const schema1 = sum.getJSONSchema();
+        assert.deepStrictEqual(schema1, {
+            $schema,
+            $id: "sum",
+            title: "sum",
+            type: "function",
+            parameters: {
+                num1: {
+                    $schema,
+                    $id: "sum.parameters.num1",
+                    title: "sum.parameters.num1",
+                    type: "number",
+                },
+                num2: {
+                    $schema,
+                    $id: "sum.parameters.num2",
+                    title: "sum.parameters.num2",
+                    type: "number",
+                },
+                num3: {
+                    $schema,
+                    $id: "sum.parameters.num3",
+                    title: "sum.parameters.num3",
+                    type: "number",
+                },
+            },
+            required: ["num1", "num2"],
+            returns: {
+                $schema,
+                $id: "sum.returns",
+                title: "sum.returns",
+                type: "number",
+            },
+        });
+
+        const schema2 = sum.getJSONSchema({
+            $id: "https://example.com/sum.schema.json",
+            title: "sum",
+        });
+        assert.deepStrictEqual(schema2, {
+            $schema,
+            $id: "https://example.com/sum.schema.json",
+            title: "sum",
+            type: "function",
+            parameters: {
+                num1: {
+                    $schema,
+                    $id: "https://example.com/sum.parameters.num1.schema.json",
+                    title: "sum.parameters.num1",
+                    type: "number",
+                },
+                num2: {
+                    $schema,
+                    $id: "https://example.com/sum.parameters.num2.schema.json",
+                    title: "sum.parameters.num2",
+                    type: "number",
+                },
+                num3: {
+                    $schema,
+                    $id: "https://example.com/sum.parameters.num3.schema.json",
+                    title: "sum.parameters.num3",
+                    type: "number",
+                },
+            },
+            required: ["num1", "num2"],
+            returns: {
+                $schema,
+                $id: "https://example.com/sum.returns.schema.json",
+                title: "sum.returns",
+                type: "number",
+            },
+        });
+    });
+
     it("it should create a super schema for wrapped function", () => {
         const sum = def(({ num1, num2, num3 }) => {
             return num1 + num2 + (num3 ?? 0);
         }, [{ num1: Number, num2: Number, num3: Number.optional }] as const, Number);
+
         const $schema = "https://json-schema.org/draft/2020-12/schema";
         const schema1 = sum.getJSONSchema();
         assert.deepStrictEqual(schema1, {
@@ -935,6 +1024,7 @@ describe("JSONSchema", () => {
                     additionalProperties: false,
                 },
             },
+            required: ["arg0"],
             returns: {
                 $schema,
                 $id: "anonymous.returns",
@@ -967,6 +1057,7 @@ describe("JSONSchema", () => {
                     additionalProperties: false,
                 },
             },
+            required: ["arg0"],
             returns: {
                 $schema,
                 $id: "https://example.com/sum.returns.schema.json",
