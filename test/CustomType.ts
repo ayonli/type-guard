@@ -18,6 +18,19 @@ describe("CustomType", () => {
             String(err2),
             "TypeError: buf is expected to be a Buffer, but a string is given"
         );
+
+        const fn = () => null;
+        const fn1 = validate(fn, Function, "fn1");
+        assert.strictEqual(fn1, fn);
+
+        const [err3] = _try(() => validate(null, Function, "fn"));
+        assert.strictEqual(String(err3), "Error: fn is required, but no value is given");
+
+        const [err4] = _try(() => validate("Not a function", Function, "fn"));
+        assert.strictEqual(
+            String(err4),
+            "TypeError: fn is expected to be a function, but a string is given"
+        );
     });
 
     it("should validate values of custom types with as() function", () => {

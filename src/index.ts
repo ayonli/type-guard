@@ -1235,6 +1235,8 @@ export class CustomType<T> extends ValidateableType<T> {
         } else if (this.type instanceof Function) {
             if (value instanceof this.type) {
                 return value;
+            } else if (Object.is(this.type, Function)) {
+                throw this.createTypeError(path, value, "function");
             } else {
                 throw this.createTypeError(path, value, this.type.name);
             }
@@ -1266,7 +1268,7 @@ export class CustomType<T> extends ValidateableType<T> {
             } as JSONSchema);
         } else if (this.type instanceof Function) {
             return omitUndefined({
-                type: "object",
+                type: Object.is(this.type, Function) ? "function" : "object",
                 description: this._remarks,
                 default: toJSON(this._default),
                 deprecated: isVoid(this._deprecated) ? void 0 : true,
