@@ -2561,7 +2561,7 @@ export function validate<T>(value: any, type: T, variable = "$", options: {
     }
 }
 
-const _methods = Symbol.for("methods");
+const _source = Symbol("source");
 const _params = Symbol.for("params");
 const _returns = Symbol.for("returns");
 const _throws = Symbol.for("throws");
@@ -2569,7 +2569,13 @@ const _title = Symbol.for("title");
 const _remarks = Symbol.for("remarks");
 const _deprecated = Symbol.for("deprecated");
 
+export type FunctionDecorator = {
+    <T>(target: any, prop: string, desc: TypedPropertyDescriptor<T>): void | TypedPropertyDescriptor<T>;
+    <F extends (...args: any) => any>(target: F): void | F;
+};
+
 export type ValidationWarning = { path: string; message: string; };
+
 export type WarningHandler = (
     this: any,
     warnings: ValidationWarning[],
@@ -2607,11 +2613,15 @@ class ValidationError extends Error {
     }
 }
 
-const wrapMethod = (target: any, prop: string | symbol, desc: TypedPropertyDescriptor<any>) => {
-    if (!target[_methods]?.[prop]) {
-        const originFn: (...arg: any[]) => any = (target[_methods] ??= {})[prop] = desc.value;
-        const newFn = desc.value = (function (this: any, ...args: any[]) {
-            const method = target[_methods][prop] as (...arg: any[]) => any;
+function wrap(target: any, prop: string = void 0, desc: TypedPropertyDescriptor<any> = null) {
+    let fn: (...arg: any[]) => any = desc ? desc.value : target;
+
+    if (!fn[_source]) {
+        const fnName: string = prop
+            || (typeof target === "function" ? target.name : "")
+            || "anonymous";
+        const originFn = fn;
+        const newFn = (function (this: any, ...args: any[]) {
             let paramsDef = newFn[_params] as { type: any; name?: string; }[];
             const returnDef = newFn[_returns] as { type: any; name: string; };
             const throwDef = newFn[_throws] as { type: any; name: string; };
@@ -2620,9 +2630,9 @@ const wrapMethod = (target: any, prop: string | symbol, desc: TypedPropertyDescr
 
             if (!isVoid(newFn[_deprecated])) {
                 const message = newFn[_deprecated]
-                    ? `${String(prop)}() is deprecated: ${newFn[_deprecated]}`
-                    : `${String(prop)}() is deprecated`;
-                warnings.push({ path: `${String(prop)}()`, message });
+                    ? `${fnName}() is deprecated: ${newFn[_deprecated]}`
+                    : `${fnName}() is deprecated`;
+                warnings.push({ path: `${fnName}()`, message });
             }
 
             if (paramsDef) {
@@ -2633,8 +2643,8 @@ const wrapMethod = (target: any, prop: string | symbol, desc: TypedPropertyDescr
                         args = [];
                     } else if (args.length > 1 || ![null, undefined].includes(args[0])) {
                         warnings.push({
-                            path: `${String(prop)}()`,
-                            message: `${String(prop)}() is expected to have no argument, `
+                            path: `${fnName}()`,
+                            message: `${fnName}() is expected to have no argument, `
                                 + `but ${readType(args[0])} is given`
                         });
                     }
@@ -2652,7 +2662,7 @@ const wrapMethod = (target: any, prop: string | symbol, desc: TypedPropertyDescr
                 }, {} as { [param: string]: any; });
 
                 for (let i = paramList.length; i < args.length; i++) {
-                    _args[`param${i}`] = args[i];
+                    _args[`arg${i}`] = args[i];
                 }
 
                 try {
@@ -2707,7 +2717,7 @@ const wrapMethod = (target: any, prop: string | symbol, desc: TypedPropertyDescr
             };
 
             const handleResult = () => {
-                let returns = method.apply(this, args);
+                let returns = originFn.apply(this, args);
 
                 if (returns && typeof returns === "object" && typeof returns.then === "function") {
                     if (returnDef) {
@@ -2746,9 +2756,24 @@ const wrapMethod = (target: any, prop: string | symbol, desc: TypedPropertyDescr
             }
         }) as any;
 
-        newFn[_title] = (target.constructor as Constructor<any>).name + "." + String(prop);
+        newFn[_source] = originFn;
+
+        if (typeof target === "function") {
+            newFn[_title] = fnName;
+        } else {
+            newFn[_title] = (target.constructor as Constructor<any>).name + "." + fnName;
+        }
+
         copyFunctionProperties(originFn, newFn);
+
+        if (desc) {
+            fn = (desc.value = newFn);
+        } else {
+            fn = newFn;
+        }
     }
+
+    return fn;
 };
 
 /**
@@ -2773,18 +2798,18 @@ const wrapMethod = (target: any, prop: string | symbol, desc: TypedPropertyDescr
  * }
  * ```
  */
-export function param<T>(type: T, name?: string, remarks?: string): MethodDecorator;
-export function param<T>(name: string, type: T, remarks?: string): MethodDecorator;
-export function param<T>(arg0: T | string, arg1?: string | T, remarks: string = void 0): MethodDecorator {
+export function param<T>(type: T, name?: string, remarks?: string): FunctionDecorator;
+export function param<T>(name: string, type: T, remarks?: string): FunctionDecorator;
+export function param<T>(arg0: T | string, arg1?: string | T, remarks: string = void 0) {
     const type = typeof arg0 === "string" ? arg1 as T : arg0 as T;
     const name = typeof arg0 === "string" ? arg0 as string : arg1 as string;
 
-    return (target, prop, desc) => {
-        wrapMethod(target, prop, desc);
-
-        const fn = desc.value as (...args: any[]) => any;
+    return (target: any, prop: string = void 0, desc: TypedPropertyDescriptor<any> = null) => {
+        const fn = wrap(target, prop, desc);
         const params = (fn[_params] ??= []) as { type: any; name?: string; remarks?: string; }[];
         params.unshift({ type, name, remarks });
+
+        return desc ?? fn;
     };
 }
 
@@ -2812,13 +2837,13 @@ export function param<T>(arg0: T | string, arg1?: string | T, remarks: string = 
  * }
  * ```
  */
-export function returns<T>(type: T, remarks: string = void 0): MethodDecorator {
-    return (target, prop, desc) => {
-        wrapMethod(target, prop, desc);
-
-        const fn = desc.value as (...args: any[]) => any;
+export function returns<T>(type: T, remarks: string = void 0) {
+    return ((target: any, prop: string = void 0, desc: TypedPropertyDescriptor<any> = null) => {
+        const fn = wrap(target, prop, desc);
         fn[_returns] = { type, name: "returns", remarks };
-    };
+
+        return desc ?? fn;
+    }) as FunctionDecorator;
 }
 
 /**
@@ -2839,13 +2864,13 @@ export function returns<T>(type: T, remarks: string = void 0): MethodDecorator {
  * }
  * ```
  */
-export function throws<T>(type: T): MethodDecorator {
-    return (target, prop, desc) => {
-        wrapMethod(target, prop, desc);
-
-        const fn = desc.value as (...args: any[]) => any;
+export function throws<T>(type: T) {
+    return ((target: any, prop: string = void 0, desc: TypedPropertyDescriptor<any> = null) => {
+        const fn = wrap(target, prop, desc);
         fn[_throws] = { type, name: "throws" };
-    };
+
+        return desc ?? fn;
+    }) as FunctionDecorator;
 }
 
 /**
@@ -2863,13 +2888,13 @@ export function throws<T>(type: T): MethodDecorator {
  * }
  * ```
  */
-export function deprecated(message = ""): MethodDecorator {
-    return (target, prop, desc) => {
-        wrapMethod(target, prop, desc);
-
-        const fn = desc.value as (...args: any[]) => any;
+export function deprecated(message = "") {
+    return ((target: any, prop: string = void 0, desc: TypedPropertyDescriptor<any> = null) => {
+        const fn = wrap(target, prop, desc);
         fn[_deprecated] = message;
-    };
+
+        return desc ?? fn;
+    }) as FunctionDecorator;
 }
 
 /**
@@ -2886,12 +2911,22 @@ export function deprecated(message = ""): MethodDecorator {
  * }
  * ```
  */
-export function remarks(note: string): MethodDecorator {
-    return (target, prop, desc) => {
-        wrapMethod(target, prop, desc);
-
-        const fn = desc.value as (...args: any[]) => any;
+export function remarks(note: string) {
+    return ((target: any, prop: string = void 0, desc: TypedPropertyDescriptor<any> = null) => {
+        const fn = wrap(target, prop, desc);
         fn[_remarks] = note;
+
+        return desc ?? fn;
+    }) as FunctionDecorator;
+}
+
+export function decorate(...decorators: FunctionDecorator[]) {
+    return <Fn extends (...args: any[]) => any>(fn: Fn) => {
+        for (let i = decorators.length - 1; i >= 0; i--) {
+            fn = decorators[i](fn) as Fn ?? fn;
+        }
+
+        return fn;
     };
 }
 
@@ -2901,15 +2936,31 @@ export function def<A extends readonly any[], R, Fn extends (
 export function def<A extends readonly any[], R, Fn extends (
     ...params: ExtractInstanceType<A>
 ) => Promise<ExtractInstanceType<R>>>(fn: Fn, params: A, returns: R): Fn;
-export function def(fn: (...params: any[]) => any, params: any[], returns: any) {
+export function def(fn: (...params: any[]) => any, paramsDef: any[], returnDef: any) {
+    const fnName = fn.name || "anonymous";
+
     function wrapper(this: any, ...args: any[]) {
         const warnings: ValidationWarning[] = [];
         const options = { warnings, removeUnknownItems: true };
 
         try {
+            if (paramsDef.length === 1 && [Void, VoidType].includes(paramsDef[0])) {
+                paramsDef = [];
+
+                if (args.length === 1 && [null, undefined].includes(args[0])) {
+                    args = [];
+                } else if (args.length > 1 || ![null, undefined].includes(args[0])) {
+                    warnings.push({
+                        path: `${fnName}()`,
+                        message: `${fnName}() is expected to have no argument, `
+                            + `but ${readType(args[0])} is given`
+                    });
+                }
+            }
+
             let _args = {};
             const paramList = [];
-            const _params = params.map((type, index) => {
+            const params = paramsDef.map((type, index) => {
                 return { type, name: "arg" + index };
             }).reduce((record, item, index) => {
                 record[item.name] = item.type;
@@ -2919,10 +2970,10 @@ export function def(fn: (...params: any[]) => any, params: any[], returns: any) 
             }, {} as { [param: string]: any; });
 
             for (let i = paramList.length; i < args.length; i++) {
-                _args[`param${i}`] = args[i];
+                _args[`arg${i}`] = args[i];
             }
 
-            _args = validate(_args, _params, "parameters", options);
+            _args = validate(_args, params, "parameters", options);
             args = paramList.map(name => _args[name]);
         } catch (err) {
             throw purifyStackTrace(err, wrapper);
@@ -2934,7 +2985,7 @@ export function def(fn: (...params: any[]) => any, params: any[], returns: any) 
             return (result as Promise<any>)
                 .then(function resolver(res) {
                     try {
-                        return validate(res, returns, "returns", {
+                        return validate(res, returnDef, "returns", {
                             ...options,
                             suppress: true,
                         });
@@ -2947,7 +2998,7 @@ export function def(fn: (...params: any[]) => any, params: any[], returns: any) 
                 });
         } else {
             try {
-                result = validate(result, returns, "returns", {
+                result = validate(result, returnDef, "returns", {
                     ...options,
                     suppress: true,
                 });
@@ -2960,9 +3011,9 @@ export function def(fn: (...params: any[]) => any, params: any[], returns: any) 
         }
     };
 
-    wrapper[_title] = fn.name || "anonymous";
-    wrapper[_params] = params.map((type, index) => ({ type, name: "arg" + index }));
-    wrapper[_returns] = { type: returns, name: "returns" };
+    wrapper[_title] = fnName;
+    wrapper[_params] = paramsDef.map((type, index) => ({ type, name: "arg" + index }));
+    wrapper[_returns] = { type: returnDef, name: "returns" };
     copyFunctionProperties(fn, wrapper);
 
     return wrapper;

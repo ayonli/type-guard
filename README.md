@@ -665,32 +665,25 @@ type Struct = ExtractInstanceType<typeof Struct>;
 
 ## Working with Common Functions
 
-Well, decorators only works on class methods, so if we want to use type
-validation in a common function, there are two ways (with limited support) to do
-it:
+Well, decorators only work on class methods, if we want to use type validation
+in common functions, there are two ways to do so:
 
-1. Use `validate()` function explicitly in the function. (will not emit warnings by default)
+1. Use `decorate()` function to simulate decorator features on a function.
 2. Use `def()` function to create a wrapped function with type checking features.
 
 ```ts
-import { validate, def, ValidationWarning, emitWarnings } from "@hyurl/type-guard";
+import { decorate, def, param, returns } from "@hyurl/type-guard";
 
-function sum(num1: number, num2: number, num3?: number): number {
-    const warnings: ValidationWarning[] = []; // record warnings manually
+const sum = decorate(
+    param("num1", Number),
+    param("num2", Number),
+    param("num3", Number.optional),
+    returns(Number)
+)(function sum(num1: number, num2: number, num3?: number) {
+    return num1 + num2 + (num3 ?? 0);
+});
 
-    num1 = validate(num1, Number, "num1", { warnings });
-    num2 = validate(num2, Number, "num2", { warnings });
-    num3 = validate(num3, Number.optional, "num3", { warnings });
-
-    let returns = num1 + num2 + (num3 || 0);
-    returns = validate(returns, Number, "returns", { warnings });
-
-    emitWarnings(warnings, returns); // emit warnings manually
-
-    return returns;
-}
-
-const wrappedSum = def(
+const sum2 = def(
     ({ num1, num2, num3 }) => { // the actual function
         return num1 + num2 + (num3 ?? 0);
     },
@@ -705,7 +698,7 @@ The type definition can be easily converted to JSON Schema, and exported to
 other clients or languages for wider adoption.
 
 ```ts
-import { ExtractInstanceType, getJSONSchema } from "@hyurl/type-guard";
+import { getJSONSchema } from "@hyurl/type-guard";
 
 const Article = {
     id: Number.remarks("The ID of article"),
@@ -714,8 +707,6 @@ const Article = {
     status: String.enum(["created", "published", "archived"] as const).remarks("The status of the article"),
     tags: [String].optional.remarks("The tags of the article"),
 };
-
-type Article = ExtractInstanceType<typeof Article>; // type declaration
 
 const ArticleSchema = getJSONSchema(Article, { // and JSON schema
     $id: "https://myapi.com/article.schema.json",

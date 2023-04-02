@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getJSONSchema = exports.ensured = exports.optional = exports.required = exports.partial = exports.def = exports.remarks = exports.deprecated = exports.throws = exports.returns = exports.param = exports.emitWarnings = exports.setWarningHandler = exports.validate = exports.as = exports.Dict = exports.Void = exports.Any = exports.OptionalTupleType = exports.TupleType = exports.OptionalArrayType = exports.ArrayType = exports.OptionalDictType = exports.DictType = exports.OptionalUnionType = exports.UnionType = exports.OptionalCustomType = exports.CustomType = exports.VoidType = exports.OptionalAnyType = exports.AnyType = exports.OptionalObjectType = exports.ObjectType = exports.OptionalDateType = exports.DateType = exports.OptionalBooleanType = exports.BooleanType = exports.OptionalBigIntEnum = exports.BigIntEnum = exports.OptionalBigIntType = exports.BigIntType = exports.OptionalNumberEnum = exports.NumberEnum = exports.OptionalNumberType = exports.NumberType = exports.OptionalStringEnum = exports.StringEnum = exports.OptionalStringType = exports.StringType = exports.ValidateableType = void 0;
+exports.ensured = exports.optional = exports.required = exports.partial = exports.def = exports.decorate = exports.remarks = exports.deprecated = exports.throws = exports.returns = exports.param = exports.emitWarnings = exports.setWarningHandler = exports.validate = exports.as = exports.Dict = exports.Void = exports.Any = exports.OptionalTupleType = exports.TupleType = exports.OptionalArrayType = exports.ArrayType = exports.OptionalDictType = exports.DictType = exports.OptionalUnionType = exports.UnionType = exports.OptionalCustomType = exports.CustomType = exports.VoidType = exports.OptionalAnyType = exports.AnyType = exports.OptionalObjectType = exports.ObjectType = exports.OptionalDateType = exports.DateType = exports.OptionalBooleanType = exports.BooleanType = exports.OptionalBigIntEnum = exports.BigIntEnum = exports.OptionalBigIntType = exports.BigIntType = exports.OptionalNumberEnum = exports.NumberEnum = exports.OptionalNumberType = exports.NumberType = exports.OptionalStringEnum = exports.StringEnum = exports.OptionalStringType = exports.StringType = exports.ValidateableType = void 0;
+exports.getJSONSchema = void 0;
 const tslib_1 = require("tslib");
 require("@hyurl/utils/types");
 const omit_1 = require("@hyurl/utils/omit");
@@ -2154,7 +2155,7 @@ function validate(value, type, variable = "$", options = null) {
     }
 }
 exports.validate = validate;
-const _methods = Symbol.for("methods");
+const _source = Symbol("source");
 const _params = Symbol.for("params");
 const _returns = Symbol.for("returns");
 const _throws = Symbol.for("throws");
@@ -2191,12 +2192,14 @@ class ValidationError extends Error {
         (_a = this.cause) !== null && _a !== void 0 ? _a : (this.cause = options.cause);
     }
 }
-const wrapMethod = (target, prop, desc) => {
-    var _a, _b;
-    if (!((_a = target[_methods]) === null || _a === void 0 ? void 0 : _a[prop])) {
-        const originFn = ((_b = target[_methods]) !== null && _b !== void 0 ? _b : (target[_methods] = {}))[prop] = desc.value;
-        const newFn = desc.value = (function (...args) {
-            const method = target[_methods][prop];
+function wrap(target, prop = void 0, desc = null) {
+    let fn = desc ? desc.value : target;
+    if (!fn[_source]) {
+        const fnName = prop
+            || (typeof target === "function" ? target.name : "")
+            || "anonymous";
+        const originFn = fn;
+        const newFn = (function (...args) {
             let paramsDef = newFn[_params];
             const returnDef = newFn[_returns];
             const throwDef = newFn[_throws];
@@ -2204,9 +2207,9 @@ const wrapMethod = (target, prop, desc) => {
             const options = { warnings, removeUnknownItems: true };
             if (!(0, isVoid_1.default)(newFn[_deprecated])) {
                 const message = newFn[_deprecated]
-                    ? `${String(prop)}() is deprecated: ${newFn[_deprecated]}`
-                    : `${String(prop)}() is deprecated`;
-                warnings.push({ path: `${String(prop)}()`, message });
+                    ? `${fnName}() is deprecated: ${newFn[_deprecated]}`
+                    : `${fnName}() is deprecated`;
+                warnings.push({ path: `${fnName}()`, message });
             }
             if (paramsDef) {
                 if (paramsDef.length === 1 && [exports.Void, VoidType].includes(paramsDef[0].type)) {
@@ -2216,8 +2219,8 @@ const wrapMethod = (target, prop, desc) => {
                     }
                     else if (args.length > 1 || ![null, undefined].includes(args[0])) {
                         warnings.push({
-                            path: `${String(prop)}()`,
-                            message: `${String(prop)}() is expected to have no argument, `
+                            path: `${fnName}()`,
+                            message: `${fnName}() is expected to have no argument, `
                                 + `but ${readType(args[0])} is given`
                         });
                     }
@@ -2233,7 +2236,7 @@ const wrapMethod = (target, prop, desc) => {
                     return record;
                 }, {});
                 for (let i = paramList.length; i < args.length; i++) {
-                    _args[`param${i}`] = args[i];
+                    _args[`arg${i}`] = args[i];
                 }
                 try {
                     _args = validate(_args, params, "parameters", options);
@@ -2275,7 +2278,7 @@ const wrapMethod = (target, prop, desc) => {
                 }
             };
             const handleResult = () => {
-                let returns = method.apply(this, args);
+                let returns = originFn.apply(this, args);
                 if (returns && typeof returns === "object" && typeof returns.then === "function") {
                     if (returnDef) {
                         returns = returns
@@ -2311,19 +2314,33 @@ const wrapMethod = (target, prop, desc) => {
                 handleError(err);
             }
         });
-        newFn[_title] = target.constructor.name + "." + String(prop);
+        newFn[_source] = originFn;
+        if (typeof target === "function") {
+            newFn[_title] = fnName;
+        }
+        else {
+            newFn[_title] = target.constructor.name + "." + fnName;
+        }
         copyFunctionProperties(originFn, newFn);
+        if (desc) {
+            fn = (desc.value = newFn);
+        }
+        else {
+            fn = newFn;
+        }
     }
-};
+    return fn;
+}
+;
 function param(arg0, arg1, remarks = void 0) {
     const type = typeof arg0 === "string" ? arg1 : arg0;
     const name = typeof arg0 === "string" ? arg0 : arg1;
-    return (target, prop, desc) => {
+    return (target, prop = void 0, desc = null) => {
         var _a;
-        wrapMethod(target, prop, desc);
-        const fn = desc.value;
+        const fn = wrap(target, prop, desc);
         const params = ((_a = fn[_params]) !== null && _a !== void 0 ? _a : (fn[_params] = []));
         params.unshift({ type, name, remarks });
+        return desc !== null && desc !== void 0 ? desc : fn;
     };
 }
 exports.param = param;
@@ -2352,11 +2369,11 @@ exports.param = param;
  * ```
  */
 function returns(type, remarks = void 0) {
-    return (target, prop, desc) => {
-        wrapMethod(target, prop, desc);
-        const fn = desc.value;
+    return ((target, prop = void 0, desc = null) => {
+        const fn = wrap(target, prop, desc);
         fn[_returns] = { type, name: "returns", remarks };
-    };
+        return desc !== null && desc !== void 0 ? desc : fn;
+    });
 }
 exports.returns = returns;
 /**
@@ -2378,11 +2395,11 @@ exports.returns = returns;
  * ```
  */
 function throws(type) {
-    return (target, prop, desc) => {
-        wrapMethod(target, prop, desc);
-        const fn = desc.value;
+    return ((target, prop = void 0, desc = null) => {
+        const fn = wrap(target, prop, desc);
         fn[_throws] = { type, name: "throws" };
-    };
+        return desc !== null && desc !== void 0 ? desc : fn;
+    });
 }
 exports.throws = throws;
 /**
@@ -2401,11 +2418,11 @@ exports.throws = throws;
  * ```
  */
 function deprecated(message = "") {
-    return (target, prop, desc) => {
-        wrapMethod(target, prop, desc);
-        const fn = desc.value;
+    return ((target, prop = void 0, desc = null) => {
+        const fn = wrap(target, prop, desc);
         fn[_deprecated] = message;
-    };
+        return desc !== null && desc !== void 0 ? desc : fn;
+    });
 }
 exports.deprecated = deprecated;
 /**
@@ -2423,21 +2440,45 @@ exports.deprecated = deprecated;
  * ```
  */
 function remarks(note) {
-    return (target, prop, desc) => {
-        wrapMethod(target, prop, desc);
-        const fn = desc.value;
+    return ((target, prop = void 0, desc = null) => {
+        const fn = wrap(target, prop, desc);
         fn[_remarks] = note;
-    };
+        return desc !== null && desc !== void 0 ? desc : fn;
+    });
 }
 exports.remarks = remarks;
-function def(fn, params, returns) {
+function decorate(...decorators) {
+    return (fn) => {
+        var _a;
+        for (let i = decorators.length - 1; i >= 0; i--) {
+            fn = (_a = decorators[i](fn)) !== null && _a !== void 0 ? _a : fn;
+        }
+        return fn;
+    };
+}
+exports.decorate = decorate;
+function def(fn, paramsDef, returnDef) {
+    const fnName = fn.name || "anonymous";
     function wrapper(...args) {
         const warnings = [];
         const options = { warnings, removeUnknownItems: true };
         try {
+            if (paramsDef.length === 1 && [exports.Void, VoidType].includes(paramsDef[0])) {
+                paramsDef = [];
+                if (args.length === 1 && [null, undefined].includes(args[0])) {
+                    args = [];
+                }
+                else if (args.length > 1 || ![null, undefined].includes(args[0])) {
+                    warnings.push({
+                        path: `${fnName}()`,
+                        message: `${fnName}() is expected to have no argument, `
+                            + `but ${readType(args[0])} is given`
+                    });
+                }
+            }
             let _args = {};
             const paramList = [];
-            const _params = params.map((type, index) => {
+            const params = paramsDef.map((type, index) => {
                 return { type, name: "arg" + index };
             }).reduce((record, item, index) => {
                 record[item.name] = item.type;
@@ -2446,9 +2487,9 @@ function def(fn, params, returns) {
                 return record;
             }, {});
             for (let i = paramList.length; i < args.length; i++) {
-                _args[`param${i}`] = args[i];
+                _args[`arg${i}`] = args[i];
             }
-            _args = validate(_args, _params, "parameters", options);
+            _args = validate(_args, params, "parameters", options);
             args = paramList.map(name => _args[name]);
         }
         catch (err) {
@@ -2459,7 +2500,7 @@ function def(fn, params, returns) {
             return result
                 .then(function resolver(res) {
                 try {
-                    return validate(res, returns, "returns", Object.assign(Object.assign({}, options), { suppress: true }));
+                    return validate(res, returnDef, "returns", Object.assign(Object.assign({}, options), { suppress: true }));
                 }
                 catch (err) {
                     throw purifyStackTrace(err, resolver);
@@ -2471,7 +2512,7 @@ function def(fn, params, returns) {
         }
         else {
             try {
-                result = validate(result, returns, "returns", Object.assign(Object.assign({}, options), { suppress: true }));
+                result = validate(result, returnDef, "returns", Object.assign(Object.assign({}, options), { suppress: true }));
                 emitWarnings.call(this, warnings, result);
                 return result;
             }
@@ -2481,9 +2522,9 @@ function def(fn, params, returns) {
         }
     }
     ;
-    wrapper[_title] = fn.name || "anonymous";
-    wrapper[_params] = params.map((type, index) => ({ type, name: "arg" + index }));
-    wrapper[_returns] = { type: returns, name: "returns" };
+    wrapper[_title] = fnName;
+    wrapper[_params] = paramsDef.map((type, index) => ({ type, name: "arg" + index }));
+    wrapper[_returns] = { type: returnDef, name: "returns" };
     copyFunctionProperties(fn, wrapper);
     return wrapper;
 }

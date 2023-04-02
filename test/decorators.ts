@@ -1,7 +1,7 @@
 import * as assert from "assert";
 import { describe, it, before, after } from "mocha";
 import _try from "dotry";
-import { as, deprecated, param, remarks, returns, setWarningHandler, throws, ValidationWarning, Void } from "..";
+import { as, decorate, deprecated, param, remarks, returns, setWarningHandler, throws, ValidationWarning, Void } from "..";
 
 describe("decorators", () => {
     const warnings: ValidationWarning[] = [];
@@ -10,47 +10,6 @@ describe("decorators", () => {
         setWarningHandler(function (_warnings) {
             warnings.push(..._warnings);
         });
-    });
-
-    after(() => {
-        assert.deepStrictEqual(warnings, [
-            {
-                path: "parameters.num",
-                message: "a string at parameters.num has been converted to number"
-            },
-            {
-                path: "parameters.param1",
-                message: "unknown property parameters.param1 has been removed"
-            },
-            {
-                path: "parameters.param1",
-                message: "unknown property parameters.param1 has been removed"
-            },
-            {
-                path: "test()",
-                message: "test() is expected to have no argument, but a string is given"
-            },
-            {
-                path: "parameters.param0",
-                message: "unknown property parameters.param0 has been removed"
-            },
-            {
-                path: "returns",
-                message: "a string at returns has been converted to number"
-            },
-            {
-                path: "returns",
-                message: "a string at returns has been converted to number"
-            },
-            {
-                path: "test1()",
-                message: "test1() is deprecated: use test3() instead"
-            },
-            {
-                path: "test2()",
-                message: "test2() is deprecated"
-            }
-        ] as ValidationWarning[]);
     });
 
     describe("@param()", () => {
@@ -180,7 +139,7 @@ describe("decorators", () => {
                 String(err1),
                 "TypeError: parameters.text is expected to be a string, but a Buffer is given"
             );
-            assert.strictEqual(err1.stack?.split("\n")[1], `    at ${__filename}:178:47`);
+            assert.strictEqual(err1.stack?.split("\n")[1], `    at ${__filename}:137:47`);
 
             // @ts-ignore
             const [err2] = await _try(() => example.test2(Buffer.from("hello, world!")));
@@ -188,7 +147,7 @@ describe("decorators", () => {
                 String(err2),
                 "TypeError: parameters.text is expected to be a string, but a Buffer is given"
             );
-            assert.strictEqual(err2.stack?.split("\n")[1], `    at ${__filename}:186:53`);
+            assert.strictEqual(err2.stack?.split("\n")[1], `    at ${__filename}:145:53`);
         });
     });
 
@@ -313,7 +272,7 @@ describe("decorators", () => {
                 String(err1),
                 "TypeError: returns is expected to be a string, but a Buffer is given"
             );
-            assert.strictEqual(err1.stack?.split("\n")[1], `    at ${__filename}:311:47`);
+            assert.strictEqual(err1.stack?.split("\n")[1], `    at ${__filename}:270:47`);
 
             // @ts-ignore
             const [err2] = await _try(() => example.test2(Buffer.from("hello, world!")));
@@ -321,7 +280,7 @@ describe("decorators", () => {
                 String(err2),
                 "TypeError: returns is expected to be a string, but a Buffer is given"
             );
-            assert.strictEqual(err2.stack?.split("\n")[1], `    at async Context.<anonymous> (${__filename}:319:28)`);
+            assert.strictEqual(err2.stack?.split("\n")[1], `    at async Context.<anonymous> (${__filename}:278:28)`);
         });
     });
 
@@ -466,23 +425,23 @@ describe("decorators", () => {
 
             const [err1] = _try(() => example.test1());
             assert.strictEqual(String(err1), "ReferenceError: shall not use this");
-            assert.strictEqual(err1.stack?.split("\n")[1], `    at Example.test1 (${__filename}:440:27)`);
+            assert.strictEqual(err1.stack?.split("\n")[1], `    at Example.test1 (${__filename}:399:27)`);
 
             const [err2] = _try(() => example.test2());
             assert.strictEqual(
                 String(err2),
                 "TypeError: throws is expected to be a ReferenceError, but a TypeError is given"
             );
-            assert.strictEqual(err2.stack?.split("\n")[1], `    at ${__filename}:471:47`);
+            assert.strictEqual(err2.stack?.split("\n")[1], `    at ${__filename}:430:47`);
 
             const [err3] = _try(() => example.test3());
             assert.strictEqual(String(err3), "ReferenceError: shall not use this");
-            assert.strictEqual(err3.stack?.split("\n")[1], `    at Example.test3 (${__filename}:449:27)`);
+            assert.strictEqual(err3.stack?.split("\n")[1], `    at Example.test3 (${__filename}:408:27)`);
 
             // @ts-ignore
             const [err4] = await _try(() => example.test4());
             assert.strictEqual(String(err4), "ReferenceError: shall not use this");
-            assert.strictEqual(err4.stack?.split("\n")[1], `    at Example.test4 (${__filename}:455:27)`);
+            assert.strictEqual(err4.stack?.split("\n")[1], `    at Example.test4 (${__filename}:414:27)`);
 
             // @ts-ignore
             const result = await _try(() => example.test5());
@@ -491,7 +450,7 @@ describe("decorators", () => {
                 String(err5),
                 "TypeError: throws is expected to be a ReferenceError, but a TypeError is given"
             );
-            assert.strictEqual(err5.stack?.split("\n")[1], `    at async Context.<anonymous> (${__filename}:488:28)`);
+            assert.strictEqual(err5.stack?.split("\n")[1], `    at async Context.<anonymous> (${__filename}:447:28)`);
         });
     });
 
@@ -569,5 +528,186 @@ describe("decorators", () => {
                     return "hello, world!";
                 }`);
         });
+    });
+
+    describe("decorate()", () => {
+        it("should define a function with typed parameters and returns", () => {
+            const sum = decorate(
+                param("a", Number),
+                param("b", Number),
+                param("c", Number.optional),
+                returns(Number)
+            )(function sum(a: number, b: number, c?: number) {
+                return String(a + b + (c || 0));
+            });
+            assert.strictEqual(sum.name, "sum");
+            assert.strictEqual(sum.length, 3);
+            assert.strictEqual(sum.toString(), `function sum(a, b, c) {
+                return String(a + b + (c || 0));
+            }`);
+
+            // @ts-ignore
+            const result = sum(1, "2");
+            assert.strictEqual(result, 3);
+
+            // @ts-ignore
+            const [err1] = _try(() => sum(Buffer.from([1]), 2));
+            assert.strictEqual(
+                String(err1),
+                "TypeError: parameters.a is expected to be a number, but a Buffer is given"
+            );
+            assert.strictEqual(err1.stack?.split("\n")[1], `    at ${__filename}:554:39`);
+
+            const sum2 = decorate(
+                param("a", Number),
+                param("b", Number),
+                param("c", Number.optional),
+                returns(Number)
+            )(function sum2(a: number, b: number, c?: number) {
+                return Buffer.from([a, b, c || 0]);
+            });
+
+            const [err2] = _try(() => sum2(1, 2));
+            assert.strictEqual(
+                String(err2),
+                "TypeError: returns is expected to be a number, but a Buffer is given"
+            );
+            assert.strictEqual(err2.stack?.split("\n")[1], `    at ${__filename}:570:39`);
+        });
+
+        it("should define an async function with typed parameters and returns", async () => {
+            // @ts-ignore
+            const sum = decorate(
+                param("a", Number),
+                param("b", Number),
+                param("c", Number.optional),
+                returns(Number)
+            )(async function sum(a: number, b: number, c?: number) {
+                return await Promise.resolve(String(a + b + (c || 0)));
+            });
+            assert.strictEqual(sum.name, "sum");
+            assert.strictEqual(sum.length, 3);
+            assert.strictEqual(sum.toString(), `async function sum(a, b, c) {
+                return await Promise.resolve(String(a + b + (c || 0)));
+            }`);
+
+            // @ts-ignore
+            const result = await sum(1, "2");
+            assert.strictEqual(result, 3);
+
+            // @ts-ignore
+            const [err1] = await _try(() => sum(Buffer.from([1]), 2));
+            assert.strictEqual(
+                String(err1),
+                "TypeError: parameters.a is expected to be a number, but a Buffer is given"
+            );
+            assert.strictEqual(err1.stack?.split("\n")[1], `    at ${__filename}:599:45`);
+
+            // @ts-ignore
+            const sum2 = decorate(
+                param("a", Number),
+                param("b", Number),
+                param("c", Number.optional),
+                returns(Number)
+            )(async function sum(a: number, b: number, c?: number) {
+                await Promise.resolve(null);
+                return Buffer.from([a, b, c || 0]);
+            });
+            const [err2] = await _try(() => sum2(1, 2));
+            assert.strictEqual(
+                String(err2),
+                "TypeError: returns is expected to be a number, but a Buffer is given"
+            );
+            assert.strictEqual(
+                err2.stack?.split("\n")[1],
+                `    at async Context.<anonymous> (${__filename}:616:28)`
+            );
+        });
+
+        it("should define a function that takes no arguments", () => {
+            const test = decorate(param(Void), returns(String))(() => {
+                return "hello, world!";
+            });
+            // @ts-ignore
+            assert.strictEqual("hello, world!", test("hi, world!"));
+        });
+
+        it("should define a function that returns nothing", () => {
+            const test = decorate(returns(Void))(() => {
+                return "hello, world!";
+            });
+            // @ts-ignore
+            const [err1] = _try(() => test());
+            assert.strictEqual(
+                String(err1),
+                "TypeError: returns is expected to be void, but a string is given"
+            );
+            assert.strictEqual(err1.stack?.split("\n")[1], `    at ${__filename}:640:39`);
+        });
+    });
+
+    after(() => {
+        assert.deepStrictEqual(warnings, [
+            {
+                path: "parameters.num",
+                message: "a string at parameters.num has been converted to number"
+            },
+            {
+                path: "parameters.arg1",
+                message: "unknown property parameters.arg1 has been removed"
+            },
+            {
+                path: "parameters.arg1",
+                message: "unknown property parameters.arg1 has been removed"
+            },
+            {
+                path: "test()",
+                message: "test() is expected to have no argument, but a string is given"
+            },
+            {
+                path: "parameters.arg0",
+                message: "unknown property parameters.arg0 has been removed"
+            },
+            {
+                path: "returns",
+                message: "a string at returns has been converted to number"
+            },
+            {
+                path: "returns",
+                message: "a string at returns has been converted to number"
+            },
+            {
+                path: "test1()",
+                message: "test1() is deprecated: use test3() instead"
+            },
+            {
+                path: "test2()",
+                message: "test2() is deprecated"
+            },
+            {
+                path: "parameters.b",
+                message: "a string at parameters.b has been converted to number"
+            },
+            {
+                path: "returns",
+                message: "a string at returns has been converted to number"
+            },
+            {
+                path: "parameters.b",
+                message: "a string at parameters.b has been converted to number"
+            },
+            {
+                path: "returns",
+                message: "a string at returns has been converted to number"
+            },
+            {
+                path: "anonymous()",
+                message: "anonymous() is expected to have no argument, but a string is given"
+            },
+            {
+                path: "parameters.arg0",
+                message: "unknown property parameters.arg0 has been removed"
+            }
+        ] as ValidationWarning[]);
     });
 });

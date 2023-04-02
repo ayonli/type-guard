@@ -12,15 +12,16 @@ describe("utils", () => {
                 num: Number.optional,
             };
             const NewType1 = partial(Type);
+            // @ts-ignore
             const obj = validate({}, NewType1, "obj");
-            assert.deepEqual(obj, {});
+            assert.deepStrictEqual(obj, {});
         });
 
         it("should work with StringEnum", () => {
             const Type = Dict(String.enum(["foo", "bar"] as const), String);
             const NewType = partial(Type);
             const obj = validate({}, NewType, "obj");
-            assert.deepEqual(obj, {});
+            assert.deepStrictEqual(obj, {});
         });
     });
 
@@ -32,7 +33,7 @@ describe("utils", () => {
             };
             const NewType = required(Type);
             const obj = validate({ str: "hello, world!", num: 123 }, NewType, "obj");
-            assert.deepEqual(obj, { str: "hello, world!", num: 123 });
+            assert.deepStrictEqual(obj, { str: "hello, world!", num: 123 });
 
             // @ts-ignore
             const [err1] = _try(() => validate({}, NewType, "obj"));
@@ -75,7 +76,7 @@ describe("utils", () => {
             };
             const NewType = ensured(Type, ["str"]);
             const obj1 = validate({ str: "hello, world!" }, NewType, "obj1");
-            assert.deepEqual(obj1, { str: "hello, world!" });
+            assert.deepStrictEqual(obj1, { str: "hello, world!" });
 
             // @ts-ignore
             const [err1] = _try(() => validate({}, NewType, "obj"));
