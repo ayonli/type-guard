@@ -290,6 +290,17 @@ describe("String", () => {
         );
     });
 
+    it("should match a uuid", () => {
+        const str1 = validate("6a2f41a3-c54c-fce8-32d2-0324e1c32e22", String.match("uuid"), "str1");
+        assert.strictEqual(str1, "6a2f41a3-c54c-fce8-32d2-0324e1c32e22");
+
+        const [err] = _try(() => validate("not a uuid", String.match("uuid"), "str"));
+        assert.strictEqual(
+            String(err),
+            "TypeError: str is not a valid UUID"
+        );
+    });
+
     it("should match the regex", () => {
         const regex = /[0-9]+/;
         const str = validate("123456", String.match(regex), "str");

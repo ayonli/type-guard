@@ -248,6 +248,9 @@ class StringType extends ValidateableType {
         else if (this._match === "datetime" && !StringType.DatetimeRegex.test(_value)) {
             err = new TypeError(`${path} is not a valid datetime string (format: YYYY-MM-DD HH:mm:ss)`);
         }
+        else if (this._match === "uuid" && !StringType.UuidRegex.test(_value)) {
+            err = new TypeError(`${path} is not a valid UUID`);
+        }
         else if (this._match instanceof RegExp && !this._match.test(_value)) {
             err = new Error(`${path} does not match the pattern: ${this._match}`);
         }
@@ -291,6 +294,9 @@ class StringType extends ValidateableType {
         else if (this._match === "datetime") {
             format = "date-time";
         }
+        else if (this._match === "uuid") {
+            format = "uuid";
+        }
         else if (this._match instanceof RegExp) {
             pattern = this._match;
         }
@@ -323,6 +329,7 @@ StringType.HostnameRegex = /^localhost$|^(([a-z0-9A-Z]\.)*[a-z0-9-]+\.)?([a-z0-9
 StringType.DateRegex = /^(19[0-9]{2}|2[0-9]{3})-(0[1-9]|1[012])-([123]0|[012][1-9]|31)$/;
 StringType.TimeRegex = /^([01][0-9]|2[0-3]):([0-5][0-9])(:[0-5][0-9])?$/;
 StringType.DatetimeRegex = /^(19[0-9]{2}|2[0-9]{3})-(0[1-9]|1[012])-([123]0|[012][1-9]|31) ([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])$/;
+StringType.UuidRegex = /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/;
 exports.StringType = StringType;
 class OptionalStringType extends StringType {
     constructor() {

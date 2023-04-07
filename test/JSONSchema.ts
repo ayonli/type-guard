@@ -54,9 +54,12 @@ describe("JSONSchema", () => {
         const schema16 = getJSONSchema(String.match("url"));
         assert.deepStrictEqual(schema16, { type: "string", format: "uri" });
 
+        const schema17 = getJSONSchema(String.match("uuid"));
+        assert.deepStrictEqual(schema17, { type: "string", format: "uuid" });
+
         const regex = /[a-z]/;
-        const schema17 = getJSONSchema(String.match(regex));
-        assert.deepStrictEqual(schema17, { type: "string", pattern: regex.source });
+        const schema18 = getJSONSchema(String.match(regex));
+        assert.deepStrictEqual(schema18, { type: "string", pattern: regex.source });
     });
 
     it("should create schema for numbers", () => {

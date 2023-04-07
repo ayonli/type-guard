@@ -164,6 +164,7 @@ export class StringType extends ValidateableType<string> {
         | "date"
         | "time"
         | "datetime"
+        | "uuid"
         | RegExp | ((value: string) => boolean) = null;
     static EmailRegex = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/;
     static PhoneRegex = /^\s*(?:\+?(\d{1,3}))?([-. (]*(\d{3})[-. )]*)?((\d{3})[-. ]*(\d{2,4})(?:[-.x ]*(\d+))?)\s*$/;
@@ -173,6 +174,7 @@ export class StringType extends ValidateableType<string> {
     static DateRegex = /^(19[0-9]{2}|2[0-9]{3})-(0[1-9]|1[012])-([123]0|[012][1-9]|31)$/;
     static TimeRegex = /^([01][0-9]|2[0-3]):([0-5][0-9])(:[0-5][0-9])?$/;
     static DatetimeRegex = /^(19[0-9]{2}|2[0-9]{3})-(0[1-9]|1[012])-([123]0|[012][1-9]|31) ([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])$/;
+    static UuidRegex = /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/;
 
     /** @internal Used for TypeScript to distinguish the type from similar types. */
     get [Symbol.toStringTag](): "StringType" {
@@ -242,6 +244,7 @@ export class StringType extends ValidateableType<string> {
         | "date"
         | "time"
         | "datetime"
+        | "uuid"
         | RegExp
         | ((value: string) => boolean)
     ) {
@@ -327,6 +330,8 @@ export class StringType extends ValidateableType<string> {
             err = new TypeError(`${path} is not a valid time string (format: HH:mm[:ss])`);
         } else if (this._match === "datetime" && !StringType.DatetimeRegex.test(_value)) {
             err = new TypeError(`${path} is not a valid datetime string (format: YYYY-MM-DD HH:mm:ss)`);
+        } else if (this._match === "uuid" && !StringType.UuidRegex.test(_value)) {
+            err = new TypeError(`${path} is not a valid UUID`);
         } else if (this._match instanceof RegExp && !this._match.test(_value)) {
             err = new Error(`${path} does not match the pattern: ${this._match}`);
         } else if (typeof this._match === "function" && !this._match(_value)) {
@@ -364,6 +369,8 @@ export class StringType extends ValidateableType<string> {
             format = "time";
         } else if (this._match === "datetime") {
             format = "date-time";
+        } else if (this._match === "uuid") {
+            format = "uuid";
         } else if (this._match instanceof RegExp) {
             pattern = this._match;
         }
