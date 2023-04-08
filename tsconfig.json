@@ -2,17 +2,14 @@
     "compilerOptions": {
         "module": "commonjs",
         "target": "es2017",
-        "preserveConstEnums": true,
         "rootDir": "src/",
         "outDir": "dist/",
-        "experimentalDecorators": true,
         "newLine": "LF",
         "noUnusedParameters": true,
         "noUnusedLocals": true,
         "noImplicitThis": true,
         "importHelpers": true,
-        "pretty": true,
-        "removeComments": false,
+        "removeComments": true,
         "sourceMap": true,
         "paths": {
             "@hyurl/type-guard": [
@@ -29,6 +26,7 @@
             "rootDir": "test/",
             "noEmit": true,
             "noUnusedParameters": false,
+            "experimentalDecorators": true
         },
         "include": [
             "./test/*.ts"

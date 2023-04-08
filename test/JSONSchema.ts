@@ -759,16 +759,17 @@ describe("JSONSchema", () => {
 
         const $schema = "https://json-schema.org/draft/2020-12/schema";
         const schema1 = Example.prototype.test1.getJSONSchema();
+        const prefix = process.env["TS_NODE_PROJECT"] === "es.tsconfig.json" ? "" : "Example.";
         assert.deepStrictEqual(schema1, {
             $schema,
-            $id: "Example.test1",
-            title: "Example.test1",
+            $id: `${prefix}test1`,
+            title: `${prefix}test1`,
             type: "function",
             parameters: {
                 data: {
                     $schema,
-                    $id: "Example.test1.parameters.data",
-                    title: "Example.test1.parameters.data",
+                    $id: `${prefix}test1.parameters.data`,
+                    title: `${prefix}test1.parameters.data`,
                     type: "object",
                     properties: {
                         text: { type: "string" },
@@ -780,8 +781,8 @@ describe("JSONSchema", () => {
             required: ["data"],
             returns: {
                 $schema,
-                $id: "Example.test1.returns",
-                title: "Example.test1.returns",
+                $id: `${prefix}test1.returns`,
+                title: `${prefix}test1.returns`,
                 type: "object",
                 properties: {
                     text: { type: "string" },
@@ -797,13 +798,13 @@ describe("JSONSchema", () => {
         assert.deepStrictEqual(schema2, {
             $schema,
             $id: "https://example.com/example.test2.schema.json",
-            title: "Example.test2",
+            title: `${prefix}test2`,
             type: "function",
             parameters: null,
             returns: {
                 $schema,
                 $id: "https://example.com/example.test2.returns.schema.json",
-                title: "Example.test2.returns",
+                title: `${prefix}test2.returns`,
                 type: "object",
                 properties: {
                     text: { type: "string" },

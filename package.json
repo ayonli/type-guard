@@ -1,12 +1,14 @@
 {
   "name": "@hyurl/type-guard",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Runtime type checking for JavaScript variables and functions.",
   "main": "dist/index.js",
   "types": "src/index.ts",
   "scripts": {
     "build": "npx tsc",
-    "test": "npx mocha -r ts-node/register test/*.ts"
+    "prepack": "npm run build",
+    "test": "npx mocha -r ts-node/register test/*.ts",
+    "test-es": "TS_NODE_PROJECT=es.tsconfig.json npx mocha -r ts-node/register test/*.ts"
   },
   "repository": {
     "type": "git",
@@ -32,6 +34,7 @@
     "typescript": "^5.0.2"
   },
   "dependencies": {
-    "@hyurl/utils": "^0.2.26"
+    "@hyurl/utils": "^0.2.26",
+    "tslib": "^2.5.0"
   }
 }

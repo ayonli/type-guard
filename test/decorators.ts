@@ -108,13 +108,13 @@ describe("decorators", () => {
 
             assert.strictEqual(example.test1.name, "test1");
             assert.strictEqual(example.test1.length, 1);
-            assert.strictEqual(example.test1.toString(), `test1(text) {
+            assertSignature(example.test1.toString(), `test1(text) {
                     return { args: [...arguments] };
                 }`);
 
             assert.strictEqual(Example.prototype.test1.name, "test1");
             assert.strictEqual(Example.prototype.test1.length, 1);
-            assert.strictEqual(Example.prototype.test1.toString(), `test1(text) {
+            assertSignature(Example.prototype.test1.toString(), `test1(text) {
                     return { args: [...arguments] };
                 }`);
         });
@@ -241,13 +241,13 @@ describe("decorators", () => {
 
             assert.strictEqual(example.test1.name, "test1");
             assert.strictEqual(example.test1.length, 0);
-            assert.strictEqual(example.test1.toString(), `test1() {
+            assertSignature(example.test1.toString(), `test1() {
                     return "hello, world!";
                 }`);
 
             assert.strictEqual(Example.prototype.test1.name, "test1");
             assert.strictEqual(Example.prototype.test1.length, 0);
-            assert.strictEqual(Example.prototype.test1.toString(), `test1() {
+            assertSignature(Example.prototype.test1.toString(), `test1() {
                     return "hello, world!";
                 }`);
         });
@@ -381,13 +381,13 @@ describe("decorators", () => {
 
             assert.strictEqual(example.test1.name, "test1");
             assert.strictEqual(example.test1.length, 0);
-            assert.strictEqual(example.test1.toString(), `test1() {
+            assertSignature(example.test1.toString(), `test1() {
                     throw new ReferenceError("shall not use this");
                 }`);
 
             assert.strictEqual(Example.prototype.test1.name, "test1");
             assert.strictEqual(Example.prototype.test1.length, 0);
-            assert.strictEqual(Example.prototype.test1.toString(), `test1() {
+            assertSignature(Example.prototype.test1.toString(), `test1() {
                     throw new ReferenceError("shall not use this");
                 }`);
         });
@@ -493,13 +493,13 @@ describe("decorators", () => {
 
             assert.strictEqual(example.test1.name, "test1");
             assert.strictEqual(example.test1.length, 0);
-            assert.strictEqual(example.test1.toString(), `test1() {
+            assertSignature(example.test1.toString(), `test1() {
                     return "hello, world!";
                 }`);
 
             assert.strictEqual(Example.prototype.test1.name, "test1");
             assert.strictEqual(Example.prototype.test1.length, 0);
-            assert.strictEqual(Example.prototype.test1.toString(), `test1() {
+            assertSignature(Example.prototype.test1.toString(), `test1() {
                     return "hello, world!";
                 }`);
         });
@@ -518,13 +518,13 @@ describe("decorators", () => {
 
             assert.strictEqual(example.test1.name, "test1");
             assert.strictEqual(example.test1.length, 0);
-            assert.strictEqual(example.test1.toString(), `test1() {
+            assertSignature(example.test1.toString(), `test1() {
                     return "hello, world!";
                 }`);
 
             assert.strictEqual(Example.prototype.test1.name, "test1");
             assert.strictEqual(Example.prototype.test1.length, 0);
-            assert.strictEqual(Example.prototype.test1.toString(), `test1() {
+            assertSignature(Example.prototype.test1.toString(), `test1() {
                     return "hello, world!";
                 }`);
         });
@@ -587,7 +587,7 @@ describe("decorators", () => {
             });
             assert.strictEqual(sum.name, "sum");
             assert.strictEqual(sum.length, 3);
-            assert.strictEqual(sum.toString(), `async function sum(a, b, c) {
+            assertSignature(sum.toString(), `async function sum(a, b, c) {
                 return await Promise.resolve(String(a + b + (c || 0)));
             }`);
 
@@ -711,3 +711,9 @@ describe("decorators", () => {
         ] as ValidationWarning[]);
     });
 });
+
+function assertSignature(fnStr1: string, fnStr2: string) {
+    fnStr1 = fnStr1.split("\n").map(line => line.trim()).join("\n");
+    fnStr2 = fnStr2.split("\n").map(line => line.trim()).join("\n");
+    assert.deepStrictEqual(fnStr1, fnStr2);
+}
