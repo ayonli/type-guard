@@ -2581,7 +2581,7 @@ const _deprecated = Symbol.for("deprecated");
 export type FunctionDecorator = {
     <T>(target: any, prop: string, desc: TypedPropertyDescriptor<T>): void | TypedPropertyDescriptor<T>;
     <F extends (...args: any[]) => any>(target: F): void | F;
-    <F extends (...args: any[]) => any>(target: F, context: ClassMethodDecoratorContext): void | F;
+    <F extends (...args: any[]) => any>(target: F, context: any): void | F;
 };
 
 export type ValidationWarning = { path: string; message: string; };
@@ -2816,7 +2816,7 @@ export function param<T>(arg0: T | string, arg1?: string | T, remarks: string = 
 
     return (...args: any[]) => {
         if (typeof args[1] === "object") { // new ES decorator since TypeScript 5.0
-            const [target, context] = args as [Function, ClassMethodDecoratorContext];
+            const [target, context] = args as [Function, any];
             const fn = wrap(target, context.name as string);
             const params = (fn[_params] ??= []) as { type: any; name?: string; remarks?: string; }[];
             params.unshift({ type, name, remarks });
@@ -2860,7 +2860,7 @@ export function param<T>(arg0: T | string, arg1?: string | T, remarks: string = 
 export function returns<T>(type: T, remarks: string = void 0) {
     return ((...args: any[]) => {
         if (typeof args[1] === "object") { // new ES decorator since TypeScript 5.0
-            const [target, context] = args as [Function, ClassMethodDecoratorContext];
+            const [target, context] = args as [Function, any];
             const fn = wrap(target, context.name as string);
             fn[_returns] = { type, name: "returns", remarks };
 
@@ -2896,7 +2896,7 @@ export function returns<T>(type: T, remarks: string = void 0) {
 export function throws<T>(type: T) {
     return ((...args: any[]) => {
         if (typeof args[1] === "object") { // new ES decorator since TypeScript 5.0
-            const [target, context] = args as [Function, ClassMethodDecoratorContext];
+            const [target, context] = args as [Function, any];
             const fn = wrap(target, context.name as string);
             fn[_throws] = { type, name: "throws" };
 
@@ -2929,7 +2929,7 @@ export function throws<T>(type: T) {
 export function deprecated(message = "") {
     return ((...args) => {
         if (typeof args[1] === "object") { // new ES decorator since TypeScript 5.0
-            const [target, context] = args as [Function, ClassMethodDecoratorContext];
+            const [target, context] = args as [Function, any];
             const fn = wrap(target, context.name as string);
             fn[_deprecated] = message;
 
@@ -2961,7 +2961,7 @@ export function deprecated(message = "") {
 export function remarks(note: string) {
     return ((...args: any[]) => {
         if (typeof args[1] === "object") { // new ES decorator since TypeScript 5.0
-            const [target, context] = args as [Function, ClassMethodDecoratorContext];
+            const [target, context] = args as [Function, any];
             const fn = wrap(target, context.name as string);
             fn[_remarks] = note;
 
