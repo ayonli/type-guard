@@ -212,8 +212,8 @@ describe("String", () => {
     });
 
     it("should match an email address", () => {
-        const str = validate("i@hyurl.com", String.match("email"), "str");
-        assert.strictEqual(str, "i@hyurl.com");
+        const str = validate("the@ayon.li", String.match("email"), "str");
+        assert.strictEqual(str, "the@ayon.li");
 
         const [err] = _try(() => validate("hello, world!", String.match("email"), "str"));
         assert.strictEqual(String(err), "TypeError: str is not a valid email address");

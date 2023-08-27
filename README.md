@@ -39,7 +39,7 @@ Runtime type checking for JavaScript variables and functions.
 ## Install
 
 ```sh
-npm i @hyurl/type-guard
+npm i @ayonli/type-guard
 ```
 
 
@@ -80,7 +80,7 @@ So how do we solve this? This is where Type-Guard comes in.
 ### Optimized Code
 
 ```ts
-import { param, returns } from "@hyurl/type-guard";
+import { param, returns } from "@ayonli/type-guard";
 
 export default class ExampleApi {
     @param({ num1: Number, num2: Number }, "data")
@@ -159,7 +159,7 @@ And these abstract types can be created via the wrapper function `as()`:
 *specific constraint.*
 
 ```ts
-import { as, Any, Dict, Void } from "@hyurl/type-guard";
+import { as, Any, Dict, Void } from "@ayonli/type-guard";
 
 const Str1 = String.optional; // an optional string
 const Str2 = String.default(""); // an optional string with default value ''
@@ -306,7 +306,7 @@ bring the additional features to any type constructors we want.
 ### Example of CustomType
 
 ```ts
-import { as } from "@hyurl/type-guard";
+import { as } from "@ayonli/type-guard";
 
 class Avatar {
     constructor(data: any) {
@@ -329,7 +329,7 @@ const Type = {
 ### Example of UnionType and TupleType
 
 ```ts
-import { as } from "@hyurl/type-guard";
+import { as } from "@ayonli/type-guard";
 
 const Type = {
     union: as(String, Number), // string | number
@@ -381,7 +381,7 @@ There are also other non-frequently used decorators:
     - `message` The warning message, can be used to provide suggestions.
 
 ```ts
-import { param, returns, deprecated } from "@hyurl/type-guard";
+import { param, returns, deprecated } from "@ayonli/type-guard";
 
 export default class ExampleApi {
     @param("data", { num1: Number, num2: Number })
@@ -426,7 +426,7 @@ NOTE: Both `@param()` and `@returns()` will set `removeUnknownItems` to `true`.
 `@returns()` sets `suppress` as well.
 
 ```ts 
-import { validate, as } from "@hyurl/type-guard";
+import { validate, as } from "@ayonli/type-guard";
 
 const str = "Hello, World!";
 validate(str, String, "str"); // => "Hello, World!";
@@ -481,7 +481,7 @@ may want to attach the warnings to the response so the client can adjust its
 calls.
 
 ```ts
-import { setWarningHandler } from "@hyurl/type-guard";
+import { setWarningHandler } from "@ayonli/type-guard";
 
 export default class ApiController {
     // All API controllers are inherited from the base ApiController.
@@ -554,7 +554,7 @@ interface ChildType extends BaseType {
 Even more, you can use functions to achieve generic types.
 
 ```ts
-import { as, param, returns } from "@hyurl/type-guard";
+import { as, param, returns } from "@ayonli/type-guard";
 
 export type ApiResponse<T> = {
     code: number;
@@ -601,7 +601,7 @@ And we can also use `pick` and `omit` from [@hyurl/utils](https://github.com/hyu
 or [Lodash](https://lodash.com).
 
 ```ts
-import { partial, required, optional, ensured } from "@hyurl/type-guard";
+import { partial, required, optional, ensured } from "@ayonli/type-guard";
 import { pick, omit } from "@hyurl/utils";
 
 const Type = {
@@ -632,7 +632,7 @@ can use to infer type from a JavaScript type definition.
 - `ExtractInstanceType<T>`
 
 ```ts
-import { ExtractInstanceType } from "@hyurl/type-guard";
+import { ExtractInstanceType } from "@ayonli/type-guard";
 
 type MyStringType = ExtractInstanceType<typeof String>;
 // will resolve in: string
@@ -662,7 +662,7 @@ in common functions, there are two ways to do so:
 2. Use `def()` function to create a wrapped function with type checking features.
 
 ```ts
-import { decorate, def, param, returns } from "@hyurl/type-guard";
+import { decorate, def, param, returns } from "@ayonli/type-guard";
 
 const sum = decorate(
     param("num1", Number),
@@ -688,7 +688,7 @@ The type definition can be easily converted to JSON Schema, and exported to
 other clients or languages for wider adoption.
 
 ```ts
-import { getJSONSchema } from "@hyurl/type-guard";
+import { getJSONSchema } from "@ayonli/type-guard";
 
 const Article = {
     id: Number.remarks("The ID of article"),
@@ -765,7 +765,7 @@ This's why this package also added a `getJSONSchema()` function to the
 `Function.prototype`, which retrieves a super schema of the function design.
 
 ```ts
-import { ExtractInstanceType, remarks, param, returns } from "@hyurl/type-guard";
+import { ExtractInstanceType, remarks, param, returns } from "@ayonli/type-guard";
 
 const Article = {
     id: Number.remarks("The ID of article"),
