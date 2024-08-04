@@ -1,7 +1,7 @@
 import * as assert from "assert";
 import { describe, it } from "mocha";
-import _try from "dotry";
-import { validate, Any, ValidationWarning } from "..";
+import _try from "@ayonli/jsext/try";
+import { validate, Any, ValidationWarning } from "../src";
 
 describe("Any", () => {
     it("should import Any type", () => {

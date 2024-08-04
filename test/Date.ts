@@ -1,7 +1,7 @@
 import * as assert from "assert";
 import { describe, it } from "mocha";
-import _try from "dotry";
-import { validate, ValidationWarning } from "..";
+import _try from "@ayonli/jsext/try";
+import { validate, ValidationWarning } from "../src";
 
 describe("Date", () => {
     it("should validate a Date instance", () => {
@@ -45,15 +45,15 @@ describe("Date", () => {
         const _date = new Date();
 
         const date = validate(_date.toISOString(), Date, "date", { warnings });
-        assert(date instanceof Date);
+        assert.ok(date instanceof Date);
         assert.strictEqual(date.toISOString(), _date.toISOString());
 
         const date1 = validate("2023-01-01 00:00:00", Date, "date1", { warnings });
-        assert(date1 instanceof Date);
+        assert.ok(date1 instanceof Date);
         assert.strictEqual(date1.toISOString(), new Date("2023-01-01 00:00:00").toISOString());
 
         const date2 = validate(_date.valueOf(), Date, "date2", { warnings });
-        assert(date2 instanceof Date);
+        assert.ok(date2 instanceof Date);
         assert.strictEqual(date2.toISOString(), _date.toISOString());
 
         assert.deepStrictEqual(warnings, [

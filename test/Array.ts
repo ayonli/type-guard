@@ -1,7 +1,7 @@
 import * as assert from "assert";
 import { describe, it } from "mocha";
-import _try from "dotry";
-import { Any, validate, ValidationWarning } from "..";
+import _try from "@ayonli/jsext/try";
+import { Any, validate, ValidationWarning } from "../src";
 
 describe("Array", () => {
     it("should validate arrays of Any type of items", () => {

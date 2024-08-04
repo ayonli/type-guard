@@ -1,7 +1,7 @@
 import * as assert from "assert";
 import { describe, it } from "mocha";
-import _try from "dotry";
-import { as, validate, ValidationWarning } from "..";
+import _try from "@ayonli/jsext/try";
+import { as, validate, ValidationWarning } from "../src";
 
 describe("CustomType", () => {
     it("should validate values of custom types without as() function", () => {
@@ -137,7 +137,7 @@ describe("CustomType", () => {
 
             return buf;
         }), "buf1", { warnings });
-        assert(Buffer.isBuffer(buf1));
+        assert.ok(Buffer.isBuffer(buf1));
         assert.strictEqual(buf1.toString(), "hello, world");
 
         assert.deepStrictEqual(warnings, [

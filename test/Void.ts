@@ -1,7 +1,7 @@
 import * as assert from "assert";
 import { describe, it } from "mocha";
-import _try from "dotry";
-import { validate, ValidationWarning, Void } from "..";
+import _try from "@ayonli/jsext/try";
+import { validate, ValidationWarning, Void } from "../src";
 
 describe("Void", () => {
     it("should import Void type", () => {
@@ -11,7 +11,7 @@ describe("Void", () => {
         assert.strictEqual(Void.optional, Void.optional);
 
         const [err] = _try(() => { Void.required; });
-        assert(String(err).includes("VoidType is always optional"));
+        assert.ok(String(err).includes("VoidType is always optional"));
     });
 
     it("should validate Void against null and undefined", () => {

@@ -1,6 +1,6 @@
 import * as assert from "assert";
 import { describe, it } from "mocha";
-import { Any, as, Void } from "..";
+import { Any, as, Void } from "../src";
 
 describe("as()", () => {
     describe("as-is", () => {

@@ -1,4 +1,3 @@
-import "@hyurl/utils/types";
 import * as assert from "assert";
 import { describe, it } from "mocha";
 
@@ -11,7 +10,7 @@ describe("Core Features", () => {
         assert.strictEqual(typeof String.required, "object");
         assert.strictEqual(String(String.required), "[object StringType]");
         assert.strictEqual(String.required, String.required);
-        assert(String.optional.required !== String.required);
+        assert.ok(String.optional.required !== String.required);
 
         assert.strictEqual(typeof String.default, "function");
         assert.strictEqual(String(String.default("")), "[object OptionalStringType]");
@@ -43,7 +42,7 @@ describe("Core Features", () => {
         assert.strictEqual(typeof Number.required, "object");
         assert.strictEqual(String(Number.required), "[object NumberType]");
         assert.strictEqual(Number.required, Number.required);
-        assert(Number.optional.required !== Number.required);
+        assert.ok(Number.optional.required !== Number.required);
 
         assert.strictEqual(typeof Number.remarks, "function");
         assert.strictEqual(typeof Number.deprecated, "function");
@@ -66,7 +65,7 @@ describe("Core Features", () => {
         assert.strictEqual(typeof BigInt.required, "object");
         assert.strictEqual(String(BigInt.required), "[object BigIntType]");
         assert.strictEqual(BigInt.required, BigInt.required);
-        assert(BigInt.optional.required !== BigInt.required);
+        assert.ok(BigInt.optional.required !== BigInt.required);
 
         assert.strictEqual(typeof BigInt.remarks, "function");
         assert.strictEqual(typeof BigInt.deprecated, "function");
@@ -89,7 +88,7 @@ describe("Core Features", () => {
         assert.strictEqual(typeof Boolean.required, "object");
         assert.strictEqual(String(Boolean.required), "[object BooleanType]");
         assert.strictEqual(Boolean.required, Boolean.required);
-        assert(Boolean.optional.required !== Boolean.required);
+        assert.ok(Boolean.optional.required !== Boolean.required);
 
         assert.strictEqual(typeof Boolean.remarks, "function");
         assert.strictEqual(typeof Boolean.deprecated, "function");
@@ -105,7 +104,7 @@ describe("Core Features", () => {
         assert.strictEqual(typeof Date.required, "object");
         assert.strictEqual(String(Date.required), "[object DateType]");
         assert.strictEqual(Date.required, Date.required);
-        assert(Date.optional.required !== Date.required);
+        assert.ok(Date.optional.required !== Date.required);
 
         assert.strictEqual(typeof Date.remarks, "function");
         assert.strictEqual(typeof Date.deprecated, "function");
@@ -121,7 +120,7 @@ describe("Core Features", () => {
         assert.strictEqual(typeof Object.required, "object");
         assert.strictEqual(String(Object.required), "[object ObjectType]");
         assert.strictEqual(Object.required, Object.required);
-        assert(Object.optional.required !== Object.required);
+        assert.ok(Object.optional.required !== Object.required);
 
         assert.strictEqual(typeof Object.remarks, "function");
         assert.strictEqual(typeof Object.deprecated, "function");

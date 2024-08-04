@@ -1,8 +1,7 @@
-import "@hyurl/utils/types";
 import * as assert from "assert";
-import _try from "dotry";
+import _try from "@ayonli/jsext/try";
 import { describe, it, before, after } from "mocha";
-import { def, setWarningHandler, ValidationWarning, Void } from "..";
+import { def, setWarningHandler, ValidationWarning, Void } from "../src";
 
 describe("def()", () => {
     const warnings: ValidationWarning[] = [];
@@ -29,23 +28,23 @@ describe("def()", () => {
         assert.strictEqual(result, 3);
 
         // @ts-ignore
-        const [err1] = _try(() => sum({ a: Buffer.from([1]), b: 2 }));
+        const [err1] = _try<Error>(() => sum({ a: Buffer.from([1]), b: 2 }));
         assert.strictEqual(
             String(err1),
             "TypeError: parameters.arg0.a is expected to be a number, but a Buffer is given"
         );
-        assert.strictEqual(err1.stack?.split("\n")[1], `    at ${__filename}:32:35`);
+        assert.strictEqual(err1?.stack?.split("\n")[1], `    at ${__filename}:31:42`);
 
         // @ts-ignore
         const sum2 = def(({ a, b, c }) => {
             return Buffer.from([a, b, c || 0]);
         }, [{ a: Number, b: Number, c: Number.optional }] as const, Number);
-        const [err2] = _try(() => sum2({ a: 1, b: 2 }));
+        const [err2] = _try<Error>(() => sum2({ a: 1, b: 2 }));
         assert.strictEqual(
             String(err2),
             "TypeError: returns is expected to be a number, but a Buffer is given"
         );
-        assert.strictEqual(err2.stack?.split("\n")[1], `    at ${__filename}:43:35`);
+        assert.strictEqual(err2?.stack?.split("\n")[1], `    at ${__filename}:42:42`);
     });
 
     it("should define an async function with typed parameters and returns", async () => {
@@ -67,12 +66,12 @@ describe("def()", () => {
         assert.strictEqual(result, 3);
 
         // @ts-ignore
-        const [err1] = await _try(() => sum({ a: Buffer.from([1]), b: 2 }));
+        const [err1] = await _try<Error>(() => sum({ a: Buffer.from([1]), b: 2 }));
         assert.strictEqual(
             String(err1),
             "TypeError: parameters.arg0.a is expected to be a number, but a Buffer is given"
         );
-        assert.strictEqual(err1.stack?.split("\n")[1], `    at ${__filename}:70:41`);
+        assert.strictEqual(err1?.stack?.split("\n")[1], `    at ${__filename}:69:48`);
 
         // @ts-ignore
         const sum2 = def(async ({ a, b, c }) => {
@@ -82,14 +81,14 @@ describe("def()", () => {
             a: number,
             b: number;
         }) => Promise<number>;
-        const [err2] = await _try(() => sum2({ a: 1, b: 2 }));
+        const [err2] = await _try<Error>(() => sum2({ a: 1, b: 2 }));
         assert.strictEqual(
             String(err2),
             "TypeError: returns is expected to be a number, but a Buffer is given"
         );
         assert.strictEqual(
-            err2.stack?.split("\n")[1],
-            `    at async Context.<anonymous> (${__filename}:85:24)`
+            err2?.stack?.split("\n")[1],
+            `    at async Context.<anonymous> (${__filename}:84:24)`
         );
     });
 
@@ -106,12 +105,12 @@ describe("def()", () => {
             return "hello, world!";
         }, [Void], Void);
         // @ts-ignore
-        const [err1] = _try(() => test());
+        const [err1] = _try<Error>(() => test());
         assert.strictEqual(
             String(err1),
             "TypeError: returns is expected to be void, but a string is given"
         );
-        assert.strictEqual(err1.stack?.split("\n")[1], `    at ${__filename}:109:35`);
+        assert.strictEqual(err1?.stack?.split("\n")[1], `    at ${__filename}:108:42`);
     });
 
     after(() => {

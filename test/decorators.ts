@@ -1,7 +1,7 @@
 import * as assert from "assert";
 import { describe, it, before, after } from "mocha";
-import _try from "dotry";
-import { as, decorate, deprecated, param, remarks, returns, setWarningHandler, throws, ValidationWarning, Void } from "..";
+import _try from "@ayonli/jsext/try";
+import { as, decorate, deprecated, param, remarks, returns, setWarningHandler, throws, ValidationWarning, Void } from "../src";
 
 describe("decorators", () => {
     const warnings: ValidationWarning[] = [];
@@ -134,20 +134,20 @@ describe("decorators", () => {
 
             const example = new Example();
             // @ts-ignore
-            const [err1] = _try(() => example.test1(Buffer.from("hello, world!")));
+            const [err1] = _try<Error>(() => example.test1(Buffer.from("hello, world!")));
             assert.strictEqual(
                 String(err1),
                 "TypeError: parameters.text is expected to be a string, but a Buffer is given"
             );
-            assert.strictEqual(err1.stack?.split("\n")[1], `    at ${__filename}:137:47`);
+            assert.strictEqual(err1?.stack?.split("\n")[1], `    at ${__filename}:137:54`);
 
             // @ts-ignore
-            const [err2] = await _try(() => example.test2(Buffer.from("hello, world!")));
+            const [err2] = await _try<Error>(() => example.test2(Buffer.from("hello, world!")));
             assert.strictEqual(
                 String(err2),
                 "TypeError: parameters.text is expected to be a string, but a Buffer is given"
             );
-            assert.strictEqual(err2.stack?.split("\n")[1], `    at ${__filename}:145:53`);
+            assert.strictEqual(err2?.stack?.split("\n")[1], `    at ${__filename}:145:60`);
         });
     });
 
@@ -267,20 +267,20 @@ describe("decorators", () => {
 
             const example = new Example();
             // @ts-ignore
-            const [err1] = _try(() => example.test1(Buffer.from("hello, world!")));
+            const [err1] = _try<Error>(() => example.test1(Buffer.from("hello, world!")));
             assert.strictEqual(
                 String(err1),
                 "TypeError: returns is expected to be a string, but a Buffer is given"
             );
-            assert.strictEqual(err1.stack?.split("\n")[1], `    at ${__filename}:270:47`);
+            assert.strictEqual(err1?.stack?.split("\n")[1], `    at ${__filename}:270:54`);
 
             // @ts-ignore
-            const [err2] = await _try(() => example.test2(Buffer.from("hello, world!")));
+            const [err2] = await _try<Error>(() => example.test2(Buffer.from("hello, world!")));
             assert.strictEqual(
                 String(err2),
                 "TypeError: returns is expected to be a string, but a Buffer is given"
             );
-            assert.strictEqual(err2.stack?.split("\n")[1], `    at async Context.<anonymous> (${__filename}:278:28)`);
+            assert.strictEqual(err2?.stack?.split("\n")[1], `    at async Context.<anonymous> (${__filename}:278:28)`);
         });
     });
 
@@ -423,34 +423,34 @@ describe("decorators", () => {
 
             const example = new Example();
 
-            const [err1] = _try(() => example.test1());
+            const [err1] = _try<Error>(() => example.test1());
             assert.strictEqual(String(err1), "ReferenceError: shall not use this");
-            assert.strictEqual(err1.stack?.split("\n")[1], `    at Example.test1 (${__filename}:399:27)`);
+            assert.strictEqual(err1?.stack?.split("\n")[1], `    at Example.test1 (${__filename}:399:27)`);
 
-            const [err2] = _try(() => example.test2());
+            const [err2] = _try<Error>(() => example.test2());
             assert.strictEqual(
                 String(err2),
                 "TypeError: throws is expected to be a ReferenceError, but a TypeError is given"
             );
-            assert.strictEqual(err2.stack?.split("\n")[1], `    at ${__filename}:430:47`);
+            assert.strictEqual(err2?.stack?.split("\n")[1], `    at ${__filename}:430:54`);
 
-            const [err3] = _try(() => example.test3());
+            const [err3] = _try<Error>(() => example.test3());
             assert.strictEqual(String(err3), "ReferenceError: shall not use this");
-            assert.strictEqual(err3.stack?.split("\n")[1], `    at Example.test3 (${__filename}:408:27)`);
+            assert.strictEqual(err3?.stack?.split("\n")[1], `    at Example.test3 (${__filename}:408:27)`);
 
             // @ts-ignore
-            const [err4] = await _try(() => example.test4());
+            const [err4] = await _try<Error>(() => example.test4());
             assert.strictEqual(String(err4), "ReferenceError: shall not use this");
-            assert.strictEqual(err4.stack?.split("\n")[1], `    at Example.test4 (${__filename}:414:27)`);
+            assert.strictEqual(err4?.stack?.split("\n")[1], `    at Example.test4 (${__filename}:414:27)`);
 
             // @ts-ignore
-            const result = await _try(() => example.test5());
+            const result = await _try<Error>(() => example.test5());
             const [err5] = result;
             assert.strictEqual(
                 String(err5),
                 "TypeError: throws is expected to be a ReferenceError, but a TypeError is given"
             );
-            assert.strictEqual(err5.stack?.split("\n")[1], `    at async Context.<anonymous> (${__filename}:447:28)`);
+            assert.strictEqual(err5?.stack?.split("\n")[1], `    at async Context.<anonymous> (${__filename}:447:28)`);
         });
     });
 
@@ -551,12 +551,12 @@ describe("decorators", () => {
             assert.strictEqual(result, 3);
 
             // @ts-ignore
-            const [err1] = _try(() => sum(Buffer.from([1]), 2));
+            const [err1] = _try<Error>(() => sum(Buffer.from([1]), 2));
             assert.strictEqual(
                 String(err1),
                 "TypeError: parameters.a is expected to be a number, but a Buffer is given"
             );
-            assert.strictEqual(err1.stack?.split("\n")[1], `    at ${__filename}:554:39`);
+            assert.strictEqual(err1?.stack?.split("\n")[1], `    at ${__filename}:554:46`);
 
             const sum2 = decorate(
                 param("a", Number),
@@ -567,12 +567,12 @@ describe("decorators", () => {
                 return Buffer.from([a, b, c || 0]);
             });
 
-            const [err2] = _try(() => sum2(1, 2));
+            const [err2] = _try<Error>(() => sum2(1, 2));
             assert.strictEqual(
                 String(err2),
                 "TypeError: returns is expected to be a number, but a Buffer is given"
             );
-            assert.strictEqual(err2.stack?.split("\n")[1], `    at ${__filename}:570:39`);
+            assert.strictEqual(err2?.stack?.split("\n")[1], `    at ${__filename}:570:46`);
         });
 
         it("should define an async function with typed parameters and returns", async () => {
@@ -596,12 +596,12 @@ describe("decorators", () => {
             assert.strictEqual(result, 3);
 
             // @ts-ignore
-            const [err1] = await _try(() => sum(Buffer.from([1]), 2));
+            const [err1] = await _try<Error>(() => sum(Buffer.from([1]), 2));
             assert.strictEqual(
                 String(err1),
                 "TypeError: parameters.a is expected to be a number, but a Buffer is given"
             );
-            assert.strictEqual(err1.stack?.split("\n")[1], `    at ${__filename}:599:45`);
+            assert.strictEqual(err1?.stack?.split("\n")[1], `    at ${__filename}:599:52`);
 
             // @ts-ignore
             const sum2 = decorate(
@@ -613,13 +613,13 @@ describe("decorators", () => {
                 await Promise.resolve(null);
                 return Buffer.from([a, b, c || 0]);
             });
-            const [err2] = await _try(() => sum2(1, 2));
+            const [err2] = await _try<Error>(() => sum2(1, 2));
             assert.strictEqual(
                 String(err2),
                 "TypeError: returns is expected to be a number, but a Buffer is given"
             );
             assert.strictEqual(
-                err2.stack?.split("\n")[1],
+                err2?.stack?.split("\n")[1],
                 `    at async Context.<anonymous> (${__filename}:616:28)`
             );
         });
@@ -637,12 +637,12 @@ describe("decorators", () => {
                 return "hello, world!";
             });
             // @ts-ignore
-            const [err1] = _try(() => test());
+            const [err1] = _try<Error>(() => test());
             assert.strictEqual(
                 String(err1),
                 "TypeError: returns is expected to be void, but a string is given"
             );
-            assert.strictEqual(err1.stack?.split("\n")[1], `    at ${__filename}:640:39`);
+            assert.strictEqual(err1?.stack?.split("\n")[1], `    at ${__filename}:640:46`);
         });
     });
 

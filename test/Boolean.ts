@@ -1,7 +1,7 @@
 import * as assert from "assert";
 import { describe, it } from "mocha";
-import _try from "dotry";
-import { validate, ValidationWarning } from "..";
+import _try from "@ayonli/jsext/try";
+import { validate, ValidationWarning } from "../src";
 
 describe("Boolean", () => {
     it("should validate boolean values", () => {

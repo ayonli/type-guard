@@ -1,6 +1,6 @@
 import * as assert from "assert";
 import { describe, it } from "mocha";
-import { Any, as, decorate, def, deprecated, Dict, getJSONSchema, param, remarks, returns, StringType, Void } from "..";
+import { Any, as, decorate, def, deprecated, Dict, getJSONSchema, param, remarks, returns, StringType, Void } from "../src";
 
 Error.stackTraceLimit = 10;
 

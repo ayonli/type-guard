@@ -1,40 +1,44 @@
 {
-  "name": "@ayonli/type-guard",
-  "version": "0.1.0",
-  "description": "Runtime type checking for JavaScript variables and functions.",
-  "main": "dist/index.js",
-  "types": "src/index.ts",
-  "scripts": {
-    "build": "npx tsc",
-    "prepack": "npm run build",
-    "test": "npx mocha -r ts-node/register test/*.ts",
-    "test-es": "cross-env TS_NODE_PROJECT=es.tsconfig.json npx mocha -r ts-node/register test/*.ts"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/ayonli/type-guard.git"
-  },
-  "keywords": [
-    "typing",
-    "type-checking",
-    "schema"
-  ],
-  "author": "A-yon Lee <the@ayon.li>",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/ayonli/type-guard/issues"
-  },
-  "homepage": "https://github.com/ayonli/type-guard#readme",
-  "devDependencies": {
-    "@types/mocha": "^10.0.1",
-    "@types/node": "^18.15.3",
-    "cross-env": "^7.0.3",
-    "dotry": "^1.2.1",
-    "mocha": "^10.2.0",
-    "ts-node": "^10.9.1",
-    "typescript": "^5.0.4"
-  },
-  "dependencies": {
-    "@hyurl/utils": "^0.2.26"
-  }
+    "name": "@ayonli/type-guard",
+    "version": "0.1.1",
+    "description": "Runtime type checking for JavaScript variables and functions.",
+    "main": "./cjs/index.js",
+    "module": "./esm/index.js",
+    "types": "./cjs/index.d.ts",
+    "exports": {
+        "require": "./cjs/index.js",
+        "import": "./esm/index.js",
+        "types": "./cjs/index.d.ts"
+    },
+    "scripts": {
+        "build": "tsc --module esnext --outDir esm && tsc --module commonjs --outDir cjs --declaration && node postbuild.js",
+        "prepack": "npm run build",
+        "test": "mocha -r ts-node/register test/*.ts"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/ayonli/type-guard.git"
+    },
+    "keywords": [
+        "typing",
+        "type-checking",
+        "schema"
+    ],
+    "author": "A-yon Lee <the@ayon.li>",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/ayonli/type-guard/issues"
+    },
+    "homepage": "https://github.com/ayonli/type-guard#readme",
+    "devDependencies": {
+        "@types/mocha": "^10.0.1",
+        "@types/node": "^18.15.3",
+        "mocha": "^10.2.0",
+        "ts-node": "^10.9.1",
+        "tslib": "^2.6.2",
+        "typescript": "^5.0.4"
+    },
+    "dependencies": {
+        "@ayonli/jsext": "^0.9.55"
+    }
 }

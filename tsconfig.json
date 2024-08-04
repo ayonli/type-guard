@@ -1,10 +1,11 @@
 {
     "compilerOptions": {
-        "module": "commonjs",
+        "module": "CommonJS",
         "target": "es2018",
         "rootDir": "src/",
         "outDir": "dist/",
         "newLine": "LF",
+        "moduleResolution": "NodeNext",
         "noUnusedParameters": true,
         "noUnusedLocals": true,
         "noImplicitThis": true,

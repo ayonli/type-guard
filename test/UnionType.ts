@@ -1,7 +1,7 @@
 import * as assert from "assert";
 import { describe, it } from "mocha";
-import _try from "dotry";
-import { as, validate, ValidationWarning, Void } from "..";
+import _try from "@ayonli/jsext/try";
+import { as, validate, ValidationWarning, Void } from "../src";
 
 describe("UnionType", () => {
     it("should validate values of union types with as() function", () => {

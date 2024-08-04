@@ -1,8 +1,7 @@
-import "@hyurl/utils/types";
 import * as assert from "assert";
-import _try from "dotry";
+import _try from "@ayonli/jsext/try";
 import { describe, it } from "mocha";
-import { Dict, ensured, optional, partial, required, validate } from "..";
+import { Dict, ensured, optional, partial, required, validate } from "../src";
 
 describe("utils", () => {
     describe("partial()", () => {

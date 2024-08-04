@@ -597,12 +597,11 @@ achieve similar functionalities of their TypeScript equivalents.
 - `optional<T extends Record<string, unknown>, K extends keyof T>(type: T, props: K[])`
 - `ensured<T extends Record<string, unknown>, K extends keyof T>(type: T, props: K[])`
 
-And we can also use `pick` and `omit` from [@hyurl/utils](https://github.com/hyurl/utils)
-or [Lodash](https://lodash.com).
+And we can also use `pick` and `omit` from [JsExt](https://github.com/ayonli/jsext).
 
 ```ts
 import { partial, required, optional, ensured } from "@ayonli/type-guard";
-import { pick, omit } from "@hyurl/utils";
+import { pick, omit } from "@ayonli/jsext/object";
 
 const Type = {
     foo: String,

@@ -1,7 +1,5 @@
-import "@hyurl/utils/types";
-import omit from "@hyurl/utils/omit";
-import pick from "@hyurl/utils/pick";
-import isVoid from "@hyurl/utils/isVoid";
+import { Constructor } from "@ayonli/jsext/types";
+import { omit, pick, isValid } from "@ayonli/jsext/object";
 
 const jsonSchemaDraftLink = "https://json-schema.org/draft/2020-12/schema";
 export type JSONSchemaType = "string" | "number" | "integer" | "boolean" | "array" | "object" | "null";
@@ -99,7 +97,7 @@ export abstract class ValidateableType<T> {
             } else if (!options?.suppress) {
                 throw new Error(`${path} is required, but no value is given`);
             }
-        } else if (!isVoid(this._deprecated) && options?.warnings) {
+        } else if (isValid(this._deprecated) && options?.warnings) {
             const message = this._deprecated
                 ? `${path} is deprecated: ${this._deprecated}`
                 : `${path} is deprecated`;
@@ -379,7 +377,7 @@ export class StringType extends ValidateableType<string> {
             type: "string",
             description: this._remarks,
             default: this._default,
-            deprecated: isVoid(this._deprecated) ? void 0 : true,
+            deprecated: !isValid(this._deprecated) ? void 0 : true,
             minLength: this._minLength,
             maxLength: this._maxLength,
             format,
@@ -590,7 +588,7 @@ export class NumberType extends ValidateableType<number> {
             type: this._integer ? "integer" : "number",
             description: this._remarks,
             default: this._default,
-            deprecated: isVoid(this._deprecated) ? void 0 : true,
+            deprecated: !isValid(this._deprecated) ? void 0 : true,
             minimum: this._min,
             maximum: this._max,
         };
@@ -770,10 +768,10 @@ export class BigIntType extends ValidateableType<bigint> {
         const schema: JSONSchema = {
             type: "integer",
             description: this._remarks,
-            default: isVoid(this._default) ? void 0 : Number(this._default),
-            deprecated: isVoid(this._deprecated) ? void 0 : true,
-            minimum: isVoid(this._min) ? void 0 : Number(this._min),
-            maximum: isVoid(this._max) ? void 0 : Number(this._max),
+            default: !isValid(this._default) ? void 0 : Number(this._default),
+            deprecated: !isValid(this._deprecated) ? void 0 : true,
+            minimum: !isValid(this._min) ? void 0 : Number(this._min),
+            maximum: !isValid(this._max) ? void 0 : Number(this._max),
         };
 
         if (this._enum) {
@@ -928,7 +926,7 @@ export class BooleanType extends ValidateableType<boolean> {
             type: "boolean",
             description: this._remarks,
             default: this._default,
-            deprecated: isVoid(this._deprecated) ? void 0 : true,
+            deprecated: !isValid(this._deprecated) ? void 0 : true,
         } as JSONSchema);
     }
 }
@@ -1005,7 +1003,7 @@ export class DateType extends ValidateableType<Date> {
             type: "string",
             description: this._remarks,
             default: this._default ? this._default.toISOString() : void 0,
-            deprecated: isVoid(this._deprecated) ? void 0 : true,
+            deprecated: !isValid(this._deprecated) ? void 0 : true,
             format: "date-time",
         } as JSONSchema);
     }
@@ -1063,7 +1061,7 @@ export class ObjectType extends ValidateableType<object> {
             type: "object",
             description: this._remarks,
             default: this._default,
-            deprecated: isVoid(this._deprecated) ? void 0 : true,
+            deprecated: !isValid(this._deprecated) ? void 0 : true,
         } as JSONSchema);
     }
 }
@@ -1101,7 +1099,7 @@ export class AnyType extends ValidateableType<any> {
             type: ["string", "number", "integer", "boolean", "object", "array", "null"],
             description: this._remarks,
             default: this._default,
-            deprecated: isVoid(this._deprecated) ? void 0 : true,
+            deprecated: !isValid(this._deprecated) ? void 0 : true,
         } as JSONSchema);
     }
 }
@@ -1147,7 +1145,7 @@ export class VoidType extends ValidateableType<void> {
             throw this.createTypeError(path, value, "void");
         } else if (this._default !== void 0) {
             return this._default;
-        } else if (!isVoid(this._deprecated) && options?.warnings) {
+        } else if (!!isValid(this._deprecated) && options?.warnings) {
             const message = this._deprecated
                 ? `${path} is deprecated: ${this._deprecated}`
                 : `${path} is deprecated`;
@@ -1165,7 +1163,7 @@ export class VoidType extends ValidateableType<void> {
             type: "null",
             description: this._remarks,
             default: this._default,
-            deprecated: isVoid(this._deprecated) ? void 0 : true,
+            deprecated: !isValid(this._deprecated) ? void 0 : true,
         } as JSONSchema);
     }
 }
@@ -1270,7 +1268,7 @@ export class CustomType<T> extends ValidateableType<T> {
                 type: "boolean",
                 description: this._remarks,
                 default: toJSON(this._default),
-                deprecated: isVoid(this._deprecated) ? void 0 : true,
+                deprecated: !isValid(this._deprecated) ? void 0 : true,
                 const: this.type,
             } as JSONSchema);
         } else if (this.type instanceof Function) {
@@ -1278,13 +1276,13 @@ export class CustomType<T> extends ValidateableType<T> {
                 type: Object.is(this.type, Function) ? "function" : "object",
                 description: this._remarks,
                 default: toJSON(this._default),
-                deprecated: isVoid(this._deprecated) ? void 0 : true,
+                deprecated: !isValid(this._deprecated) ? void 0 : true,
             } as JSONSchema);
         } else {
             return toJSONSchema(this.type, {
                 description: this._remarks,
                 default: toJSON(this._default),
-                deprecated: isVoid(this._deprecated) ? void 0 : true,
+                deprecated: !isValid(this._deprecated) ? void 0 : true,
                 parent,
             });
         }
@@ -1454,7 +1452,7 @@ export class UnionType<T extends any[]> extends ValidateableType<T[]> {
             type,
             description: this._remarks,
             default: toJSON(this._default),
-            deprecated: isVoid(this._deprecated) ? void 0 : true,
+            deprecated: !isValid(this._deprecated) ? void 0 : true,
         };
 
         if (typeof type === "string") {
@@ -1589,7 +1587,7 @@ export class DictType<K extends IndexableType, V> extends ValidateableType<Recor
             type: "object",
             description: this._remarks,
             default: this._default,
-            deprecated: isVoid(this._deprecated) ? void 0 : true,
+            deprecated: !isValid(this._deprecated) ? void 0 : true,
         };
         const keys = this.keyEnum();
 
@@ -1756,7 +1754,7 @@ export class ArrayType<T> extends CustomType<T[]> {
             type: "array",
             description: this._remarks,
             default: this._default,
-            deprecated: isVoid(this._deprecated) ? void 0 : true,
+            deprecated: !isValid(this._deprecated) ? void 0 : true,
             minItems: this._minItems,
             maxItems: this._maxItems,
             uniqueItems: this._uniqueItems || void 0,
@@ -1878,7 +1876,7 @@ export class TupleType<T extends readonly any[]> extends ValidateableType<T> {
             type: "array",
             description: this._remarks,
             default: this._default,
-            deprecated: isVoid(this._deprecated) ? void 0 : true,
+            deprecated: !isValid(this._deprecated) ? void 0 : true,
             minItems: this.type.filter(type => {
                 return !(type instanceof ValidateableType)
                     || !type["_optional"];
@@ -2638,7 +2636,7 @@ function wrap(target: any, prop: string = void 0, desc: TypedPropertyDescriptor<
             const warnings: ValidationWarning[] = [];
             const options = { warnings, removeUnknownItems: true };
 
-            if (!isVoid(newFn[_deprecated])) {
+            if (!!isValid(newFn[_deprecated])) {
                 const message = newFn[_deprecated]
                     ? `${fnName}() is deprecated: ${newFn[_deprecated]}`
                     : `${fnName}() is deprecated`;
@@ -3269,7 +3267,7 @@ Function.prototype.getJSONSchema = function (options) {
         title,
         type: "function" as const,
         description: options?.description || this[_remarks],
-        deprecated: isVoid(this[_deprecated]) ? void 0 : true,
+        deprecated: !isValid(this[_deprecated]) ? void 0 : true,
     });
 
     schema["parameters"] = paramsDef && !isVoidParam ? paramsDef.reduce((records, item, index) => {

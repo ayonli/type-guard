@@ -3,4 +3,3 @@ test/
 .*
 *.tgz
 tsconfig.json
-es.tsconfig.json
