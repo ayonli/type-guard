@@ -6,6 +6,7 @@
         "outDir": "dist/",
         "newLine": "LF",
         "moduleResolution": "NodeNext",
+        "skipLibCheck": true,
         "noUnusedParameters": true,
         "noUnusedLocals": true,
         "noImplicitThis": true,
