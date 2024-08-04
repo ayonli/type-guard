@@ -1,6 +1,6 @@
 {
     "name": "@ayonli/type-guard",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "description": "Runtime type checking for JavaScript variables and functions.",
     "main": "./cjs/index.js",
     "module": "./esm/index.js",
@@ -39,6 +39,6 @@
         "typescript": "^5.0.4"
     },
     "dependencies": {
-        "@ayonli/jsext": "^0.9.55"
+        "@ayonli/jsext": "^0.9.56"
     }
 }
